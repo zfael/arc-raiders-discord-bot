@@ -13,7 +13,7 @@ config();
 process.env.TZ = 'UTC';
 
 // Validate required environment variables
-const requiredEnvVars = ['DISCORD_TOKEN', 'CHANNEL_ID', 'CLIENT_ID'];
+const requiredEnvVars = ['DISCORD_TOKEN', 'CLIENT_ID'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     logger.error(`Error: ${envVar} is not set in .env file`);

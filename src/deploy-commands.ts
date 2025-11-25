@@ -25,23 +25,12 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
   try {
     logger.info(`Started refreshing ${commands.length} application (/) commands.`);
 
-    let data: any;
-    
-    if (process.env.GUILD_ID) {
-      // Deploy to specific guild (faster for development)
-      data = await rest.put(
-        Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.GUILD_ID),
-        { body: commands },
-      );
-      logger.info(`Successfully registered ${data.length} guild commands.`);
-    } else {
-      // Deploy globally (takes up to 1 hour to update)
-      data = await rest.put(
-        Routes.applicationCommands(process.env.CLIENT_ID!),
-        { body: commands },
-      );
-      logger.info(`Successfully registered ${data.length} global commands.`);
-    }
+    // Deploy globally
+    const data: any = await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID!),
+      { body: commands },
+    );
+    logger.info(`Successfully registered ${data.length} global commands.`);
   } catch (error) {
     logger.error({ err: error }, 'Error deploying commands');
   }

@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 import * as cron from 'node-cron';
-import { postOrUpdateMapMessage } from './messageManager';
+import { postOrUpdateMapMessages } from './messageManager';
 import { logger } from './logger';
 
 /**
@@ -8,7 +8,7 @@ import { logger } from './logger';
  */
 export async function updateMapStatus(client: Client): Promise<void> {
   try {
-    await postOrUpdateMapMessage(client);
+    await postOrUpdateMapMessages(client);
   } catch (error) {
     logger.error({ err: error }, 'Error updating map status');
   }

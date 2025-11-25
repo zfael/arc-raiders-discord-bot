@@ -54,8 +54,6 @@ The bot tracks these condition types across all maps:
    Edit `.env` and fill in your values:
    ```env
    DISCORD_TOKEN=your_bot_token_here
-   GUILD_ID=your_guild_id_here
-   CHANNEL_ID=your_channel_id_here
    CLIENT_ID=your_client_id_here
    ```
 
@@ -88,11 +86,9 @@ The bot requires these permissions (permission integer: **274877925376**):
 4. Copy the generated URL and open it in your browser
 5. Select your server and authorize the bot
 
-### 4. Get IDs
+### 4. Client ID
 
-- **Client ID**: Found in the "General Information" section of your application
-- **Guild ID**: Enable Developer Mode in Discord (User Settings > Advanced), right-click your server, "Copy Server ID"
-- **Channel ID**: Right-click the channel where you want map updates, "Copy Channel ID"
+- **Client ID**: Found in the "General Information" section of your application.
 
 ## Usage
 
@@ -112,9 +108,7 @@ Before first run or after adding new commands, deploy them:
 npm run deploy-commands
 ```
 
-This registers commands either:
-- **Guild-specific** (instant, recommended for development) if `GUILD_ID` is set
-- **Global** (takes up to 1 hour) if `GUILD_ID` is not set
+This registers commands globally, which can take up to an hour to propagate to all servers.
 
 ### Production Mode
 
@@ -130,7 +124,8 @@ This registers commands either:
 
 ## Commands
 
-- `/ping` - Check bot latency and responsiveness
+- `/ping` - Check bot latency and responsiveness.
+- `/set-channel` - (Admin-only) Sets the channel where map rotation updates are posted.
 
 ## Project Structure
 
@@ -175,14 +170,14 @@ arc-raiders-discord-bot/
 ## Troubleshooting
 
 ### Bot doesn't respond to commands
-- Make sure you ran `npm run deploy-commands`
-- Check that the bot has proper permissions in the server
-- For guild commands, ensure `GUILD_ID` is correct in `.env`
+- Make sure you ran `npm run deploy-commands`.
+- Check that the bot has proper permissions in the server.
+- Global commands can take up to an hour to update after being deployed.
 
 ### Map rotation message not appearing
-- Verify `CHANNEL_ID` is correct and the bot has access to that channel
-- Check the bot has "Send Messages", "Embed Links", and "Manage Messages" permissions
-- Look at console logs for error messages
+- Use the `/set-channel` command to designate a channel for updates.
+- Check the bot has "Send Messages", "Embed Links", and "Manage Messages" permissions in the designated channel.
+- Look at the bot's console logs for any error messages.
 
 ### TypeScript errors
 - Run `npm install` to ensure all dependencies are installed
