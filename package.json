@@ -22,7 +22,7 @@
     "@supabase/supabase-js": "^2.86.0",
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
-    "node-cron": "^3.0.3",
+    "node-cron": "^4.2.1",
     "pino": "^10.1.0",
     "pino-pretty": "^10.3.1"
   },
