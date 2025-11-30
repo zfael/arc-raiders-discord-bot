@@ -318,7 +318,13 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
     return;
   }
 
+
+  const testGuildId = process.env.TEST_GUILD_ID;
   for (const [guildId, config] of entries) {
+    if (testGuildId && guildId !== testGuildId) {
+      continue; // Skip non-test guilds if TEST_GUILD_ID is set
+    }
+
     await postOrUpdateInChannel(client, guildId, config.channelId, config.messageId);
   }
 }
