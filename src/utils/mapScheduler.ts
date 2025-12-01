@@ -22,20 +22,24 @@ export function initScheduler(client: Client): void {
     const now = new Date();
     const nextHour = new Date(now);
     nextHour.setHours(now.getHours() + 1, 0, 0, 0);
-    const delay = nextHour.getTime() - now.getTime();
+    // Trigger 5 seconds before the hour to account for processing time
+    const delay = nextHour.getTime() - now.getTime() - 5000;
 
-    logger.info(
-      `📅 Next map rotation update scheduled in ${Math.round(delay / 1000 / 60)} minutes`,
-    );
+    logger.info(`Next map rotation update scheduled in ${Math.round(delay / 1000 / 60)} minutes`);
 
     setTimeout(async () => {
-      logger.info("⏰ Hourly map rotation update triggered");
+      logger.info("Hourly map rotation update triggered");
       await updateMapStatus(client);
       scheduleNext();
     }, delay);
   };
 
-  // Start the cycle
-  scheduleNext();
-  logger.info("📅 Map rotation scheduler initialized");
+  // Run immediately on startup
+  logger.info("Running initial map rotation update...");
+  updateMapStatus(client).then(() => {
+    logger.info("Initial update complete");
+    // Start the cycle
+    scheduleNext();
+    logger.info("Map rotation scheduler initialized");
+  });
 }
