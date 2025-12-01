@@ -357,6 +357,7 @@ export async function postOrUpdateInChannel(
  * @param {Client} client The Discord client.
  */
 export async function postOrUpdateMapMessages(client: Client): Promise<void> {
+  const start = Date.now();
   const serverConfigs = await getServerConfigs();
   const entries = Object.entries(serverConfigs);
 
@@ -365,9 +366,22 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
     return;
   }
 
-  for (const [guildId, config] of entries) {
-    await postOrUpdateInChannel(client, guildId, config.channelId, config.messageId);
+  logger.info(`🚀 Starting update for ${entries.length} servers...`);
+
+  // Process in chunks to avoid rate limits/overload
+  const CHUNK_SIZE = 10;
+  for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+    const chunkStart = Date.now();
+    const chunk = entries.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map(([guildId, config]) =>
+        postOrUpdateInChannel(client, guildId, config.channelId, config.messageId),
+      ),
+    );
+    logger.info(`📦 Chunk ${i / CHUNK_SIZE + 1} processed in ${Date.now() - chunkStart}ms`);
   }
+  
+  logger.info(`✅ All updates completed in ${Date.now() - start}ms`);
 }
 
 const catchPinError = (error: any) => {

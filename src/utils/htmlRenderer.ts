@@ -80,14 +80,29 @@ export class HtmlRenderer {
     return icons;
   }
 
-  async render(data: RenderData, translations: Record<string, string>): Promise<Buffer> {
-    let browser: Browser | undefined;
-    try {
-      browser = await puppeteer.launch({
+  private browserPromise: Promise<Browser> | null = null;
+
+  private getBrowser(): Promise<Browser> {
+    if (!this.browserPromise) {
+      this.browserPromise = puppeteer.launch({
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      }).then(browser => {
+        // Handle browser disconnect/crash
+        browser.on('disconnected', () => {
+          this.browserPromise = null;
+        });
+        return browser;
       });
-      const page = await browser.newPage();
+    }
+    return this.browserPromise;
+  }
+
+  async render(data: RenderData, translations: Record<string, string>): Promise<Buffer> {
+    let page;
+    try {
+      const browser = await this.getBrowser();
+      page = await browser.newPage();
 
       await page.setViewport({
         width: 1240,
@@ -234,7 +249,7 @@ export class HtmlRenderer {
       logger.error({ err: error }, "Error rendering HTML to image");
       throw error;
     } finally {
-      if (browser) await browser.close();
+      if (page) await page.close();
     }
   }
 }
