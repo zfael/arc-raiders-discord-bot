@@ -366,7 +366,7 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
     return;
   }
 
-  logger.info(`🚀 Starting update for ${entries.length} servers...`);
+  logger.info(`Starting update for ${entries.length} servers...`);
 
   // Process in chunks to avoid rate limits/overload
   const CHUNK_SIZE = 10;
@@ -378,10 +378,10 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
         postOrUpdateInChannel(client, guildId, config.channelId, config.messageId),
       ),
     );
-    logger.info(`📦 Chunk ${i / CHUNK_SIZE + 1} processed in ${Date.now() - chunkStart}ms`);
+    logger.info(`Chunk ${i / CHUNK_SIZE + 1} processed in ${Date.now() - chunkStart}ms`);
   }
 
-  logger.info(`✅ All updates completed in ${Date.now() - start}ms`);
+  logger.info(`All updates completed in ${Date.now() - start}ms`);
 }
 
 const catchPinError = (error: any) => {
