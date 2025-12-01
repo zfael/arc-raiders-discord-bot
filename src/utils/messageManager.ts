@@ -380,7 +380,7 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
     );
     logger.info(`📦 Chunk ${i / CHUNK_SIZE + 1} processed in ${Date.now() - chunkStart}ms`);
   }
-  
+
   logger.info(`✅ All updates completed in ${Date.now() - start}ms`);
 }
 

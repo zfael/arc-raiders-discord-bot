@@ -1,5 +1,17 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Interaction, } from "discord.js";
-import { CONDITION_COLORS, CONDITION_EMOJIS, getCurrentRotation, getNextRotationTimestamp,MAP_ROTATIONS,} from "../config/mapRotation";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  type Interaction,
+} from "discord.js";
+import {
+  CONDITION_COLORS,
+  CONDITION_EMOJIS,
+  getCurrentRotation,
+  getNextRotationTimestamp,
+  MAP_ROTATIONS,
+} from "../config/mapRotation";
 import { getT } from "../utils/i18n";
 import { interactionLockManager } from "../utils/interactionLock";
 import { logger } from "../utils/logger";

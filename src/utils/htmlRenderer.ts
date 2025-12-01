@@ -2,7 +2,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import puppeteer, { type Browser } from "puppeteer";
+import puppeteer, { type Browser, type Page } from "puppeteer";
 import { CONDITION_EMOJIS } from "../config/mapRotation";
 import type { MapRotation } from "../types";
 import { logger } from "./logger";
@@ -84,22 +84,24 @@ export class HtmlRenderer {
 
   private getBrowser(): Promise<Browser> {
     if (!this.browserPromise) {
-      this.browserPromise = puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      }).then(browser => {
-        // Handle browser disconnect/crash
-        browser.on('disconnected', () => {
-          this.browserPromise = null;
+      this.browserPromise = puppeteer
+        .launch({
+          headless: true,
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        })
+        .then((browser) => {
+          // Handle browser disconnect/crash
+          browser.on("disconnected", () => {
+            this.browserPromise = null;
+          });
+          return browser;
         });
-        return browser;
-      });
     }
     return this.browserPromise;
   }
 
   async render(data: RenderData, translations: Record<string, string>): Promise<Buffer> {
-    let page;
+    let page: Page | undefined;
     try {
       const browser = await this.getBrowser();
       page = await browser.newPage();
@@ -199,7 +201,8 @@ export class HtmlRenderer {
                 const major = rotation[`${loc}Major`];
                 if (major !== "None") {
                   hasEvents = true;
-                  const locName = translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
+                  const locName =
+                    translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
                   const eventName = translations[`event_${major.toLowerCase()}`] || major;
                   eventsHtml += `
                   <div class="event-row">

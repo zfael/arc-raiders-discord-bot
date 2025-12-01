@@ -68,7 +68,7 @@ export function generateMapImage(
         translations,
       );
       const duration = Date.now() - start;
-      logger.info(`🖼️ Image generation for ${locale} took ${duration}ms`);
+      logger.info(`Image generation for ${locale} took ${duration}ms`);
 
       // Update cache
       // Clear old cache for different hours to prevent memory leak (simple strategy)

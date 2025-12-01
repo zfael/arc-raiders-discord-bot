@@ -24,7 +24,9 @@ export function initScheduler(client: Client): void {
     nextHour.setHours(now.getHours() + 1, 0, 0, 0);
     const delay = nextHour.getTime() - now.getTime();
 
-    logger.info(`📅 Next map rotation update scheduled in ${Math.round(delay / 1000 / 60)} minutes`);
+    logger.info(
+      `📅 Next map rotation update scheduled in ${Math.round(delay / 1000 / 60)} minutes`,
+    );
 
     setTimeout(async () => {
       logger.info("⏰ Hourly map rotation update triggered");
