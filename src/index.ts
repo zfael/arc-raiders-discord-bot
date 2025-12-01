@@ -9,14 +9,6 @@ import { setupLockExpiration } from "./utils/messageManager";
 
 // Load environment variables
 config();
-
-// Initialize i18n
-// We just need to import it to start the instance, but we can wait for it if needed.
-// Since it's fs-backend, it might be async, but usually for initial load we might want to ensure it's ready.
-// However, for this simple setup, just importing it starts the process.
-// We can explicitly wait for init if we export a promise, but for now let's just import it.
-
-// Set timezone to UTC
 process.env.TZ = "UTC";
 
 // Validate required environment variables

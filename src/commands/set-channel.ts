@@ -8,19 +8,12 @@ import {
 import type { Command } from "../types";
 import { getT } from "../utils/i18n";
 import { logger } from "../utils/logger";
-import {
-  buildCommandLocalizations,
-  buildOptionLocalizations,
-  loadAvailableLocales,
-} from "../utils/localeLoader";
+import { buildCommandLocalizations, buildOptionLocalizations, loadAvailableLocales } from "../utils/localeLoader";
 import { postOrUpdateInChannel } from "../utils/messageManager";
 import { getServerConfigs, setServerConfig } from "../utils/serverConfig";
 
 const locales = loadAvailableLocales();
-const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
-  "set-channel",
-  locales,
-);
+const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations("set-channel", locales);
 const channelOptionLocalizations = buildOptionLocalizations("set-channel", "channel", locales);
 
 const SetChannelCommand: Command = {

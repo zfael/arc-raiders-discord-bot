@@ -1,58 +1,30 @@
 # Adding New Languages
 
-This bot supports automatic command localization. When you add a new language file, the bot will automatically apply the translations to Discord commands.
+This guide explains how to add new language support to the Arc Raiders Discord Bot.
 
-## Steps to Add a New Language
+## 🌍 For Translators
+
+If you want to translate the bot into your language, follow these steps. You do not need any coding knowledge!
 
 ### 1. Create a New Locale File
 
-Create a new JSON file in `src/locales/` named with the language code (e.g., `fr.json` for French, `de.json` for German).
+1.  Find the `src/locales/` folder.
+2.  Copy `en.json` (the English source) and rename it to your language code (e.g., `fr.json` for French, `de.json` for German).
+    *   *Tip*: Use the standard 2-letter ISO code for your language.
 
-```bash
-cp src/locales/en.json src/locales/fr.json
-```
+### 2. Translate the File
 
-### 2. Update the Locale Mapping
+Open your new JSON file and translate the text values.
 
-Edit `src/utils/localeLoader.ts` and add your language to the `LOCALE_MAP`:
+> **⚠️ Important Rules**:
+> *   **Do NOT change the keys** (the text before the `:`). Only translate the values (the text after the `:`).
+> *   **Do NOT remove any keys**.
+> *   **Do NOT translate placeholders** like `{{latency}}`, `{{status}}`, `{{location}}`. Keep them exactly as they are.
+> *   **Structure matters**: Keep the nesting exactly the same as the original file.
 
-```typescript
-const LOCALE_MAP: Record<string, string> = {
-  en: "en-US",
-  es: "es-ES",
-  fr: "fr",      // Add this line
-  // ...
-};
-```
+#### File Structure Reference
 
-**Discord Locale Codes**: See the [Discord documentation](https://discord.com/developers/docs/reference#locales) for valid locale codes.
-
-### 3. Translate the Locale File
-
-Open your new locale file and translate all strings. The file has the following structure:
-
-#### File Structure Overview
-
-```json
-{
-    "_developer_note": "Translation instructions for contributors",
-    "command_metadata": { /* Discord command localizations */ },
-    "common": { /* Shared error messages and UI text */ },
-    "commands": { /* Command response strings */ },
-    "map_rotation": { /* Map rotation embed content */ }
-}
-```
-
-#### Required Sections
-
-**A. Developer Note**
-```json
-{
-    "_developer_note": "Translate this to explain the file's purpose in your language"
-}
-```
-
-**B. Command Metadata** (Used for Discord UI localization)
+**A. Command Metadata** (Used for Discord's UI - command names and descriptions)
 ```json
 {
     "command_metadata": {
@@ -88,7 +60,7 @@ Open your new locale file and translate all strings. The file has the following 
 }
 ```
 
-**C. Common Strings** (Shared across commands)
+**B. Common Strings** (Shared messages)
 ```json
 {
     "common": {
@@ -102,7 +74,7 @@ Open your new locale file and translate all strings. The file has the following 
 }
 ```
 
-**D. Commands** (Response messages)
+**C. Commands** (Bot responses)
 ```json
 {
     "commands": {
@@ -137,7 +109,7 @@ Open your new locale file and translate all strings. The file has the following 
 }
 ```
 
-**E. Image Renderer** (Text displayed in generated images)
+**D. Image Renderer** (Text inside generated images)
 ```json
 {
     "image_renderer": {
@@ -146,7 +118,7 @@ Open your new locale file and translate all strings. The file has the following 
 }
 ```
 
-**F. Map Rotation** (Embed content and button labels)
+**E. Map Rotation** (Embeds and buttons)
 ```json
 {
     "map_rotation": {
@@ -203,39 +175,56 @@ Open your new locale file and translate all strings. The file has the following 
 }
 ```
 
-> **💡 Tip**: Use `src/locales/en.json` as your reference. Copy it and translate each value while keeping all keys in English.
+---
 
-> **⚠️ Important**: 
-> - Keep all JSON keys in English (e.g., `"error"`, `"commands"`, `"map_rotation"`)
-> - Only translate the values (the text after the `:`)
-> - Preserve all placeholders like `{{latency}}`, `{{status}}`, `{{location}}`
-> - Maintain the exact same structure as `en.json`
+## 🛠️ For Bot Maintainers
 
-### 4. Redeploy Commands
+Once a translator has provided a new JSON file, follow these steps to integrate it.
 
-After adding the new locale file, redeploy the commands to Discord:
+### 1. Update Locale Mapping
+
+Edit `src/utils/localeLoader.ts` and add the new language to the `LOCALE_MAP`:
+
+```typescript
+const LOCALE_MAP: Record<string, string> = {
+  en: "en-US",
+  es: "es-ES",
+  fr: "fr",      // Add the new mapping here
+  // ...
+};
+```
+*Refer to [Discord's Locale Codes](https://discord.com/developers/docs/reference#locales) for the correct value.*
+
+### 2. Add Language Choice to Settings
+
+Edit `src/commands/settings.ts` to allow users to select this new language:
+
+```typescript
+.addChoices(
+  { name: "English", value: "en" },
+  { name: "Español", value: "es" },
+  { name: "Français", value: "fr" },  // Add the new choice here
+)
+```
+
+### 3. Redeploy Commands
+
+Run the deployment script to register the new localized command names and descriptions with Discord:
 
 ```bash
 npm run deploy-commands
 ```
 
 The bot will automatically:
-- Detect the new locale file
-- Load the `command_metadata`
-- Apply the localizations to all commands
-- Log any errors if Discord rejects a translation
+*   Detect the new locale file.
+*   Load the `command_metadata`.
+*   Apply localizations to Discord commands.
+*   Log any errors or warnings.
 
-### 5. Add Language Choice to Settings
+### Troubleshooting
 
-Edit `src/commands/settings.ts` and add your language to the choices:
-
-```typescript
-.addChoices(
-  { name: "English", value: "en" },
-  { name: "Español", value: "es" },
-  { name: "Français", value: "fr" },  // Add this
-)
-```
+*   **Missing Metadata**: If logs show warnings about missing metadata, ensure the translator included the `command_metadata` section.
+*   **Discord API Errors**: Discord has strict limits (e.g., 32 chars for names). If a translation is too long, the API will reject it. Check the logs for details.
 
 ## Important Notes
 

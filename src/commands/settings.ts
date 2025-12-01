@@ -5,24 +5,13 @@ import {
 } from "discord.js";
 import type { Command } from "../types";
 import { getT } from "../utils/i18n";
-import {
-  buildCommandLocalizations,
-  buildOptionLocalizations,
-  loadAvailableLocales,
-} from "../utils/localeLoader";
+import { buildCommandLocalizations, buildOptionLocalizations, loadAvailableLocales } from "../utils/localeLoader";
 import { logger } from "../utils/logger";
 import { getServerConfigs, setMobileFriendly, setServerLocale } from "../utils/serverConfig";
 
 const locales = loadAvailableLocales();
-const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
-  "settings",
-  locales,
-);
-const mobileFriendlyLocalizations = buildOptionLocalizations(
-  "settings",
-  "mobile-friendly",
-  locales,
-);
+const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations("settings", locales);
+const mobileFriendlyLocalizations = buildOptionLocalizations("settings", "mobile-friendly", locales);
 const localeOptionLocalizations = buildOptionLocalizations("settings", "locale", locales);
 
 const SettingsCommand: Command = {

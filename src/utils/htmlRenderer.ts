@@ -184,8 +184,7 @@ export class HtmlRenderer {
                 const major = rotation[`${loc}Major`];
                 if (major !== "None") {
                   hasEvents = true;
-                  const locName =
-                    translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
+                  const locName = translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
                   const eventName = translations[`event_${major.toLowerCase()}`] || major;
                   eventsHtml += `
                   <div class="event-row">

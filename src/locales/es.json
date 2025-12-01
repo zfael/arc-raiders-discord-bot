@@ -1,5 +1,5 @@
 {
-  "_developer_note": "Estos archivos se utilizan para las traducciones del bot. Por favor, no elimine las claves. Las nuevas claves deben agregarse tanto a en.json como a es.json. NOTA: Si cambia los nombres o descripciones de los comandos aquí, DEBE actualizar manualmente 'setNameLocalizations' y 'setDescriptionLocalizations' en el archivo de comando correspondiente (ej. src/commands/settings.ts) y volver a desplegar los comandos.",
+  "_developer_note": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys ex. ping, settings, set-channel, any text encapsulated in {{example}}. New keys should be added to both en.json and es.json.",
   "common": {
     "error": "¡Ocurrió un error al ejecutar este comando!",
     "error_saving": "Ocurrió un error al guardar tu configuración. Por favor intenta de nuevo más tarde.",
