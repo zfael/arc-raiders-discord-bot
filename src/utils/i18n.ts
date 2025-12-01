@@ -2,12 +2,16 @@ import i18next from "i18next";
 import Backend from "i18next-fs-backend";
 import * as path from "node:path";
 
+import { loadAvailableLocales } from "./localeLoader";
+
 const i18n = i18next.createInstance();
+
+const availableLocales = Array.from(loadAvailableLocales().keys());
 
 i18n.use(Backend).init({
   lng: "en", // Default language
   fallbackLng: "en",
-  preload: ["en", "es"],
+  preload: availableLocales,
   ns: ["translation"],
   defaultNS: "translation",
   backend: {

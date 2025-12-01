@@ -292,6 +292,7 @@ export async function postOrUpdateInChannel(
   guildId: string,
   channelId: string,
   existingMessageId?: string,
+  localeOverride?: string,
 ): Promise<void> {
   try {
     const channel = (await client.channels.fetch(channelId)) as TextChannel;
@@ -304,9 +305,8 @@ export async function postOrUpdateInChannel(
     const configs = await getServerConfigs();
     const config = configs[guildId];
     const mobileFriendly = config?.mobileFriendly ?? false;
-    // Use guild preferred locale if available, otherwise default to 'en'
-    // Actually, use our server config locale
-    const locale = config?.locale || channel.guild?.preferredLocale || "en";
+    // Use override if provided, otherwise fetch from config
+    const locale = localeOverride || config?.locale || channel.guild?.preferredLocale || "en";
 
     const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
     let message: Message;

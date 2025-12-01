@@ -1,281 +1,197 @@
 # Adding New Languages
 
-This guide explains how to add new language support to the Arc Raiders Discord Bot.
+This guide explains how to add new language support to the Arc Raiders Discord Bot. The bot now features **automatic language detection** - simply add a translation file and it will be automatically integrated!
 
 ## 🌍 For Translators
 
-If you want to translate the bot into your language, follow these steps. You do not need any coding knowledge!
+If you want to translate the bot into your language, follow these steps. **No coding knowledge required!**
 
-### 1. Create a New Locale File
+### Step 1: Create Your Translation File
 
-1.  Find the `src/locales/` folder.
-2.  Copy `en.json` (the English source) and rename it to your language code (e.g., `fr.json` for French, `de.json` for German).
-    *   *Tip*: Use the standard 2-letter ISO code for your language.
+1.  Navigate to the `src/locales/` folder
+2.  Copy `en.json` and rename it using your language's 2-letter ISO code:
+    *   French: `fr.json`
+    *   German: `de.json`
+    *   Portuguese: `pt.json`
+    *   Japanese: `ja.json`
+    *   etc.
 
-### 2. Translate the File
+### Step 2: Add Language Metadata
 
-Open your new JSON file and translate the text values.
+Open your new file and update these required fields at the top:
 
-> **⚠️ Important Rules**:
-> *   **Do NOT change the keys** (the text before the `:`). Only translate the values (the text after the `:`).
-> *   **Do NOT remove any keys**.
-> *   **Do NOT translate placeholders** like `{{latency}}`, `{{status}}`, `{{location}}`. Keep them exactly as they are.
-> *   **Structure matters**: Keep the nesting exactly the same as the original file.
-
-#### File Structure Reference
-
-**A. Command Metadata** (Used for Discord's UI - command names and descriptions)
 ```json
 {
-    "command_metadata": {
-        "ping": {
-            "name": "ping",
-            "description": "Répond avec Pong! et affiche la latence du bot"
-        },
-        "settings": {
-            "name": "parametres",
-            "description": "Configure les paramètres du bot pour ce serveur.",
-            "options": {
-                "mobile-friendly": {
-                    "name": "vue-mobile",
-                    "description": "Activer la vue optimisée pour mobile"
-                },
-                "locale": {
-                    "name": "langue",
-                    "description": "Définir la langue du bot sur ce serveur"
-                }
-            }
-        },
-        "set-channel": {
-            "name": "definir-canal",
-            "description": "Définit le canal pour les mises à jour de rotation de carte.",
-            "options": {
-                "channel": {
-                    "name": "canal",
-                    "description": "Le canal pour envoyer les mises à jour"
-                }
-            }
-        }
-    }
+  "_developer_note": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions...",
+  "_language_name": "Français",
+  "common": { ... }
 }
 ```
 
-**B. Common Strings** (Shared messages)
-```json
-{
-    "common": {
-        "error": "Une erreur s'est produite lors de l'exécution de cette commande!",
-        "error_saving": "Une erreur s'est produite lors de l'enregistrement de vos paramètres.",
-        "only_in_guild": "Cette commande ne peut être utilisée que dans un serveur.",
-        "menu_locked": "🚫 Ce menu est actuellement utilisé par un autre utilisateur. Veuillez attendre {{remaining}} secondes.",
-        "enabled": "ACTIVÉ",
-        "disabled": "DÉSACTIVÉ"
-    }
-}
-```
+**⚠️ IMPORTANT**: The `_language_name` field is **required** and determines how your language appears in the `/settings` command dropdown!
 
-**C. Commands** (Bot responses)
-```json
-{
-    "commands": {
-        "ping": {
-            "description": "Répond avec Pong! et affiche la latence du bot",
-            "pinging": "Ping en cours...",
-            "response": "🏓 Pong!\n📡 Latence: {{latency}}ms\n💓 Latence API: {{apiLatency}}ms"
-        },
-        "settings": {
-            "description": "Configure les paramètres du bot pour ce serveur.",
-            "mobile_friendly": {
-                "name": "vue-mobile",
-                "description": "Activer la vue optimisée pour mobile"
-            },
-            "server_only": "Cette commande ne peut être utilisée que dans un serveur.",
-            "updated": "Paramètres mis à jour! Le mode vue mobile est maintenant **{{status}}**.",
-            "mobile_friendly_updated": "Le mode vue mobile est maintenant **{{status}}**.",
-            "locale_updated": "Langue définie sur **{{locale}}**.",
-            "no_changes": "Aucune modification effectuée.",
-            "enabled": "ACTIVÉ",
-            "disabled": "DÉSACTIVÉ"
-        },
-        "set_channel": {
-            "description": "Définit le canal pour les mises à jour de rotation de carte.",
-            "channel_option": {
-                "name": "canal",
-                "description": "Le canal pour envoyer les mises à jour"
-            },
-            "success": "Les mises à jour de rotation de carte seront maintenant envoyées à {{channel}}.\n\n**Note:** La vue par défaut est optimisée pour **Bureau**. Si vos utilisateurs sont principalement sur mobile, utilisez `/settings mobile-friendly: True`."
-        }
-    }
-}
-```
+### Step 3: Translate All Sections
 
-**D. Image Renderer** (Text inside generated images)
-```json
-{
-    "image_renderer": {
-        "forecast_header": "Prévisions (6 Prochaines Heures)"
-    }
-}
-```
+Translate the values (text after the `:`) in each section. **Do not modify the keys!**
 
-**E. Map Rotation** (Embeds and buttons)
-```json
-{
-    "map_rotation": {
-        "title": "Arc Raiders - État de Rotation de Carte",
-        "footer": "Bot Arc Raiders • Mises à jour toutes les heures",
-        "locked": "🚫 Ce menu est actuellement utilisé par un autre utilisateur. Veuillez attendre {{remaining}} secondes.",
-        "buttons": {
-            "dam": "Barrage",
-            "buried_city": "Ville Enterrée",
-            "spaceport": "Port Spatial",
-            "blue_gate": "Porte Bleue",
-            "stella_montis": "Stella Montis",
-            "show_major": "Afficher Événements Majeurs",
-            "show_minor": "Afficher Événements Mineurs",
-            "show_map": "Afficher Carte",
-            "home": "Accueil"
-        },
-        "events": {
-            "harvester": "Moissonneuse",
-            "night": "Nuit",
-            "storm": "Tempête",
-            "tower": "Tour",
-            "bunker": "Bunker",
-            "matriarch": "Matriarche",
-            "husks": "Coques",
-            "blooms": "Fleurs",
-            "caches": "Caches",
-            "probes": "Sondes",
-            "none": "Aucun",
-            "major": "Majeur",
-            "minor": "Mineur"
-        },
-        "forecast": {
-            "header": "━━━━━━ 🔮 PRÉVISIONS (6 Prochaines Heures) ━━━━━━",
-            "title_location": "**Prévisions pour {{location}}**",
-            "title_event": "**Prévisions pour {{emoji}} {{event}}**",
-            "next_rotation": "Prochaine Rotation: <t:{{timestamp}}:R>",
-            "no_events": "Aucun événement à venir dans les 24 prochaines heures.",
-            "no_major_events": "Aucun Événement Majeur",
-            "time_until": "Temps Restant",
-            "conditions": "Conditions",
-            "locations": "Emplacements",
-            "upcoming": "À Venir",
-            "in_hours": "dans {{hours}}h"
-        },
-        "locations": {
-            "dam": "Barrage",
-            "buried_city": "Ville Enterrée",
-            "spaceport": "Port Spatial",
-            "blue_gate": "Porte Bleue",
-            "stella_montis": "Stella Montis"
-        }
-    }
-}
-```
+> **⚠️ Critical Translation Rules**:
+> *   ✅ **DO** translate text values
+> *   ❌ **DON'T** change keys (e.g., keep `"error"`, `"ping"`, `"settings"`)
+> *   ❌ **DON'T** translate placeholders like `{{latency}}`, `{{status}}`, `{{location}}`
+> *   ❌ **DON'T** remove any sections or keys
+> *   ✅ **DO** keep the exact same JSON structure
+
+#### Sections You Must Translate
+
+Use `en.json` as your reference. Here's what each section controls:
+
+**A. Command Metadata** (Discord UI - command names/descriptions in autocomplete)
+**B. Common Strings** (Error messages and shared text)
+**C. Commands** (Bot response messages)
+**D. Image Renderer** (Text displayed in generated map images)
+**E. Map Rotation** (Embed titles, buttons, location/event names, forecast text)
+
+See `en.json` for the complete structure with all keys.
+
+### Step 4: Submit Your Translation
+
+Once complete, submit your translation file via:
+*   **Pull Request** on GitHub
+*   **Discord** to the bot maintainers
+*   **Email** to the project team
+
+That's it! The bot will automatically detect and use your translation.
 
 ---
 
 ## 🛠️ For Bot Maintainers
 
-Once a translator has provided a new JSON file, follow these steps to integrate it.
+The bot **automatically detects and loads** new language files. Here's what you need to do when a translator submits a new language:
 
-### 1. Update Locale Mapping
+### What Happens Automatically
 
-Edit `src/utils/localeLoader.ts` and add the new language to the `LOCALE_MAP`:
+When a new `.json` file is added to `src/locales/`:
+
+✅ **Automatically loaded** by `i18next` (via dynamic preload)  
+✅ **Automatically added** to `/settings` command choices (using `_language_name`)  
+✅ **Automatically preloaded** for instant availability  
+✅ **Automatically applied** to Discord command localizations
+
+### Integration Steps
+
+#### Step 1: Add Discord Locale Mapping (Required)
+
+Edit `src/utils/localeLoader.ts` and add the language to `LOCALE_MAP`:
 
 ```typescript
 const LOCALE_MAP: Record<string, string> = {
   en: "en-US",
   es: "es-ES",
-  fr: "fr",      // Add the new mapping here
-  // ...
+  ru: "ru",
+  fr: "fr",      // Add new language here
+  de: "de",
+  pt: "pt-BR",   // Use Discord's specific locale codes
 };
 ```
-*Refer to [Discord's Locale Codes](https://discord.com/developers/docs/reference#locales) for the correct value.*
 
-### 2. Add Language Choice to Settings
+**Why?** Discord uses specific locale codes (e.g., `pt-BR` instead of `pt`). This maps your file name to Discord's expected format.
 
-Edit `src/commands/settings.ts` to allow users to select this new language:
+📖 **Reference**: [Discord Locale Codes](https://discord.com/developers/docs/reference#locales)
 
-```typescript
-.addChoices(
-  { name: "English", value: "en" },
-  { name: "Español", value: "es" },
-  { name: "Français", value: "fr" },  // Add the new choice here
-)
-```
+#### Step 2: Deploy Commands (Required)
 
-### 3. Redeploy Commands
-
-Run the deployment script to register the new localized command names and descriptions with Discord:
+Run the deployment script to register the new language with Discord:
 
 ```bash
 npm run deploy-commands
 ```
 
-The bot will automatically:
-*   Detect the new locale file.
-*   Load the `command_metadata`.
-*   Apply localizations to Discord commands.
-*   Log any errors or warnings.
+**What this does:**
+*   Scans `src/locales/` for all `.json` files
+*   Loads `command_metadata` from each file
+*   Applies name/description localizations to Discord commands
+*   Updates `/settings` choices with all available languages (using `_language_name`)
+*   Logs success/errors for each language
+
+#### Step 3: Verify (Recommended)
+
+1.  **Check deployment logs** for:
+    ```
+    [INFO] Loaded locale file: fr
+    [INFO] Successfully registered 3 global commands.
+    ```
+
+2.  **Start the bot**:
+    ```bash
+    npm run dev
+    ```
+
+3.  **Test in Discord**:
+    *   Type `/settings locale:` and verify the new language appears
+    *   Select the new language
+    *   Verify bot responses are in the new language
+    *   Check that the map embed updates to the new language
+    *   Verify generated map images show translated text
 
 ### Troubleshooting
 
-*   **Missing Metadata**: If logs show warnings about missing metadata, ensure the translator included the `command_metadata` section.
-*   **Discord API Errors**: Discord has strict limits (e.g., 32 chars for names). If a translation is too long, the API will reject it. Check the logs for details.
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Language doesn't appear in `/settings` | Missing `_language_name` in JSON | Add `"_language_name": "Français"` to the file |
+| Commands not localized | Missing `command_metadata` section | Ensure translator included all command metadata |
+| Discord API error | Translation too long | Discord limits: 32 chars (names), 100 chars (descriptions) |
+| Bot uses English instead | File not loaded by i18next | Check logs for parse errors; verify JSON syntax |
+| Locale mapping warning | Missing from `LOCALE_MAP` | Add mapping in `localeLoader.ts` |
+| Duplicate command names | Two languages use same command name | Discord requires unique names per locale |
 
-## Important Notes
+### Advanced: Validation
 
-### Command Metadata Structure
+To validate a translation file before deployment:
 
-The `command_metadata` section must match the structure of your commands:
+```bash
+# Check JSON syntax
+node -e "JSON.parse(require('fs').readFileSync('src/locales/fr.json', 'utf-8'))"
 
-- **Command names and descriptions** go at the top level
-- **Option names and descriptions** go under `options`
-
-Example:
-```json
-"command_metadata": {
-    "command-name": {
-        "name": "translated-command-name",
-        "description": "Translated description",
-        "options": {
-            "option-name": {
-                "name": "translated-option-name",
-                "description": "Translated option description"
-            }
-        }
-    }
-}
+# Verify all required keys exist (manual check against en.json)
+diff <(jq -S 'keys' src/locales/en.json) <(jq -S 'keys' src/locales/fr.json)
 ```
 
-### Logging
+---
 
-The bot logs all localization activities:
+## Summary
 
-- ✅ `Loaded locale file: fr` - Successfully loaded
-- ⚠️ `No Discord locale mapping found for: xyz` - Missing mapping in `LOCALE_MAP`
-- ⚠️ `No command_metadata found for command "ping" in locale "fr"` - Missing metadata
-- ❌ `Failed to load locale file: fr.json` - JSON parse error
+**For Translators:**
+1.  Copy `en.json` → `[language-code].json`
+2.  Add `_language_name` field
+3.  Translate all values (keep keys unchanged)
+4.  Submit the file
 
-Check the logs when deploying commands to ensure all translations were applied correctly.
+**For Maintainers:**
+1.  Add language to `LOCALE_MAP` in `localeLoader.ts`
+2.  Run `npm run deploy-commands`
+3.  Verify in Discord
 
-### Discord API Limitations
+The bot handles everything else automatically! 🎉
 
-Discord may reject certain translations if they:
-- Exceed character limits (32 chars for names, 100 for descriptions)
-- Contain invalid characters
-- Are duplicates of existing command names
+---
 
-The bot will log these errors but continue deploying other localizations.
+## Technical Details
 
-## Testing
+### File Structure
 
-After deploying:
+Every locale file must include:
+- `_developer_note`: Documentation reference (not translated)
+- `_language_name`: Display name for `/settings` dropdown (**required**)
+- `command_metadata`: Discord command localizations
+- `common`: Shared strings
+- `commands`: Command response messages
+- `image_renderer`: Text for generated images
+- `map_rotation`: Embed content, buttons, locations, events, forecast
 
-1. Change your Discord language to the new locale in User Settings
-2. Type `/` in a channel - you should see translated command names and descriptions
-3. Use `/settings locale: [YourLanguage]` to set the server language
-4. Verify bot responses are in the correct language
+### How It Works
+
+1.  **Loading**: `src/utils/localeLoader.ts` scans `src/locales/` and loads all `.json` files
+2.  **i18n**: `src/utils/i18n.ts` preloads all detected languages via `i18next`
+3.  **Commands**: `src/commands/settings.ts` dynamically generates choices from loaded locales
+4.  **Deployment**: `src/deploy-commands.ts` applies localizations to Discord's API
+5.  **Runtime**: Bot fetches server's configured locale from database and uses `getT(locale)` for translations

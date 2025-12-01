@@ -9,6 +9,7 @@ import { logger } from "./logger";
 const LOCALE_MAP: Record<string, string> = {
   en: "en-US",
   es: "es-ES",
+  ru: "ru",
   // Add more mappings as needed:
   // fr: "fr",
   // de: "de",
@@ -28,13 +29,20 @@ interface CommandMetadata {
 }
 
 interface LocaleData {
+  _language_name?: string;
   command_metadata?: Record<string, CommandMetadata>;
 }
+
+let cachedLocales: Map<string, LocaleData> | null = null;
 
 /**
  * Scans the locales directory and loads all available locale files
  */
 export function loadAvailableLocales(): Map<string, LocaleData> {
+  if (cachedLocales) {
+    return cachedLocales;
+  }
+
   const localesPath = path.join(__dirname, "../locales");
   const localeFiles = fs.readdirSync(localesPath).filter((file) => file.endsWith(".json"));
 
@@ -53,6 +61,7 @@ export function loadAvailableLocales(): Map<string, LocaleData> {
     }
   }
 
+  cachedLocales = locales;
   return locales;
 }
 

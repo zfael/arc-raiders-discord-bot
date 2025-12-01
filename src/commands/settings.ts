@@ -35,7 +35,12 @@ const SettingsCommand: Command = {
         .setNameLocalizations(localeOptionLocalizations.nameLocalizations)
         .setDescriptionLocalizations(localeOptionLocalizations.descriptionLocalizations)
         .setRequired(false)
-        .addChoices({ name: "English", value: "en" }, { name: "Español", value: "es" }),
+        .addChoices(
+          ...Array.from(locales.entries()).map(([code, data]) => ({
+            name: data._language_name || code,
+            value: code,
+          })),
+        ),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) as Command["data"],
   async execute(interaction: ChatInputCommandInteraction) {
@@ -84,7 +89,11 @@ const SettingsCommand: Command = {
 
       if (locale !== null) {
         await setServerLocale(interaction.guildId, locale);
-        responseMessage += `${t("commands.settings.locale_updated", { locale: locale === "en" ? "English" : "Español" })}\n`;
+        // Re-initialize t with new locale
+        const newT = getT(locale);
+        const localeData = locales.get(locale);
+        const localeName = localeData?._language_name || locale;
+        responseMessage += `${newT("commands.settings.locale_updated", { locale: localeName })}\n`;
       }
 
       await interaction.reply({
@@ -95,6 +104,20 @@ const SettingsCommand: Command = {
       logger.info(
         `Settings updated for guild ${interaction.guildId}: mobileFriendly=${mobileFriendly}, locale=${locale}`,
       );
+
+      // Trigger immediate update of the map message
+      const { postOrUpdateInChannel } = require("../utils/messageManager");
+      // We already have the configs from earlier in the function
+      const updatedConfig = configs[interaction.guildId];
+      if (updatedConfig && updatedConfig.channelId) {
+        await postOrUpdateInChannel(
+          interaction.client,
+          interaction.guildId,
+          updatedConfig.channelId,
+          updatedConfig.messageId,
+          locale || undefined, // Pass the new locale if it was updated
+        );
+      }
     } catch (error) {
       logger.error({ err: error }, "Error executing settings command");
       await interaction.reply({

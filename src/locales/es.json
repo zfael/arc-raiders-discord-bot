@@ -1,5 +1,6 @@
 {
   "_developer_note": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys ex. ping, settings, set-channel, any text encapsulated in {{example}}. New keys should be added to both en.json and es.json.",
+  "_language_name": "Español",
   "common": {
     "error": "¡Ocurrió un error al ejecutar este comando!",
     "error_saving": "Ocurrió un error al guardar tu configuración. Por favor intenta de nuevo más tarde.",
