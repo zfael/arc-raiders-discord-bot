@@ -1,18 +1,18 @@
 import { type ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../types";
 import { getT } from "../utils/i18n";
+import { buildCommandLocalizations, loadAvailableLocales } from "../utils/localeLoader";
 import { getServerConfigs } from "../utils/serverConfig";
+
+const locales = loadAvailableLocales();
+const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations("ping", locales);
 
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName("ping")
-    .setNameLocalizations({
-      "es-ES": "ping",
-    })
+    .setNameLocalizations(nameLocalizations)
     .setDescription("Replies with Pong! and shows bot latency")
-    .setDescriptionLocalizations({
-      "es-ES": "¡Responde con Pong! y muestra la latencia del bot",
-    }),
+    .setDescriptionLocalizations(descriptionLocalizations),
 
   async execute(interaction: ChatInputCommandInteraction) {
     // Get Server Config for locale
@@ -28,9 +28,7 @@ const command: Command = {
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
     const apiLatency = Math.round(interaction.client.ws.ping);
 
-    await interaction.editReply(
-      t("commands.ping.response", { latency, apiLatency }),
-    );
+    await interaction.editReply(t("commands.ping.response", { latency, apiLatency }));
   },
 };
 

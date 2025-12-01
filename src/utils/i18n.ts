@@ -4,21 +4,19 @@ import * as path from "node:path";
 
 const i18n = i18next.createInstance();
 
-i18n
-  .use(Backend)
-  .init({
-    lng: "en", // Default language
-    fallbackLng: "en",
-    preload: ["en", "es"],
-    ns: ["translation"],
-    defaultNS: "translation",
-    backend: {
-      loadPath: path.join(__dirname, "../locales/{{lng}}.json"),
-    },
-    interpolation: {
-      escapeValue: false, // Discord handles escaping
-    },
-  });
+i18n.use(Backend).init({
+  lng: "en", // Default language
+  fallbackLng: "en",
+  preload: ["en", "es"],
+  ns: ["translation"],
+  defaultNS: "translation",
+  backend: {
+    loadPath: path.join(__dirname, "../locales/{{lng}}.json"),
+  },
+  interpolation: {
+    escapeValue: false, // Discord handles escaping
+  },
+});
 
 export default i18n;
 

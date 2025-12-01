@@ -6,7 +6,6 @@ import { logger } from "./logger";
 
 const renderer = new HtmlRenderer();
 
-
 // Cache key: "hour-locale"
 const imageCache = new Map<string, Buffer>();
 
@@ -31,6 +30,7 @@ export async function generateMapImage(
 
     const t = getT(locale);
     const translations: Record<string, string> = {
+      forecast_header: t("image_renderer.forecast_header"),
       location_dam: t("map_rotation.locations.dam"),
       location_buriedCity: t("map_rotation.locations.buried_city"),
       location_spaceport: t("map_rotation.locations.spaceport"),

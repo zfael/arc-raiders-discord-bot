@@ -113,6 +113,12 @@ export class HtmlRenderer {
           const mapImg = document.getElementById("map-bg");
           if (mapImg) mapImg.src = mapImage;
 
+          // Update forecast header with translation
+          const forecastText = document.getElementById("forecast-text");
+          if (forecastText && translations.forecast_header) {
+            forecastText.textContent = translations.forecast_header;
+          }
+
           const getIconHtml = (condition) => {
             if (icons[condition]) {
               return `<img src="${icons[condition]}" class="condition-icon" alt="${condition}">`;
@@ -178,7 +184,8 @@ export class HtmlRenderer {
                 const major = rotation[`${loc}Major`];
                 if (major !== "None") {
                   hasEvents = true;
-                  const locName = translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
+                  const locName =
+                    translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
                   const eventName = translations[`event_${major.toLowerCase()}`] || major;
                   eventsHtml += `
                   <div class="event-row">
@@ -193,7 +200,10 @@ export class HtmlRenderer {
                 eventsHtml = `<div class="no-events">${translations.no_major_events}</div>`;
               }
 
-              const hoursDiff = rotation.hour - data.current.hour > 0 ? rotation.hour - data.current.hour : 24 + (rotation.hour - data.current.hour);
+              const hoursDiff =
+                rotation.hour - data.current.hour > 0
+                  ? rotation.hour - data.current.hour
+                  : 24 + (rotation.hour - data.current.hour);
               const timeText = translations.in_hours.replace("{{hours}}", hoursDiff.toString());
 
               card.innerHTML = `

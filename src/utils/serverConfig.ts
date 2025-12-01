@@ -22,7 +22,9 @@ export async function getServerConfigs(): Promise<ServerConfig> {
   try {
     const { data, error } = await supabase
       .from(SERVERS_TABLE)
-      .select("guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale");
+      .select(
+        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale",
+      );
 
     if (error) {
       throw error;

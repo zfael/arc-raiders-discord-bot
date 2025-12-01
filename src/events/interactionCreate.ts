@@ -2,24 +2,19 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  type ButtonInteraction,
   EmbedBuilder,
-  Events,
   type Interaction,
 } from "discord.js";
 import {
   CONDITION_COLORS,
   CONDITION_EMOJIS,
-  formatLocationEvents,
   getCurrentRotation,
   getNextRotationTimestamp,
   MAP_ROTATIONS,
 } from "../config/mapRotation";
 import { getT } from "../utils/i18n";
-import { generateMapImage } from "../utils/imageGenerator";
 import { interactionLockManager } from "../utils/interactionLock";
 import { logger } from "../utils/logger";
-import { createMapRotationEmbed } from "../utils/messageManager";
 import { getServerConfigs } from "../utils/serverConfig";
 
 export async function handleInteraction(interaction: Interaction) {
@@ -246,62 +241,70 @@ export async function handleInteraction(interaction: Interaction) {
 
     // handle home / overview
     if (customId === "view_overview") {
-      embed.setDescription(`**${t("map_rotation.forecast.conditions")}**\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`);
+      embed.setDescription(
+        `**${t("map_rotation.forecast.conditions")}**\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
+      );
 
       if (mobileFriendly) {
         embed.addFields(
           {
-            name: "🏔️ " + t("map_rotation.locations.dam"),
+            name: `🏔️ ${t("map_rotation.locations.dam")}`,
             value: formatLocationEventsTranslated(current.damMajor, current.damMinor),
             inline: false,
           },
           {
-            name: "🏛️ " + t("map_rotation.locations.buried_city"),
+            name: `🏛️ ${t("map_rotation.locations.buried_city")}`,
             value: formatLocationEventsTranslated(current.buriedCityMajor, current.buriedCityMinor),
             inline: false,
           },
           {
-            name: "🚀 " + t("map_rotation.locations.spaceport"),
+            name: `🚀 ${t("map_rotation.locations.spaceport")}`,
             value: formatLocationEventsTranslated(current.spaceportMajor, current.spaceportMinor),
             inline: false,
           },
           {
-            name: "🌉 " + t("map_rotation.locations.blue_gate"),
+            name: `🌉 ${t("map_rotation.locations.blue_gate")}`,
             value: formatLocationEventsTranslated(current.blueGateMajor, current.blueGateMinor),
             inline: false,
           },
           {
-            name: "🏔️ " + t("map_rotation.locations.stella_montis"),
-            value: formatLocationEventsTranslated(current.stellaMontisMajor, current.stellaMontisMinor),
+            name: `🏔️ ${t("map_rotation.locations.stella_montis")}`,
+            value: formatLocationEventsTranslated(
+              current.stellaMontisMajor,
+              current.stellaMontisMinor,
+            ),
             inline: false,
           },
         );
       } else {
         embed.addFields(
           {
-            name: "🏔️ " + t("map_rotation.locations.dam"),
+            name: `🏔️ ${t("map_rotation.locations.dam")}`,
             value: formatLocationEventsTranslated(current.damMajor, current.damMinor),
             inline: true,
           },
           {
-            name: "🏛️ " + t("map_rotation.locations.buried_city"),
+            name: `🏛️ ${t("map_rotation.locations.buried_city")}`,
             value: formatLocationEventsTranslated(current.buriedCityMajor, current.buriedCityMinor),
             inline: true,
           },
           {
-            name: "🚀 " + t("map_rotation.locations.spaceport"),
+            name: `🚀 ${t("map_rotation.locations.spaceport")}`,
             value: formatLocationEventsTranslated(current.spaceportMajor, current.spaceportMinor),
             inline: true,
           },
           {
-            name: "🌉 " + t("map_rotation.locations.blue_gate"),
+            name: `🌉 ${t("map_rotation.locations.blue_gate")}`,
             value: formatLocationEventsTranslated(current.blueGateMajor, current.blueGateMinor),
             inline: true,
           },
           { name: "\u200b", value: "\u200b", inline: true },
           {
-            name: "🏔️ " + t("map_rotation.locations.stella_montis"),
-            value: formatLocationEventsTranslated(current.stellaMontisMajor, current.stellaMontisMinor),
+            name: `🏔️ ${t("map_rotation.locations.stella_montis")}`,
+            value: formatLocationEventsTranslated(
+              current.stellaMontisMajor,
+              current.stellaMontisMinor,
+            ),
             inline: true,
           },
         );
@@ -320,15 +323,25 @@ export async function handleInteraction(interaction: Interaction) {
 
           const events = [];
           if (rotation.damMajor !== "None")
-            events.push(`${t("map_rotation.locations.dam")}: ${CONDITION_EMOJIS[rotation.damMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.dam")}: ${CONDITION_EMOJIS[rotation.damMajor]}`,
+            );
           if (rotation.buriedCityMajor !== "None")
-            events.push(`${t("map_rotation.locations.buried_city")}: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.buried_city")}: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`,
+            );
           if (rotation.spaceportMajor !== "None")
-            events.push(`${t("map_rotation.locations.spaceport")}: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.spaceport")}: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`,
+            );
           if (rotation.blueGateMajor !== "None")
-            events.push(`${t("map_rotation.locations.blue_gate")}: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.blue_gate")}: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`,
+            );
           if (rotation.stellaMontisMajor !== "None")
-            events.push(`${t("map_rotation.locations.stella_montis")}: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.stella_montis")}: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`,
+            );
 
           if (events.length > 0) {
             forecastText += `**${timeLabel}** • ${events.join(" | ")}\n`;
@@ -360,17 +373,28 @@ export async function handleInteraction(interaction: Interaction) {
 
           const events = [];
           if (rotation.damMajor !== "None")
-            events.push(`${t("map_rotation.locations.dam")}: ${CONDITION_EMOJIS[rotation.damMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.dam")}: ${CONDITION_EMOJIS[rotation.damMajor]}`,
+            );
           if (rotation.buriedCityMajor !== "None")
-            events.push(`${t("map_rotation.locations.buried_city")}: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.buried_city")}: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`,
+            );
           if (rotation.spaceportMajor !== "None")
-            events.push(`${t("map_rotation.locations.spaceport")}: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.spaceport")}: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`,
+            );
           if (rotation.blueGateMajor !== "None")
-            events.push(`${t("map_rotation.locations.blue_gate")}: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.blue_gate")}: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`,
+            );
           if (rotation.stellaMontisMajor !== "None")
-            events.push(`${t("map_rotation.locations.stella_montis")}: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`);
+            events.push(
+              `${t("map_rotation.locations.stella_montis")}: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`,
+            );
 
-          const eventText = events.length > 0 ? events.join(" | ") : t("map_rotation.forecast.no_major_events");
+          const eventText =
+            events.length > 0 ? events.join(" | ") : t("map_rotation.forecast.no_major_events");
 
           timeCol += `${timeLabel}\n`;
           conditionCol += `${eventText}\n`;
@@ -409,13 +433,13 @@ export async function handleInteraction(interaction: Interaction) {
       const nextRotationTs = getNextRotationTimestamp();
 
       embed.setDescription(
-        t("map_rotation.forecast.title_location", { location: locationName }) + `\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
+        `${t("map_rotation.forecast.title_location", { location: locationName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
       );
       embed.setImage("attachment://map-status.png");
       embed.setFields([]);
 
       if (mobileFriendly) {
-        let description = t("map_rotation.forecast.title_location", { location: locationName }) + `\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
+        let description = `${t("map_rotation.forecast.title_location", { location: locationName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
         let hasEvents = false;
 
         for (let i = 1; i <= 24; i++) {
@@ -429,8 +453,10 @@ export async function handleInteraction(interaction: Interaction) {
 
           if (major !== "None" || minor !== "None") {
             let eventText = "";
-            if (major !== "None") eventText += `${CONDITION_EMOJIS[major]} ${translateEvent(String(major))} `;
-            if (minor !== "None") eventText += `${CONDITION_EMOJIS[minor]} ${translateEvent(String(minor))}`;
+            if (major !== "None")
+              eventText += `${CONDITION_EMOJIS[major]} ${translateEvent(String(major))} `;
+            if (minor !== "None")
+              eventText += `${CONDITION_EMOJIS[minor]} ${translateEvent(String(minor))}`;
 
             description += `**${timeLabel}** • ${eventText}\n`;
             hasEvents = true;
@@ -456,8 +482,10 @@ export async function handleInteraction(interaction: Interaction) {
 
           if (major !== "None" || minor !== "None") {
             let eventText = "";
-            if (major !== "None") eventText += `${CONDITION_EMOJIS[major]} ${translateEvent(String(major))} `;
-            if (minor !== "None") eventText += `${CONDITION_EMOJIS[minor]} ${translateEvent(String(minor))}`;
+            if (major !== "None")
+              eventText += `${CONDITION_EMOJIS[major]} ${translateEvent(String(major))} `;
+            if (minor !== "None")
+              eventText += `${CONDITION_EMOJIS[minor]} ${translateEvent(String(minor))}`;
 
             timeCol += `${timeLabel}\n`;
             conditionCol += `${eventText}\n`;
@@ -496,13 +524,13 @@ export async function handleInteraction(interaction: Interaction) {
       const locations = ["dam", "buriedCity", "spaceport", "blueGate", "stellaMontis"];
 
       embed.setDescription(
-        t("map_rotation.forecast.title_event", { emoji, event: eventName }) + `\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
+        `${t("map_rotation.forecast.title_event", { emoji, event: eventName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
       );
       embed.setImage("attachment://map-status.png");
       embed.setFields([]);
 
       if (mobileFriendly) {
-        let description = t("map_rotation.forecast.title_event", { emoji, event: eventName }) + `\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
+        let description = `${t("map_rotation.forecast.title_event", { emoji, event: eventName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
         let hasEvents = false;
 
         for (let i = 1; i <= 24; i++) {

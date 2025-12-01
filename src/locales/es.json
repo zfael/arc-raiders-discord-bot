@@ -1,120 +1,123 @@
 {
-    "_developer_note": "Estos archivos se utilizan para las traducciones del bot. Por favor, no elimine las claves. Las nuevas claves deben agregarse tanto a en.json como a es.json. NOTA: Si cambia los nombres o descripciones de los comandos aquí, DEBE actualizar manualmente 'setNameLocalizations' y 'setDescriptionLocalizations' en el archivo de comando correspondiente (ej. src/commands/settings.ts) y volver a desplegar los comandos.",
-    "common": {
-        "error": "¡Ocurrió un error al ejecutar este comando!",
-        "error_saving": "Ocurrió un error al guardar tu configuración. Por favor intenta de nuevo más tarde.",
-        "only_in_guild": "Este comando solo puede ser usado en un servidor.",
-        "enabled": "ACTIVADO",
-        "disabled": "DESACTIVADO"
+  "_developer_note": "Estos archivos se utilizan para las traducciones del bot. Por favor, no elimine las claves. Las nuevas claves deben agregarse tanto a en.json como a es.json. NOTA: Si cambia los nombres o descripciones de los comandos aquí, DEBE actualizar manualmente 'setNameLocalizations' y 'setDescriptionLocalizations' en el archivo de comando correspondiente (ej. src/commands/settings.ts) y volver a desplegar los comandos.",
+  "common": {
+    "error": "¡Ocurrió un error al ejecutar este comando!",
+    "error_saving": "Ocurrió un error al guardar tu configuración. Por favor intenta de nuevo más tarde.",
+    "only_in_guild": "Este comando solo puede ser usado en un servidor.",
+    "enabled": "ACTIVADO",
+    "disabled": "DESACTIVADO"
+  },
+  "command_metadata": {
+    "ping": {
+      "name": "ping",
+      "description": "¡Responde con Pong! y muestra la latencia del bot"
     },
-    "command_metadata": {
-        "ping": {
-            "name": "ping",
-            "description": "¡Responde con Pong! y muestra la latencia del bot"
+    "settings": {
+      "name": "configuracion",
+      "description": "Configura los ajustes del bot para este servidor.",
+      "options": {
+        "mobile-friendly": {
+          "name": "vista-movil",
+          "description": "Habilitar vista amigable para móviles en actualizaciones del mapa (por defecto: falso)"
         },
-        "settings": {
-            "name": "configuracion",
-            "description": "Configura los ajustes del bot para este servidor.",
-            "options": {
-                "mobile-friendly": {
-                    "name": "vista-movil",
-                    "description": "Habilitar vista amigable para móviles en actualizaciones del mapa (por defecto: falso)"
-                },
-                "locale": {
-                    "name": "idioma",
-                    "description": "Establece el idioma del bot en este servidor"
-                }
-            }
-        },
-        "set-channel": {
-            "name": "establecer-canal",
-            "description": "Establece el canal para las actualizaciones de rotación de mapas.",
-            "options": {
-                "channel": {
-                    "name": "canal",
-                    "description": "El canal para enviar actualizaciones"
-                }
-            }
+        "locale": {
+          "name": "idioma",
+          "description": "Establece el idioma del bot en este servidor"
         }
+      }
     },
-    "commands": {
-        "ping": {
-            "description": "¡Responde con Pong! y muestra la latencia del bot",
-            "pinging": "Haciendo ping...",
-            "response": "🏓 ¡Pong!\n📡 Latencia: {{latency}}ms\n💓 Latencia API: {{apiLatency}}ms"
-        },
-        "settings": {
-            "description": "Configura los ajustes del bot para este servidor.",
-            "mobile_friendly": {
-                "name": "vista-movil",
-                "description": "Habilitar vista amigable para móviles en actualizaciones del mapa (por defecto: falso)"
-            },
-            "updated": "¡Ajustes actualizados! El modo vista móvil ahora está **{{status}}**.\nEl mensaje del mapa se actualizará en breve.",
-            "server_only": "Este comando solo se puede usar en un servidor.",
-            "mobile_friendly_updated": "El modo vista móvil ahora está **{{status}}**.",
-            "locale_updated": "Idioma establecido en **{{locale}}**.",
-            "no_changes": "No se realizaron cambios.",
-            "enabled": "ACTIVADO",
-            "disabled": "DESACTIVADO"
-        },
-        "set_channel": {
-            "description": "Establece el canal para las actualizaciones de rotación de mapas.",
-            "channel_option": {
-                "name": "canal",
-                "description": "El canal para enviar actualizaciones"
-            },
-            "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles."
+    "set-channel": {
+      "name": "establecer-canal",
+      "description": "Establece el canal para las actualizaciones de rotación de mapas.",
+      "options": {
+        "channel": {
+          "name": "canal",
+          "description": "El canal para enviar actualizaciones"
         }
-    },
-    "map_rotation": {
-        "title": "Arc Raiders - Estado de Rotación del Mapa",
-        "footer": "Bot Arc Raiders • Actualizaciones cada hora",
-        "locked": "🚫 Este menú está siendo usado por otro usuario. Por favor espera {{remaining}} segundos.",
-        "buttons": {
-            "dam": "Presa",
-            "buried_city": "Ciudad Enterrada",
-            "spaceport": "Puerto Espacial",
-            "blue_gate": "Puerta Azul",
-            "stella_montis": "Stella Montis",
-            "show_major": "Ver Eventos Mayores",
-            "show_minor": "Ver Eventos Menores",
-            "show_map": "Ver Mapa",
-            "home": "Inicio"
-        },
-        "events": {
-            "harvester": "Cosechador",
-            "night": "Noche",
-            "storm": "Tormenta",
-            "tower": "Torre",
-            "bunker": "Búnker",
-            "matriarch": "Matriarca",
-            "husks": "Cáscaras",
-            "blooms": "Flores",
-            "caches": "Cachés",
-            "probes": "Sondas",
-            "none": "Ninguno",
-            "major": "Mayor",
-            "minor": "Menor"
-        },
-        "forecast": {
-            "header": "━━━━━━ 🔮 PRONÓSTICO (Próximas 6 Horas) ━━━━━━",
-            "title_location": "**Pronóstico para {{location}}**",
-            "title_event": "**Pronóstico para {{emoji}} {{event}}**",
-            "next_rotation": "Siguiente Rotación: <t:{{timestamp}}:R>",
-            "no_events": "No hay eventos próximos en las siguientes 24 horas.",
-            "no_major_events": "Sin Eventos Mayores",
-            "time_until": "Tiempo Hasta",
-            "conditions": "Condiciones",
-            "locations": "Ubicaciones",
-            "upcoming": "Próximo",
-            "in_hours": "en {{hours}}h"
-        },
-        "locations": {
-            "dam": "Presa",
-            "buried_city": "Ciudad Enterrada",
-            "spaceport": "Puerto Espacial",
-            "blue_gate": "Puerta Azul",
-            "stella_montis": "Stella Montis"
-        }
+      }
     }
+  },
+  "commands": {
+    "ping": {
+      "description": "¡Responde con Pong! y muestra la latencia del bot",
+      "pinging": "Haciendo ping...",
+      "response": "🏓 ¡Pong!\n📡 Latencia: {{latency}}ms\n💓 Latencia API: {{apiLatency}}ms"
+    },
+    "settings": {
+      "description": "Configura los ajustes del bot para este servidor.",
+      "mobile_friendly": {
+        "name": "vista-movil",
+        "description": "Habilitar vista amigable para móviles en actualizaciones del mapa (por defecto: falso)"
+      },
+      "updated": "¡Ajustes actualizados! El modo vista móvil ahora está **{{status}}**.\nEl mensaje del mapa se actualizará en breve.",
+      "server_only": "Este comando solo se puede usar en un servidor.",
+      "mobile_friendly_updated": "El modo vista móvil ahora está **{{status}}**.",
+      "locale_updated": "Idioma establecido en **{{locale}}**.",
+      "no_changes": "No se realizaron cambios.",
+      "enabled": "ACTIVADO",
+      "disabled": "DESACTIVADO"
+    },
+    "set_channel": {
+      "description": "Establece el canal para las actualizaciones de rotación de mapas.",
+      "channel_option": {
+        "name": "canal",
+        "description": "El canal para enviar actualizaciones"
+      },
+      "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles."
+    }
+  },
+  "image_renderer": {
+    "forecast_header": "Pronóstico (Próximas 6 Horas)"
+  },
+  "map_rotation": {
+    "title": "Arc Raiders - Estado de Rotación del Mapa",
+    "footer": "Bot Arc Raiders • Actualizaciones cada hora",
+    "locked": "🚫 Este menú está siendo usado por otro usuario. Por favor espera {{remaining}} segundos.",
+    "buttons": {
+      "dam": "Presa",
+      "buried_city": "Ciudad Enterrada",
+      "spaceport": "Puerto Espacial",
+      "blue_gate": "Puerta Azul",
+      "stella_montis": "Stella Montis",
+      "show_major": "Ver Eventos Mayores",
+      "show_minor": "Ver Eventos Menores",
+      "show_map": "Ver Mapa",
+      "home": "Inicio"
+    },
+    "events": {
+      "harvester": "Cosechador",
+      "night": "Noche",
+      "storm": "Tormenta",
+      "tower": "Torre",
+      "bunker": "Búnker",
+      "matriarch": "Matriarca",
+      "husks": "Cáscaras",
+      "blooms": "Flores",
+      "caches": "Cachés",
+      "probes": "Sondas",
+      "none": "Ninguno",
+      "major": "Mayor",
+      "minor": "Menor"
+    },
+    "forecast": {
+      "header": "━━━━━━ 🔮 PRONÓSTICO (Próximas 6 Horas) ━━━━━━",
+      "title_location": "**Pronóstico para {{location}}**",
+      "title_event": "**Pronóstico para {{emoji}} {{event}}**",
+      "next_rotation": "Siguiente Rotación: <t:{{timestamp}}:R>",
+      "no_events": "No hay eventos próximos en las siguientes 24 horas.",
+      "no_major_events": "Sin Eventos Mayores",
+      "time_until": "Tiempo Hasta",
+      "conditions": "Condiciones",
+      "locations": "Ubicaciones",
+      "upcoming": "Próximo",
+      "in_hours": "en {{hours}}h"
+    },
+    "locations": {
+      "dam": "Presa",
+      "buried_city": "Ciudad Enterrada",
+      "spaceport": "Puerto Espacial",
+      "blue_gate": "Puerta Azul",
+      "stella_montis": "Stella Montis"
+    }
+  }
 }

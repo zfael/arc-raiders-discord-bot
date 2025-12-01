@@ -5,50 +5,48 @@ import {
 } from "discord.js";
 import type { Command } from "../types";
 import { getT } from "../utils/i18n";
-import { logger } from "../utils/logger";
 import {
-  getServerConfigs,
-  setMobileFriendly,
-  setServerLocale,
-} from "../utils/serverConfig";
+  buildCommandLocalizations,
+  buildOptionLocalizations,
+  loadAvailableLocales,
+} from "../utils/localeLoader";
+import { logger } from "../utils/logger";
+import { getServerConfigs, setMobileFriendly, setServerLocale } from "../utils/serverConfig";
+
+const locales = loadAvailableLocales();
+const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
+  "settings",
+  locales,
+);
+const mobileFriendlyLocalizations = buildOptionLocalizations(
+  "settings",
+  "mobile-friendly",
+  locales,
+);
+const localeOptionLocalizations = buildOptionLocalizations("settings", "locale", locales);
 
 const SettingsCommand: Command = {
   data: new SlashCommandBuilder()
     .setName("settings")
     .setDescription("Configure bot settings for this server.")
-    .setNameLocalizations({
-      "es-ES": "configuracion",
-    })
-    .setDescriptionLocalizations({
-      "es-ES": "Configura los ajustes del bot para este servidor.",
-    })
+    .setNameLocalizations(nameLocalizations)
+    .setDescriptionLocalizations(descriptionLocalizations)
     .addBooleanOption((option) =>
       option
         .setName("mobile-friendly")
         .setDescription("Enable mobile-friendly view for map updates (default: false)")
-        .setNameLocalizations({
-          "es-ES": "vista-movil",
-        })
-        .setDescriptionLocalizations({
-          "es-ES": "Habilita la vista optimizada para móviles (por defecto: falso)",
-        })
+        .setNameLocalizations(mobileFriendlyLocalizations.nameLocalizations)
+        .setDescriptionLocalizations(mobileFriendlyLocalizations.descriptionLocalizations)
         .setRequired(false),
     )
     .addStringOption((option) =>
       option
         .setName("locale")
         .setDescription("Set the language for the bot in this server")
-        .setNameLocalizations({
-          "es-ES": "idioma",
-        })
-        .setDescriptionLocalizations({
-          "es-ES": "Establece el idioma del bot en este servidor",
-        })
+        .setNameLocalizations(localeOptionLocalizations.nameLocalizations)
+        .setDescriptionLocalizations(localeOptionLocalizations.descriptionLocalizations)
         .setRequired(false)
-        .addChoices(
-          { name: "English", value: "en" },
-          { name: "Español", value: "es" },
-        ),
+        .addChoices({ name: "English", value: "en" }, { name: "Español", value: "es" }),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) as Command["data"],
   async execute(interaction: ChatInputCommandInteraction) {
@@ -64,7 +62,7 @@ const SettingsCommand: Command = {
     // Get current config to determine locale for response
     const configs = await getServerConfigs();
     const currentConfig = configs[interaction.guildId];
-    const currentMobileFriendly = currentConfig?.mobileFriendly ?? false;
+    const _currentMobileFriendly = currentConfig?.mobileFriendly ?? false;
     const currentLocale = currentConfig?.locale || interaction.guild?.preferredLocale || "en";
     const t = getT(currentLocale);
     // But for settings, we might want to respond in the NEW locale if changed, or the OLD one?
@@ -92,12 +90,12 @@ const SettingsCommand: Command = {
         const status = mobileFriendly
           ? t("commands.settings.enabled")
           : t("commands.settings.disabled");
-        responseMessage += t("commands.settings.mobile_friendly_updated", { status }) + "\n";
+        responseMessage += `${t("commands.settings.mobile_friendly_updated", { status })}\n`;
       }
 
       if (locale !== null) {
         await setServerLocale(interaction.guildId, locale);
-        responseMessage += t("commands.settings.locale_updated", { locale: locale === "en" ? "English" : "Español" }) + "\n";
+        responseMessage += `${t("commands.settings.locale_updated", { locale: locale === "en" ? "English" : "Español" })}\n`;
       }
 
       await interaction.reply({
