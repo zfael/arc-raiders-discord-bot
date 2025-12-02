@@ -113,6 +113,13 @@
       "upcoming": "Próximo",
       "in_hours": "en {{hours}}h"
     },
+    "locations_short": {
+      "dam": "Presa",
+      "buried_city": "Ciudad",
+      "spaceport": "Puerto",
+      "blue_gate": "Puerta",
+      "stella_montis": "Stella"
+    },
     "locations": {
       "dam": "Presa",
       "buried_city": "Ciudad Enterrada",

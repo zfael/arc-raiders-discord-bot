@@ -113,8 +113,15 @@
       "upcoming": "Upcoming",
       "in_hours": "in {{hours}}h"
     },
-    "locations": {
+    "locations_short": {
       "dam": "Dam",
+      "buried_city": "City",
+      "spaceport": "Space",
+      "blue_gate": "Gate",
+      "stella_montis": "Stella"
+    },
+    "locations": {
+      "dam": "Dam Battlegrounds",
       "buried_city": "Buried City",
       "spaceport": "Spaceport",
       "blue_gate": "Blue Gate",
