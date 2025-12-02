@@ -295,7 +295,11 @@ export async function postOrUpdateInChannel(
   localeOverride?: string,
 ): Promise<void> {
   try {
-    const channel = (await client.channels.fetch(channelId)) as TextChannel;
+    // Try to resolve from cache first, then fetch if missing
+    let channel = client.channels.resolve(channelId) as TextChannel;
+    if (!channel) {
+      channel = (await client.channels.fetch(channelId)) as TextChannel;
+    }
 
     if (!channel || !channel.isTextBased()) {
       logger.warn(`Invalid or non-text channel: ${channelId}`);
@@ -369,7 +373,9 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
   logger.info(`Starting update for ${entries.length} servers...`);
 
   // Process in chunks to avoid rate limits/overload
-  const CHUNK_SIZE = 10;
+  // Increased to 50 for mass updates (Discord rate limit is 50 requests/sec globally, but per-channel is lower)
+  // Since we are mostly editing messages, 50 parallel requests is reasonable.
+  const CHUNK_SIZE = 50;
   for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
     const chunkStart = Date.now();
     const chunk = entries.slice(i, i + CHUNK_SIZE);

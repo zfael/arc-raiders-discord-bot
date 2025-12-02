@@ -1,94 +1,64 @@
-import { MAP_ROTATIONS } from "../config/mapRotation";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { MapRotation } from "../types";
-import { HtmlRenderer } from "./htmlRenderer";
-import { getT } from "./i18n";
 import { logger } from "./logger";
 
-const renderer = new HtmlRenderer();
-
-// Cache key: "hour-locale"
+// Simple in-memory cache to avoid repeated disk reads during mass updates
+// Key: "locale-hour"
+// Only caches the current hour to minimize memory usage
 const imageCache = new Map<string, Buffer>();
-// Track pending promises to deduplicate requests
-const pendingPromises = new Map<string, Promise<Buffer>>();
+let cachedHour: number | null = null;
 
-export function generateMapImage(
+/**
+ * Serves a pre-generated map image for the given rotation and locale.
+ * Images are generated via `npm run generate-maps` and stored in `src/assets/generatedMaps`.
+ */
+export async function generateMapImage(
   currentRotation: MapRotation,
   locale: string = "en",
 ): Promise<Buffer> {
-  const cacheKey = `${currentRotation.hour}-${locale}`;
+  const cacheKey = `${locale}-${currentRotation.hour}`;
+
+  // If hour changed, clear the cache (only keep current hour's images)
+  if (cachedHour !== null && cachedHour !== currentRotation.hour) {
+    imageCache.clear();
+    logger.info(`Cache cleared for hour change (${cachedHour} -> ${currentRotation.hour})`);
+  }
+  cachedHour = currentRotation.hour;
 
   // Return cached image if available
   if (imageCache.has(cacheKey)) {
-    return Promise.resolve(imageCache.get(cacheKey)!);
+    return imageCache.get(cacheKey)!;
   }
 
-  // Return pending promise if one exists (deduplication)
-  if (pendingPromises.has(cacheKey)) {
-    return pendingPromises.get(cacheKey)!;
+  // Construct path to the pre-generated image
+  // Format: src/assets/generatedMaps/<locale>/<hour>.png
+  const imagePath = path.join(
+    __dirname,
+    `../assets/generatedMaps/${locale}/${currentRotation.hour}.png`,
+  );
+
+  try {
+    // Check if file exists first to provide a better error message
+    await fs.promises.access(imagePath, fs.constants.F_OK);
+
+    const buffer = await fs.promises.readFile(imagePath);
+
+    // Cache the buffer for this hour
+    imageCache.set(cacheKey, buffer);
+
+    return buffer;
+  } catch (error) {
+    logger.error(
+      { err: error, path: imagePath, locale, hour: currentRotation.hour },
+      "Failed to load pre-generated map image",
+    );
+
+    // Fallback or re-throw?
+    // Since we expect these to exist, throwing is appropriate to alert the admin.
+    // The bot should probably not crash, but the command will fail.
+    throw new Error(
+      `Map image not found for locale "${locale}" and hour "${currentRotation.hour}". Please run "npm run generate-maps".`,
+    );
   }
-
-  const promise = (async () => {
-    try {
-      const forecast: MapRotation[] = [];
-      const currentHour = currentRotation.hour;
-      for (let i = 1; i <= 6; i++) {
-        const hourIndex = (currentHour + i) % 24;
-        forecast.push(MAP_ROTATIONS[hourIndex]);
-      }
-
-      const t = getT(locale);
-      const translations: Record<string, string> = {
-        forecast_header: t("image_renderer.forecast_header"),
-        location_dam: t("map_rotation.locations.dam"),
-        location_buriedCity: t("map_rotation.locations.buried_city"),
-        location_spaceport: t("map_rotation.locations.spaceport"),
-        location_blueGate: t("map_rotation.locations.blue_gate"),
-        location_stellaMontis: t("map_rotation.locations.stella_montis"),
-        event_harvester: t("map_rotation.events.harvester"),
-        event_night: t("map_rotation.events.night"),
-        event_storm: t("map_rotation.events.storm"),
-        event_tower: t("map_rotation.events.tower"),
-        event_bunker: t("map_rotation.events.bunker"),
-        event_matriarch: t("map_rotation.events.matriarch"),
-        event_husks: t("map_rotation.events.husks"),
-        event_blooms: t("map_rotation.events.blooms"),
-        event_caches: t("map_rotation.events.caches"),
-        event_probes: t("map_rotation.events.probes"),
-        no_major_events: t("map_rotation.forecast.no_major_events"),
-        upcoming: t("map_rotation.forecast.upcoming"),
-        in_hours: t("map_rotation.forecast.in_hours"),
-      };
-
-      const start = Date.now();
-      const buffer = await renderer.render(
-        {
-          current: currentRotation,
-          forecast: forecast,
-        },
-        translations,
-      );
-      const duration = Date.now() - start;
-      logger.info(`Image generation for ${locale} took ${duration}ms`);
-
-      // Update cache
-      // Clear old cache for different hours to prevent memory leak (simple strategy)
-      for (const key of imageCache.keys()) {
-        if (!key.startsWith(`${currentRotation.hour}-`)) {
-          imageCache.delete(key);
-        }
-      }
-      imageCache.set(cacheKey, buffer);
-
-      return buffer;
-    } catch (error) {
-      logger.error({ err: error }, "Error generating map image");
-      throw error;
-    } finally {
-      // Clean up pending promise
-      pendingPromises.delete(cacheKey);
-    }
-  })();
-
-  pendingPromises.set(cacheKey, promise);
-  return promise;
 }

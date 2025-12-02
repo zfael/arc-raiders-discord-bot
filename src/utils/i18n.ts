@@ -8,7 +8,7 @@ const i18n = i18next.createInstance();
 
 const availableLocales = Array.from(loadAvailableLocales().keys());
 
-i18n.use(Backend).init({
+export const i18nPromise = i18n.use(Backend).init({
   lng: "en", // Default language
   fallbackLng: "en",
   preload: availableLocales,

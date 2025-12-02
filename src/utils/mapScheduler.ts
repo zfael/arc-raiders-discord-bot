@@ -1,4 +1,5 @@
 import type { Client } from "discord.js";
+import cron from "node-cron";
 import { logger } from "./logger";
 import { postOrUpdateMapMessages } from "./messageManager";
 
@@ -15,31 +16,27 @@ export async function updateMapStatus(client: Client): Promise<void> {
 
 /**
  * Initialize the map rotation scheduler
- * Runs at the top of every hour (UTC)
+ * Runs at the top of every hour (UTC) using cron
  */
 export function initScheduler(client: Client): void {
-  const scheduleNext = () => {
-    const now = new Date();
-    const nextHour = new Date(now);
-    nextHour.setHours(now.getHours() + 1, 0, 0, 0);
-    // Trigger 5 seconds before the hour to account for processing time
-    const delay = nextHour.getTime() - now.getTime() - 5000;
-
-    logger.info(`Next map rotation update scheduled in ${Math.round(delay / 1000 / 60)} minutes`);
-
-    setTimeout(async () => {
-      logger.info("Hourly map rotation update triggered");
+  // Schedule updates at minute 0 of every hour (0 * * * *)
+  // This means: "at minute 0, every hour, every day, every month, every day of week"
+  cron.schedule(
+    "0 * * * *",
+    async () => {
+      logger.info(`Hourly map rotation update triggered (cron) at ${new Date().toISOString()}`);
       await updateMapStatus(client);
-      scheduleNext();
-    }, delay);
-  };
+    },
+    {
+      timezone: "UTC",
+    },
+  );
+
+  logger.info("Map rotation cron scheduler initialized (runs at :00 of every hour UTC)");
 
   // Run immediately on startup
   logger.info("Running initial map rotation update...");
   updateMapStatus(client).then(() => {
     logger.info("Initial update complete");
-    // Start the cycle
-    scheduleNext();
-    logger.info("Map rotation scheduler initialized");
   });
 }
