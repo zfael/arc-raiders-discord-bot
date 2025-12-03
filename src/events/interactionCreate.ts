@@ -32,7 +32,7 @@ export async function handleInteraction(interaction: Interaction) {
       // Use interaction locale for ephemeral error
       const t = getT(interaction.locale);
       await interaction.reply({
-        content: t("common.menu_locked", { remaining }),
+        content: t("map_rotation.locked", { remaining }),
         ephemeral: true,
       });
       return;

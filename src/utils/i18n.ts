@@ -10,55 +10,60 @@ const i18n = i18next.createInstance();
 
 const availableLocales = Array.from(loadAvailableLocales().keys());
 
-export const i18nPromise = i18n.use(Backend).init({
-  lng: "en", // Default language
-  fallbackLng: "en",
-  supportedLngs: availableLocales, // Explicitly tell i18next which locales to support (including hyphens like pt-br)
-  preload: availableLocales,
-  ns: ["translation"],
-  defaultNS: "translation",
-  backend: {
-    loadPath: path.join(__dirname, "../locales/{{lng}}.json"),
-    // Add parse function to handle JSON files correctly
-    parse: (data: string, path: string) => {
-      try {
-        return JSON.parse(data);
-      } catch (e) {
-        logger.error({ err: e, path }, `Failed to parse locale file: ${path}`);
-        return {};
-      }
-    },
-  },
-  interpolation: {
-    escapeValue: false, // Discord handles escaping
-  },
-  // Ensure resources are loaded synchronously
-  initImmediate: false,
-}).then(async () => {
-  // Explicitly load all locale resources after initialization
-  // This ensures files with hyphens (like pt-br) are properly loaded
-  const localesPath = path.join(__dirname, "../locales");
-  for (const locale of availableLocales) {
-    if (!i18n.hasResourceBundle(locale, "translation")) {
-      logger.warn(`Resource bundle not loaded for locale: ${locale}, attempting to manually load...`);
-      try {
-        const filePath = path.join(localesPath, `${locale}.json`);
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath, "utf-8");
-          const translations = JSON.parse(fileContent);
-          i18n.addResourceBundle(locale, "translation", translations, true, true);
-          logger.info(`Manually loaded resource bundle for locale: ${locale}`);
-        } else {
-          logger.error(`Locale file not found: ${filePath}`);
+export const i18nPromise = i18n
+  .use(Backend)
+  .init({
+    lng: "en", // Default language
+    fallbackLng: "en",
+    supportedLngs: availableLocales, // Explicitly tell i18next which locales to support (including hyphens like pt-br)
+    preload: availableLocales,
+    ns: ["translation"],
+    defaultNS: "translation",
+    backend: {
+      loadPath: path.join(__dirname, "../locales/{{lng}}.json"),
+      // Add parse function to handle JSON files correctly
+      parse: (data: string, path: string) => {
+        try {
+          return JSON.parse(data);
+        } catch (e) {
+          logger.error({ err: e, path }, `Failed to parse locale file: ${path}`);
+          return {};
         }
-      } catch (err) {
-        logger.error({ err }, `Failed to manually load resources for locale: ${locale}`);
+      },
+    },
+    interpolation: {
+      escapeValue: false, // Discord handles escaping
+    },
+    // Ensure resources are loaded synchronously
+    initImmediate: false,
+  })
+  .then(async () => {
+    // Explicitly load all locale resources after initialization
+    // This ensures files with hyphens (like pt-br) are properly loaded
+    const localesPath = path.join(__dirname, "../locales");
+    for (const locale of availableLocales) {
+      if (!i18n.hasResourceBundle(locale, "translation")) {
+        logger.warn(
+          `Resource bundle not loaded for locale: ${locale}, attempting to manually load...`,
+        );
+        try {
+          const filePath = path.join(localesPath, `${locale}.json`);
+          if (fs.existsSync(filePath)) {
+            const fileContent = fs.readFileSync(filePath, "utf-8");
+            const translations = JSON.parse(fileContent);
+            i18n.addResourceBundle(locale, "translation", translations, true, true);
+            logger.info(`Manually loaded resource bundle for locale: ${locale}`);
+          } else {
+            logger.error(`Locale file not found: ${filePath}`);
+          }
+        } catch (err) {
+          logger.error({ err }, `Failed to manually load resources for locale: ${locale}`);
+        }
       }
     }
-  }
-  logger.info(`i18next initialized. Loaded languages: ${i18n.languages.join(", ")}`);
-  return i18n;
-});
+    logger.info(`i18next initialized. Loaded languages: ${i18n.languages.join(", ")}`);
+    return i18n;
+  });
 
 export default i18n;
 
@@ -109,7 +114,7 @@ export const getT = (locale: string) => {
   // Explicitly specify the namespace to ensure proper loading
   // Use getFixedT with the resolved locale - this should work now that resources are loaded
   const t = i18n.getFixedT(resolvedLocale, "translation");
-  
+
   // If the resource bundle exists but we're still getting English, try accessing directly
   if (resolvedLocale !== "en" && i18n.hasResourceBundle(resolvedLocale, "translation")) {
     // Create a custom T function that uses the resource bundle directly
@@ -143,7 +148,7 @@ export const getT = (locale: string) => {
       };
     }
   }
-  
+
   // Wrap the i18next T function to ensure it always returns a string
   return (key: string, options?: any): string => {
     const result = t(key, options);
