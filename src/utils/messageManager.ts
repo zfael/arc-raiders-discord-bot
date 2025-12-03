@@ -11,11 +11,11 @@ import {
 import {
   CONDITION_COLORS,
   CONDITION_EMOJIS,
-  formatLocationEvents,
   getCurrentRotation,
   getNextRotationTimestamp,
   MAP_ROTATIONS,
 } from "../config/mapRotation";
+import { getT } from "./i18n";
 import { generateMapImage } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
@@ -24,15 +24,19 @@ import { getServerConfigs, setServerMessageState } from "./serverConfig";
 /**
  * Create the map rotation embed
  */
-export async function createMapRotationEmbed(mobileFriendly: boolean = false): Promise<{
+export async function createMapRotationEmbed(
+  mobileFriendly: boolean = false,
+  locale: string = "en",
+): Promise<{
   embed: EmbedBuilder;
   files: AttachmentBuilder[];
   components: ActionRowBuilder<ButtonBuilder>[];
 }> {
+  const t = getT(locale);
   const current = getCurrentRotation();
   const nextTimestamp = getNextRotationTimestamp();
 
-  const mapBuffer = await generateMapImage(current);
+  const mapBuffer = await generateMapImage(current, locale);
   const mapAttachment = new AttachmentBuilder(mapBuffer, {
     name: "map-status.png",
   });
@@ -41,38 +45,59 @@ export async function createMapRotationEmbed(mobileFriendly: boolean = false): P
     CONDITION_COLORS[current.damMajor] || CONDITION_COLORS[current.damMinor] || 0x5865f2;
 
   const embed = new EmbedBuilder()
-    .setTitle("🗺️ Arc Raiders - Map Rotation Status")
-    .setDescription(`**Current Conditions**\nNext rotation: <t:${nextTimestamp}:R>`)
+    .setTitle(t("map_rotation.title"))
+    .setDescription(
+      `**${t("map_rotation.forecast.conditions")}**\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
+    )
     .setColor(primaryColor)
     .setImage("attachment://map-status.png");
+
+  // Helper to translate event names (basic mapping)
+  const translateEvent = (event: string) => {
+    if (event === "None") return t("map_rotation.events.none");
+    const key = event.toLowerCase();
+    return t(`map_rotation.events.${key}`, { defaultValue: event });
+  };
+
+  // Helper to format location events with translation
+  const formatLocationEventsTranslated = (major: string, minor: string) => {
+    const parts = [];
+    if (major !== "None") {
+      parts.push(`${CONDITION_EMOJIS[major]} **${translateEvent(major)}**`);
+    }
+    if (minor !== "None") {
+      parts.push(`${CONDITION_EMOJIS[minor]} ${translateEvent(minor)}`);
+    }
+    return parts.length > 0 ? parts.join("\n") : t("map_rotation.events.none");
+  };
 
   // Location Layout
   if (mobileFriendly) {
     // Mobile: Vertical list (non-inline fields)
     embed.addFields(
       {
-        name: "🏔️ Dam",
-        value: formatLocationEvents(current.damMajor, current.damMinor),
+        name: `🏔️ ${t("map_rotation.locations_short.dam")}`,
+        value: formatLocationEventsTranslated(current.damMajor, current.damMinor),
         inline: false,
       },
       {
-        name: "🏛️ Buried City",
-        value: formatLocationEvents(current.buriedCityMajor, current.buriedCityMinor),
+        name: `🏛️ ${t("map_rotation.locations.buried_city")}`,
+        value: formatLocationEventsTranslated(current.buriedCityMajor, current.buriedCityMinor),
         inline: false,
       },
       {
-        name: "🚀 Spaceport",
-        value: formatLocationEvents(current.spaceportMajor, current.spaceportMinor),
+        name: `🚀 ${t("map_rotation.locations.spaceport")}`,
+        value: formatLocationEventsTranslated(current.spaceportMajor, current.spaceportMinor),
         inline: false,
       },
       {
-        name: "🌉 Blue Gate",
-        value: formatLocationEvents(current.blueGateMajor, current.blueGateMinor),
+        name: `🌉 ${t("map_rotation.locations.blue_gate")}`,
+        value: formatLocationEventsTranslated(current.blueGateMajor, current.blueGateMinor),
         inline: false,
       },
       {
-        name: "🏔️ Stella Montis",
-        value: formatLocationEvents(current.stellaMontisMajor, current.stellaMontisMinor),
+        name: `🏔️ ${t("map_rotation.locations.stella_montis")}`,
+        value: formatLocationEventsTranslated(current.stellaMontisMajor, current.stellaMontisMinor),
         inline: false,
       },
     );
@@ -80,29 +105,29 @@ export async function createMapRotationEmbed(mobileFriendly: boolean = false): P
     // Desktop: Grid (inline fields)
     embed.addFields(
       {
-        name: "🏔️ Dam",
-        value: formatLocationEvents(current.damMajor, current.damMinor),
+        name: `🏔️ ${t("map_rotation.locations_short.dam")}`,
+        value: formatLocationEventsTranslated(current.damMajor, current.damMinor),
         inline: true,
       },
       {
-        name: "🏛️ Buried City",
-        value: formatLocationEvents(current.buriedCityMajor, current.buriedCityMinor),
+        name: `🏛️ ${t("map_rotation.locations.buried_city")}`,
+        value: formatLocationEventsTranslated(current.buriedCityMajor, current.buriedCityMinor),
         inline: true,
       },
       {
-        name: "🚀 Spaceport",
-        value: formatLocationEvents(current.spaceportMajor, current.spaceportMinor),
+        name: `🚀 ${t("map_rotation.locations.spaceport")}`,
+        value: formatLocationEventsTranslated(current.spaceportMajor, current.spaceportMinor),
         inline: true,
       },
       {
-        name: "🌉 Blue Gate",
-        value: formatLocationEvents(current.blueGateMajor, current.blueGateMinor),
+        name: `🌉 ${t("map_rotation.locations.blue_gate")}`,
+        value: formatLocationEventsTranslated(current.blueGateMajor, current.blueGateMinor),
         inline: true,
       },
       { name: "\u200b", value: "\u200b", inline: true },
       {
-        name: "🏔️ Stella Montis",
-        value: formatLocationEvents(current.stellaMontisMajor, current.stellaMontisMinor),
+        name: `🏔️ ${t("map_rotation.locations.stella_montis")}`,
+        value: formatLocationEventsTranslated(current.stellaMontisMajor, current.stellaMontisMinor),
         inline: true,
       },
     );
@@ -121,32 +146,43 @@ export async function createMapRotationEmbed(mobileFriendly: boolean = false): P
       const timeLabel = `<t:${timestamp}:R>`;
 
       const events = [];
-      if (rotation.damMajor !== "None") events.push(`Dam: ${CONDITION_EMOJIS[rotation.damMajor]}`);
+      if (rotation.damMajor !== "None")
+        events.push(
+          `${t("map_rotation.locations_short.dam")}: ${CONDITION_EMOJIS[rotation.damMajor]}`,
+        );
       if (rotation.buriedCityMajor !== "None")
-        events.push(`Buried: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.buried_city")}: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`,
+        );
       if (rotation.spaceportMajor !== "None")
-        events.push(`Space: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.spaceport")}: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`,
+        );
       if (rotation.blueGateMajor !== "None")
-        events.push(`Gate: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.blue_gate")}: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`,
+        );
       if (rotation.stellaMontisMajor !== "None")
-        events.push(`Stella: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.stella_montis")}: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`,
+        );
 
       if (events.length > 0) {
-        forecastText += `**${timeLabel}** • ${events.join(" | ")}\n`;
+        forecastText += `**${timeLabel}**\n${events.join("\n")}\n`;
       } else {
-        forecastText += `**${timeLabel}** • No Major Events\n`;
+        forecastText += `**${timeLabel}**\n${t("map_rotation.forecast.no_major_events")}\n`;
       }
     }
 
     embed.addFields({
-      name: "━━━━━━ 🔮 FORECAST (Next 6 Hours) ━━━━━━",
-      value: forecastText || "No major events upcoming.",
+      name: t("map_rotation.forecast.header"),
+      value: forecastText || t("map_rotation.forecast.no_events"),
       inline: false,
     });
   } else {
     // Desktop: Inline Fields
     embed.addFields({
-      name: "━━━━━━ 🔮 FORECAST (Next 6 Hours) ━━━━━━",
+      name: t("map_rotation.forecast.header"),
       value: "\u200b",
       inline: false,
     });
@@ -161,55 +197,73 @@ export async function createMapRotationEmbed(mobileFriendly: boolean = false): P
       const timeLabel = `<t:${timestamp}:R>`;
 
       const events = [];
-      if (rotation.damMajor !== "None") events.push(`Dam: ${CONDITION_EMOJIS[rotation.damMajor]}`);
+      if (rotation.damMajor !== "None")
+        events.push(
+          `${t("map_rotation.locations_short.dam")}: ${CONDITION_EMOJIS[rotation.damMajor]}`,
+        );
       if (rotation.buriedCityMajor !== "None")
-        events.push(`Buried: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.buried_city")}: ${CONDITION_EMOJIS[rotation.buriedCityMajor]}`,
+        );
       if (rotation.spaceportMajor !== "None")
-        events.push(`Space: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.spaceport")}: ${CONDITION_EMOJIS[rotation.spaceportMajor]}`,
+        );
       if (rotation.blueGateMajor !== "None")
-        events.push(`Gate: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.blue_gate")}: ${CONDITION_EMOJIS[rotation.blueGateMajor]}`,
+        );
       if (rotation.stellaMontisMajor !== "None")
-        events.push(`Stella: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`);
+        events.push(
+          `${t("map_rotation.locations_short.stella_montis")}: ${CONDITION_EMOJIS[rotation.stellaMontisMajor]}`,
+        );
 
-      const eventText = events.length > 0 ? events.join(" | ") : "No Major Events";
+      const eventText =
+        events.length > 0 ? events.join("\n") : t("map_rotation.forecast.no_major_events");
 
-      timeCol += `${timeLabel}\n`;
+      const lineCount = events.length > 0 ? events.length : 1;
+      timeCol += `${timeLabel}`;
+      for (let j = 1; j < lineCount; j++) {
+        timeCol += "\n\u200b";
+      }
+      timeCol += "\n";
+
       conditionCol += `${eventText}\n`;
     }
 
     embed.addFields(
-      { name: "Time Until", value: timeCol, inline: true },
-      { name: "Conditions", value: conditionCol, inline: true },
+      { name: t("map_rotation.forecast.time_until"), value: timeCol, inline: true },
+      { name: t("map_rotation.forecast.conditions"), value: conditionCol, inline: true },
       { name: "\u200b", value: "\u200b", inline: true },
     );
   }
 
-  embed.setTimestamp().setFooter({ text: "Arc Raiders Bot • Updates every hour" });
+  embed.setTimestamp().setFooter({ text: t("map_rotation.footer") });
 
   const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId("view_map_dam")
-      .setLabel("Dam")
+      .setLabel(t("map_rotation.buttons.dam"))
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("🏔️"),
     new ButtonBuilder()
       .setCustomId("view_map_buriedCity")
-      .setLabel("Buried City")
+      .setLabel(t("map_rotation.buttons.buried_city"))
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("🏛️"),
     new ButtonBuilder()
       .setCustomId("view_map_spaceport")
-      .setLabel("Spaceport")
+      .setLabel(t("map_rotation.buttons.spaceport"))
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("🚀"),
     new ButtonBuilder()
       .setCustomId("view_map_blueGate")
-      .setLabel("Blue Gate")
+      .setLabel(t("map_rotation.buttons.blue_gate"))
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("🌉"),
     new ButtonBuilder()
       .setCustomId("view_map_stellaMontis")
-      .setLabel("Stella Montis")
+      .setLabel(t("map_rotation.buttons.stella_montis"))
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("🏔️"),
   );
@@ -217,17 +271,17 @@ export async function createMapRotationEmbed(mobileFriendly: boolean = false): P
   const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId("view_mode_major")
-      .setLabel("Show Major Events")
+      .setLabel(t("map_rotation.buttons.show_major"))
       .setStyle(ButtonStyle.Primary)
       .setEmoji("⚔️"),
     new ButtonBuilder()
       .setCustomId("view_mode_minor")
-      .setLabel("Show Minor Events")
+      .setLabel(t("map_rotation.buttons.show_minor"))
       .setStyle(ButtonStyle.Primary)
       .setEmoji("🔍"),
     new ButtonBuilder()
       .setCustomId("view_overview")
-      .setLabel("Home")
+      .setLabel(t("map_rotation.buttons.home"))
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("🏠")
       .setDisabled(true),
@@ -242,15 +296,21 @@ export async function createMapRotationEmbed(mobileFriendly: boolean = false): P
  * @param guildId The guild that owns the channel.
  * @param channelId The ID of the channel to post in.
  * @param existingMessageId Optional message ID to update instead of creating a new one.
+ * @param localeOverride Optional locale to use instead of the config locale.
  */
 export async function postOrUpdateInChannel(
   client: Client,
   guildId: string,
   channelId: string,
   existingMessageId?: string,
+  localeOverride?: string,
 ): Promise<void> {
   try {
-    const channel = (await client.channels.fetch(channelId)) as TextChannel;
+    // Try to resolve from cache first, then fetch if missing
+    let channel = client.channels.resolve(channelId) as TextChannel;
+    if (!channel) {
+      channel = (await client.channels.fetch(channelId)) as TextChannel;
+    }
 
     if (!channel || !channel.isTextBased()) {
       logger.warn(`Invalid or non-text channel: ${channelId}`);
@@ -260,8 +320,10 @@ export async function postOrUpdateInChannel(
     const configs = await getServerConfigs();
     const config = configs[guildId];
     const mobileFriendly = config?.mobileFriendly ?? false;
+    // Use override if provided, otherwise fetch from config
+    const locale = localeOverride || config?.locale || channel.guild?.preferredLocale || "en";
 
-    const { embed, files, components } = await createMapRotationEmbed(mobileFriendly);
+    const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
     let message: Message;
 
     if (
@@ -299,7 +361,7 @@ export async function postOrUpdateInChannel(
     await setServerMessageState(guildId, message.id, new Date().toISOString());
   } catch (error) {
     logger.error(
-      { type: error?.type, message: error?.message },
+      { type: (error as any)?.type, message: (error as any)?.message },
       `Error processing channel ${channelId}`,
     );
   }
@@ -310,6 +372,7 @@ export async function postOrUpdateInChannel(
  * @param {Client} client The Discord client.
  */
 export async function postOrUpdateMapMessages(client: Client): Promise<void> {
+  const start = Date.now();
   const serverConfigs = await getServerConfigs();
   const entries = Object.entries(serverConfigs);
 
@@ -318,20 +381,38 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
     return;
   }
 
-  for (const [guildId, config] of entries) {
-    await postOrUpdateInChannel(client, guildId, config.channelId, config.messageId);
+  logger.info(`Starting update for ${entries.length} servers...`);
+
+  // Process in chunks to avoid rate limits/overload
+  // Increased to 50 for mass updates (Discord rate limit is 50 requests/sec globally, but per-channel is lower)
+  // Since we are mostly editing messages, 50 parallel requests is reasonable.
+  const CHUNK_SIZE = 50;
+  for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+    const chunkStart = Date.now();
+    const chunk = entries.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map(([guildId, config]) =>
+        postOrUpdateInChannel(client, guildId, config.channelId, config.messageId),
+      ),
+    );
+    logger.info(
+      `Chunk ${Math.floor(i / CHUNK_SIZE) + 1} processed in ${Date.now() - chunkStart}ms`,
+    );
   }
+
+  logger.info(`All updates completed in ${Date.now() - start}ms`);
 }
 
-const catchPinError = (error: any) => {
+const catchPinError = (error: unknown) => {
   logger.error({ error }, "Error pinning message");
 };
+
 /**
  * Sets up the lock expiration callback to revert messages to the home screen.
  * @param client The Discord client.
  */
 export function setupLockExpiration(client: Client) {
-  interactionLockManager.setExpirationCallback(async (messageId, channelId, _guildId) => {
+  interactionLockManager.setExpirationCallback(async (messageId, channelId, guildId) => {
     try {
       const channel = (await client.channels.fetch(channelId)) as TextChannel;
       if (!channel || !channel.isTextBased()) return;
@@ -340,12 +421,12 @@ export function setupLockExpiration(client: Client) {
       if (!message) return;
 
       // Check if already on home screen (Home button disabled)
-      const components = message.components;
+      const existingComponents = message.components;
       let isHome = false;
 
       // Check row 2 (index 1) for Home button (index 2)
-      if (components.length > 1) {
-        const row2 = components[1] as any;
+      if (existingComponents.length > 1) {
+        const row2 = existingComponents[1] as any;
         const homeButton = row2.components.find((c: any) => c.customId === "view_overview");
         if (homeButton?.disabled) {
           isHome = true;
@@ -353,16 +434,21 @@ export function setupLockExpiration(client: Client) {
       }
 
       if (!isHome) {
-        const { embed, files, components } = await createMapRotationEmbed();
+        // Get config for mobile friendly
+        const configs = await getServerConfigs();
+        const config = configs[guildId];
+        const mobileFriendly = config?.mobileFriendly ?? false;
+        const locale = config?.locale || channel.guild?.preferredLocale || "en";
+
+        const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
         await message.edit({
           embeds: [embed],
           files: files,
           components: components,
         });
-        // logger.info({ messageId }, 'Reverted message to home screen after lock expiration');
       }
     } catch (_error) {
-      // logger.error({ err: error }, 'Error reverting message to home screen');
+      // Silently fail - message may have been deleted
     }
   });
 }

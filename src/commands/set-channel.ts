@@ -6,26 +6,49 @@ import {
   type TextChannel,
 } from "discord.js";
 import type { Command } from "../types";
+import { getT } from "../utils/i18n";
 import { logger } from "../utils/logger";
+import {
+  buildCommandLocalizations,
+  buildOptionLocalizations,
+  loadAvailableLocales,
+} from "../utils/localeLoader";
 import { postOrUpdateInChannel } from "../utils/messageManager";
-import { setServerConfig } from "../utils/serverConfig";
+import { getServerConfigs, setServerConfig } from "../utils/serverConfig";
+
+const locales = loadAvailableLocales();
+const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
+  "set-channel",
+  locales,
+);
+const channelOptionLocalizations = buildOptionLocalizations("set-channel", "channel", locales);
 
 const SetChannelCommand: Command = {
   data: new SlashCommandBuilder()
     .setName("set-channel")
+    .setNameLocalizations(nameLocalizations)
     .setDescription("Sets the channel for map rotation updates.")
+    .setDescriptionLocalizations(descriptionLocalizations)
     .addChannelOption((option) =>
       option
         .setName("channel")
+        .setNameLocalizations(channelOptionLocalizations.nameLocalizations)
         .setDescription("The channel to send updates to")
+        .setDescriptionLocalizations(channelOptionLocalizations.descriptionLocalizations)
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) as Command["data"],
   async execute(interaction: ChatInputCommandInteraction) {
+    // Get Server Config for locale
+    const configs = await getServerConfigs();
+    const config = interaction.guildId ? configs[interaction.guildId] : null;
+    const locale = config?.locale || interaction.guild?.preferredLocale || "en";
+    const t = getT(locale);
+
     if (!interaction.guildId) {
       await interaction.reply({
-        content: "This command can only be used in a server.",
+        content: t("common.only_in_guild"),
         ephemeral: true,
       });
       return;
@@ -43,7 +66,7 @@ const SetChannelCommand: Command = {
 
     // Reply immediately
     await interaction.editReply({
-      content: `Map rotation updates will now be sent to #${channel.name}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use \`/settings mobile-friendly: True\` to switch to a mobile-optimized layout.`,
+      content: t("commands.set_channel.success", { channel: `#${channel.name}` }),
     });
 
     // Trigger map status update in the background (don't await)

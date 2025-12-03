@@ -1,0 +1,133 @@
+{
+  "_developer_note_do_not_edit": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys. Text encapsulated in {{example}} are variables - keep them as-is.",
+  "_language_name": "English",
+  "common": {
+    "error": "An error occurred while executing this command!",
+    "error_saving": "An error occurred while saving your settings. Please try again later.",
+    "only_in_guild": "This command can only be used in a server."
+  },
+  "command_metadata": {
+    "_developer_note_do_not_edit": "Descriptions have a max length of 100 characters.",
+    "ping": {
+      "name": "ping",
+      "description": "Replies with Pong! and shows bot latency"
+    },
+    "settings": {
+      "name": "settings",
+      "description": "Configure bot settings for this server.",
+      "options": {
+        "mobile-friendly": {
+          "name": "mobile-friendly",
+          "description": "Enable mobile-friendly view for map updates (default: false)"
+        },
+        "locale": {
+          "name": "locale",
+          "description": "Set the language for the bot in this server"
+        }
+      }
+    },
+    "set-channel": {
+      "name": "set-channel",
+      "description": "Sets the channel for map rotation updates.",
+      "options": {
+        "channel": {
+          "name": "channel",
+          "description": "The channel to send updates to"
+        }
+      }
+    },
+    "translations": {
+      "name": "translations",
+      "description": "Learn how to help translate this bot into your language"
+    }
+  },
+  "commands": {
+    "ping": {
+      "pinging": "Pinging...",
+      "response": "🏓 Pong!\n📡 Latency: {{latency}}ms\n💓 API Latency: {{apiLatency}}ms"
+    },
+    "settings": {
+      "mobile_friendly_updated": "Mobile-friendly mode is now **{{status}}**.",
+      "locale_updated": "Language set to **{{locale}}**.",
+      "no_changes": "No changes were made.",
+      "enabled": "ENABLED",
+      "disabled": "DISABLED"
+    },
+    "set_channel": {
+      "success": "Map rotation updates will now be sent to {{channel}}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use `/settings mobile-friendly: True` to switch to a mobile-optimized layout."
+    },
+    "translations": {
+      "title": "🌍 Help Translate Arc Raiders Bot",
+      "description": "Want to see this bot in your language? We'd love your help! Contributing a translation is easy and doesn't require any coding knowledge.",
+      "available_languages": "📚 Currently Available Languages",
+      "how_to_help": "✨ How to Contribute",
+      "steps": "1. Visit our GitHub repository\n2. Download the English template file ([`en.json`](https://raw.githubusercontent.com/zfael/arc-raiders-discord-bot/refs/heads/feature/translation-support/src/locales/en.json))\n3. Translate all the text into your language\n4. Submit your translation via GitHub or Discord\n\n🔗 **GitHub:** https://github.com/zfael/arc-raiders-discord-bot/issues/new",
+      "what_to_translate": "📝 What You'll Translate",
+      "sections": "• **Command descriptions** — What users see when typing commands\n• **Bot responses** — Messages the bot sends\n• **Map information** — Location names, event names, buttons\n• **Error messages** — When something goes wrong",
+      "important_rules": "⚠️ Important Guidelines",
+      "rules": "• Keep text inside `{{brackets}}` exactly as-is — these are placeholders\n• Don't change any of the key names, only the text values\n• Keep the same file structure as the English version\n• Command descriptions must be under 100 characters",
+      "footer": "Thank you for helping make this bot accessible to more players! 💙"
+    }
+  },
+  "image_renderer": {
+    "forecast_header": "Forecast (Next 6 Hours)"
+  },
+  "map_rotation": {
+    "title": "Arc Raiders - Map Rotation Status",
+    "footer": "Arc Raiders Bot • Updates every hour",
+    "locked": "🚫 This menu is currently being used by another user. Please wait {{remaining}} seconds.",
+    "buttons": {
+      "dam": "Dam",
+      "buried_city": "Buried City",
+      "spaceport": "Spaceport",
+      "blue_gate": "Blue Gate",
+      "stella_montis": "Stella Montis",
+      "show_major": "Show Major Events",
+      "show_minor": "Show Minor Events",
+      "show_map": "Show Map",
+      "home": "Home"
+    },
+    "events": {
+      "harvester": "Harvester",
+      "night": "Night",
+      "storm": "Storm",
+      "tower": "Tower",
+      "bunker": "Bunker",
+      "matriarch": "Matriarch",
+      "husks": "Husks",
+      "blooms": "Blooms",
+      "caches": "Caches",
+      "probes": "Probes",
+      "none": "None",
+      "major": "Major",
+      "minor": "Minor"
+    },
+    "forecast": {
+      "header": "━━━━━━ 🔮 FORECAST (Next 6 Hours) ━━━━━━",
+      "title_location": "**Forecast for {{location}}**",
+      "title_event": "**Forecast for {{emoji}} {{event}}**",
+      "next_rotation": "Next Rotation: <t:{{timestamp}}:R>",
+      "no_events": "No events upcoming in the next 24 hours.",
+      "no_major_events": "No Major Events",
+      "time_until": "Time Until",
+      "conditions": "Conditions",
+      "locations": "Locations",
+      "upcoming": "Upcoming",
+      "in_hours": "in {{hours}}h"
+    },
+    "locations_short": {
+      "dam": "Dam",
+      "buried_city": "City",
+      "spaceport": "Space",
+      "blue_gate": "Gate",
+      "stella_montis": "Stella"
+    },
+    "locations": {
+      "dam": "Dam Battlegrounds",
+      "buried_city": "Buried City",
+      "spaceport": "Spaceport",
+      "blue_gate": "Blue Gate",
+      "stella_montis": "Stella Montis"
+    }
+  }
+}

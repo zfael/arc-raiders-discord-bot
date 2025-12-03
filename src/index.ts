@@ -9,8 +9,6 @@ import { setupLockExpiration } from "./utils/messageManager";
 
 // Load environment variables
 config();
-
-// Set timezone to UTC
 process.env.TZ = "UTC";
 
 // Validate required environment variables

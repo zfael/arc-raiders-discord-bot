@@ -11,6 +11,7 @@ interface ServerRow {
   message_id: string | null;
   last_updated: string | null;
   mobile_friendly: boolean | null;
+  locale: string | null;
 }
 
 /**
@@ -21,7 +22,9 @@ export async function getServerConfigs(): Promise<ServerConfig> {
   try {
     const { data, error } = await supabase
       .from(SERVERS_TABLE)
-      .select("guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly");
+      .select(
+        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale",
+      );
 
     if (error) {
       throw error;
@@ -40,6 +43,7 @@ export async function getServerConfigs(): Promise<ServerConfig> {
         messageId: row.message_id ?? undefined,
         lastUpdated: row.last_updated ?? undefined,
         mobileFriendly: row.mobile_friendly ?? false,
+        locale: row.locale ?? "en",
       };
       return acc;
     }, {} as ServerConfig);
@@ -108,6 +112,25 @@ export async function setMobileFriendly(guildId: string, enabled: boolean): Prom
     }
   } catch (error) {
     logger.error({ err: error }, "Error updating mobile friendly setting");
+    throw error;
+  }
+}
+
+/**
+ * Updates the locale setting for a server.
+ */
+export async function setServerLocale(guildId: string, locale: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from(SERVERS_TABLE)
+      .update({ locale: locale })
+      .eq("guild_id", guildId);
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    logger.error({ err: error }, "Error updating server locale");
     throw error;
   }
 }

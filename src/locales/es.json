@@ -1,0 +1,132 @@
+{
+  "_developer_note": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys. Text encapsulated in {{example}} are variables - keep them as-is. Descriptions in command_metadata have a max length of 100 characters.",
+  "_language_name": "Español",
+  "common": {
+    "error": "¡Ocurrió un error al ejecutar este comando!",
+    "error_saving": "Ocurrió un error al guardar tu configuración. Por favor intenta de nuevo más tarde.",
+    "only_in_guild": "Este comando solo puede ser usado en un servidor."
+  },
+  "command_metadata": {
+    "ping": {
+      "name": "ping",
+      "description": "¡Responde con Pong! y muestra la latencia del bot"
+    },
+    "settings": {
+      "name": "configuracion",
+      "description": "Configura los ajustes del bot para este servidor.",
+      "options": {
+        "mobile-friendly": {
+          "name": "vista-movil",
+          "description": "Habilitar vista amigable para móviles en actualizaciones del mapa (por defecto: falso)"
+        },
+        "locale": {
+          "name": "idioma",
+          "description": "Establece el idioma del bot en este servidor"
+        }
+      }
+    },
+    "set-channel": {
+      "name": "establecer-canal",
+      "description": "Establece el canal para las actualizaciones de rotación de mapas.",
+      "options": {
+        "channel": {
+          "name": "canal",
+          "description": "El canal para enviar actualizaciones"
+        }
+      }
+    },
+    "translations": {
+      "name": "traducciones",
+      "description": "Aprende cómo ayudar a traducir este bot a tu idioma"
+    }
+  },
+  "commands": {
+    "ping": {
+      "pinging": "Haciendo ping...",
+      "response": "🏓 ¡Pong!\n📡 Latencia: {{latency}}ms\n💓 Latencia API: {{apiLatency}}ms"
+    },
+    "settings": {
+      "mobile_friendly_updated": "El modo vista móvil ahora está **{{status}}**.",
+      "locale_updated": "Idioma establecido en **{{locale}}**.",
+      "no_changes": "No se realizaron cambios.",
+      "enabled": "ACTIVADO",
+      "disabled": "DESACTIVADO"
+    },
+    "set_channel": {
+      "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles."
+    },
+    "translations": {
+      "title": "🌍 Ayuda a Traducir Arc Raiders Bot",
+      "description": "¿Quieres ver este bot en tu idioma? ¡Nos encantaría tu ayuda! Contribuir una traducción es fácil y no requiere conocimientos de programación.",
+      "available_languages": "📚 Idiomas Disponibles Actualmente",
+      "how_to_help": "✨ Cómo Contribuir",
+      "steps": "1. Visita nuestro repositorio de GitHub\n2. Descarga el archivo de plantilla en inglés ([`en.json`](https://raw.githubusercontent.com/zfael/arc-raiders-discord-bot/refs/heads/feature/translation-support/src/locales/en.json))\n3. Traduce todo el texto a tu idioma\n4. Envía tu traducción por GitHub o Discord\n\n🔗 **GitHub:** https://github.com/zfael/arc-raiders-discord-bot/issues/new",
+      "what_to_translate": "📝 Qué Traducirás",
+      "sections": "• **Descripciones de comandos** — Lo que los usuarios ven al escribir comandos\n• **Respuestas del bot** — Mensajes que envía el bot\n• **Información del mapa** — Nombres de ubicaciones, eventos, botones\n• **Mensajes de error** — Cuando algo sale mal",
+      "important_rules": "⚠️ Directrices Importantes",
+      "rules": "• Mantén el texto dentro de `{{llaves}}` exactamente igual — son marcadores de posición\n• No cambies los nombres de las claves, solo los valores de texto\n• Mantén la misma estructura que la versión en inglés\n• Las descripciones de comandos deben tener menos de 100 caracteres",
+      "footer": "¡Gracias por ayudar a que este bot sea accesible para más jugadores! 💙"
+    }
+  },
+  "image_renderer": {
+    "forecast_header": "Pronóstico (Próximas 6 Horas)"
+  },
+  "map_rotation": {
+    "title": "Arc Raiders - Estado de Rotación del Mapa",
+    "footer": "Bot Arc Raiders • Actualizaciones cada hora",
+    "locked": "🚫 Este menú está siendo usado por otro usuario. Por favor espera {{remaining}} segundos.",
+    "buttons": {
+      "dam": "Presa",
+      "buried_city": "Ciudad Enterrada",
+      "spaceport": "Puerto Espacial",
+      "blue_gate": "Puerta Azul",
+      "stella_montis": "Stella Montis",
+      "show_major": "Ver Eventos Mayores",
+      "show_minor": "Ver Eventos Menores",
+      "show_map": "Ver Mapa",
+      "home": "Inicio"
+    },
+    "events": {
+      "harvester": "Cosechador",
+      "night": "Noche",
+      "storm": "Tormenta",
+      "tower": "Torre",
+      "bunker": "Búnker",
+      "matriarch": "Matriarca",
+      "husks": "Cáscaras",
+      "blooms": "Flores",
+      "caches": "Cachés",
+      "probes": "Sondas",
+      "none": "Ninguno",
+      "major": "Mayor",
+      "minor": "Menor"
+    },
+    "forecast": {
+      "header": "━━━━━━ 🔮 PRONÓSTICO (Próximas 6 Horas) ━━━━━━",
+      "title_location": "**Pronóstico para {{location}}**",
+      "title_event": "**Pronóstico para {{emoji}} {{event}}**",
+      "next_rotation": "Siguiente Rotación: <t:{{timestamp}}:R>",
+      "no_events": "No hay eventos próximos en las siguientes 24 horas.",
+      "no_major_events": "Sin Eventos Mayores",
+      "time_until": "Tiempo Hasta",
+      "conditions": "Condiciones",
+      "locations": "Ubicaciones",
+      "upcoming": "Próximo",
+      "in_hours": "en {{hours}}h"
+    },
+    "locations_short": {
+      "dam": "Presa",
+      "buried_city": "Ciudad",
+      "spaceport": "Puerto",
+      "blue_gate": "Puerta",
+      "stella_montis": "Stella"
+    },
+    "locations": {
+      "dam": "Presa",
+      "buried_city": "Ciudad Enterrada",
+      "spaceport": "Puerto Espacial",
+      "blue_gate": "Puerta Azul",
+      "stella_montis": "Stella Montis"
+    }
+  }
+}

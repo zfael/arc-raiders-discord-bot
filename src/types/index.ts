@@ -6,6 +6,7 @@ export interface ServerConfigEntry {
   messageId?: string;
   lastUpdated?: string;
   mobileFriendly?: boolean;
+  locale?: string;
 }
 
 export interface ServerConfig {

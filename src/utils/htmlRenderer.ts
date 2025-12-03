@@ -2,7 +2,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import puppeteer, { type Browser } from "puppeteer";
+import puppeteer, { type Browser, type Page } from "puppeteer";
 import { CONDITION_EMOJIS } from "../config/mapRotation";
 import type { MapRotation } from "../types";
 import { logger } from "./logger";
@@ -80,14 +80,31 @@ export class HtmlRenderer {
     return icons;
   }
 
-  async render(data: RenderData): Promise<Buffer> {
-    let browser: Browser | undefined;
+  private browserPromise: Promise<Browser> | null = null;
+
+  private getBrowser(): Promise<Browser> {
+    if (!this.browserPromise) {
+      this.browserPromise = puppeteer
+        .launch({
+          headless: true,
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        })
+        .then((browser) => {
+          // Handle browser disconnect/crash
+          browser.on("disconnected", () => {
+            this.browserPromise = null;
+          });
+          return browser;
+        });
+    }
+    return this.browserPromise;
+  }
+
+  async render(data: RenderData, translations: Record<string, string>): Promise<Buffer> {
+    let page: Page | undefined;
     try {
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
-      const page = await browser.newPage();
+      const browser = await this.getBrowser();
+      page = await browser.newPage();
 
       await page.setViewport({
         width: 1240,
@@ -109,9 +126,15 @@ export class HtmlRenderer {
       const mapImageBuffer = fs.readFileSync(mapImagePath);
       const mapImageBase64 = `data:image/png;base64,${mapImageBuffer.toString("base64")}`;
       await page.evaluate(
-        (data, locations, emojis, icons, mapImage) => {
+        (data, locations, emojis, icons, mapImage, translations) => {
           const mapImg = document.getElementById("map-bg");
           if (mapImg) mapImg.src = mapImage;
+
+          // Update forecast header with translation
+          const forecastText = document.getElementById("forecast-text");
+          if (forecastText && translations.forecast_header) {
+            forecastText.textContent = translations.forecast_header;
+          }
 
           const getIconHtml = (condition) => {
             if (icons[condition]) {
@@ -126,12 +149,17 @@ export class HtmlRenderer {
               const major = data.current[`${key}Major` as keyof typeof data.current];
               const minor = data.current[`${key}Minor` as keyof typeof data.current];
 
+              // Translate location label if available
+              const locLabel = translations[`location_${key}`] || loc.label;
+
               let statusHtml = "";
               if (major !== "None") {
-                statusHtml += `<div class="status-row status-major">${getIconHtml(major)} ${major}</div>`;
+                const majorTrans = translations[`event_${major.toLowerCase()}`] || major;
+                statusHtml += `<div class="status-row status-major">${getIconHtml(major)} ${majorTrans}</div>`;
               }
               if (minor !== "None") {
-                statusHtml += `<div class="status-row status-minor">${getIconHtml(minor)} ${minor}</div>`;
+                const minorTrans = translations[`event_${minor.toLowerCase()}`] || minor;
+                statusHtml += `<div class="status-row status-minor">${getIconHtml(minor)} ${minorTrans}</div>`;
               }
               if (major === "None" && minor === "None") {
                 const marker = document.createElement("div");
@@ -139,7 +167,7 @@ export class HtmlRenderer {
                 marker.style.left = `${loc.x}%`;
                 marker.style.top = `${loc.y}%`;
                 marker.innerHTML = `
-                <div class="location-name">${loc.label}</div>
+                <div class="location-name">${locLabel}</div>
                 <div class="location-pin"></div>
               `;
                 overlaysContainer.appendChild(marker);
@@ -151,7 +179,7 @@ export class HtmlRenderer {
               marker.style.left = `${loc.x}%`;
               marker.style.top = `${loc.y}%`;
               marker.innerHTML = `
-              <div class="location-name">${loc.label}</div>
+              <div class="location-name">${locLabel}</div>
               <div class="location-pin"></div>
               <div class="location-status">${statusHtml}</div>
             `;
@@ -173,23 +201,32 @@ export class HtmlRenderer {
                 const major = rotation[`${loc}Major`];
                 if (major !== "None") {
                   hasEvents = true;
+                  const locName =
+                    translations[`location_${loc}`] || loc.charAt(0).toUpperCase() + loc.slice(1);
+                  const eventName = translations[`event_${major.toLowerCase()}`] || major;
                   eventsHtml += `
                   <div class="event-row">
-                    <span class="event-location">${loc.charAt(0).toUpperCase() + loc.slice(1)}</span>
-                    <span class="event-name">${getIconHtml(major)} ${major}</span>
+                    <span class="event-location">${locName}</span>
+                    <span class="event-name">${getIconHtml(major)} ${eventName}</span>
                   </div>
                 `;
                 }
               });
 
               if (!hasEvents) {
-                eventsHtml = '<div class="no-events">No Major Events</div>';
+                eventsHtml = `<div class="no-events">${translations.no_major_events}</div>`;
               }
+
+              const hoursDiff =
+                rotation.hour - data.current.hour > 0
+                  ? rotation.hour - data.current.hour
+                  : 24 + (rotation.hour - data.current.hour);
+              const timeText = translations.in_hours.replace("{{hours}}", hoursDiff.toString());
 
               card.innerHTML = `
               <div class="forecast-header">
-                <span class="forecast-time">in ${rotation.hour - data.current.hour > 0 ? rotation.hour - data.current.hour : 24 + (rotation.hour - data.current.hour)}h</span>
-                <span class="forecast-label">Upcoming</span>
+                <span class="forecast-time">${timeText}</span>
+                <span class="forecast-label">${translations.upcoming}</span>
               </div>
               ${eventsHtml}
             `;
@@ -202,6 +239,7 @@ export class HtmlRenderer {
         CONDITION_EMOJIS,
         this.icons,
         mapImageBase64,
+        translations,
       );
 
       // Screenshot the container
@@ -214,7 +252,7 @@ export class HtmlRenderer {
       logger.error({ err: error }, "Error rendering HTML to image");
       throw error;
     } finally {
-      if (browser) await browser.close();
+      if (page) await page.close();
     }
   }
 }
