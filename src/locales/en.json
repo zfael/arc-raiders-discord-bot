@@ -1,14 +1,13 @@
 {
-  "_developer_note": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys ex. ping, settings, set-channel, any text encapsulated in {{example}}.",
+  "_developer_note_do_not_edit": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys. Text encapsulated in {{example}} are variables - keep them as-is.",
   "_language_name": "English",
   "common": {
     "error": "An error occurred while executing this command!",
     "error_saving": "An error occurred while saving your settings. Please try again later.",
-    "only_in_guild": "This command can only be used in a server.",
-    "enabled": "ENABLED",
-    "disabled": "DISABLED"
+    "only_in_guild": "This command can only be used in a server."
   },
   "command_metadata": {
+    "_developer_note_do_not_edit": "Descriptions have a max length of 100 characters.",
     "ping": {
       "name": "ping",
       "description": "Replies with Pong! and shows bot latency"
@@ -36,22 +35,18 @@
           "description": "The channel to send updates to"
         }
       }
+    },
+    "translations": {
+      "name": "translations",
+      "description": "Learn how to help translate this bot into your language"
     }
   },
   "commands": {
     "ping": {
-      "description": "Replies with Pong! and shows bot latency",
       "pinging": "Pinging...",
       "response": "🏓 Pong!\n📡 Latency: {{latency}}ms\n💓 API Latency: {{apiLatency}}ms"
     },
     "settings": {
-      "description": "Configure bot settings for this server.",
-      "mobile_friendly": {
-        "name": "mobile-friendly",
-        "description": "Enable mobile-friendly view for map updates (default: false)"
-      },
-      "server_only": "This command can only be used in a server.",
-      "updated": "Settings updated! Mobile-friendly mode is now **{{status}}**.\nThe map message will be updated shortly.",
       "mobile_friendly_updated": "Mobile-friendly mode is now **{{status}}**.",
       "locale_updated": "Language set to **{{locale}}**.",
       "no_changes": "No changes were made.",
@@ -59,12 +54,19 @@
       "disabled": "DISABLED"
     },
     "set_channel": {
-      "description": "Sets the channel for map rotation updates.",
-      "channel_option": {
-        "name": "channel",
-        "description": "The channel to send updates to"
-      },
       "success": "Map rotation updates will now be sent to {{channel}}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use `/settings mobile-friendly: True` to switch to a mobile-optimized layout."
+    },
+    "translations": {
+      "title": "🌍 Help Translate Arc Raiders Bot",
+      "description": "Want to see this bot in your language? We'd love your help! Contributing a translation is easy and doesn't require any coding knowledge.",
+      "available_languages": "📚 Currently Available Languages",
+      "how_to_help": "✨ How to Contribute",
+      "steps": "1. Visit our GitHub repository\n2. Download the English template file ([`en.json`](https://raw.githubusercontent.com/zfael/arc-raiders-discord-bot/refs/heads/feature/translation-support/src/locales/en.json))\n3. Translate all the text into your language\n4. Submit your translation via GitHub or Discord\n\n🔗 **GitHub:** https://github.com/zfael/arc-raiders-discord-bot/issues/new",
+      "what_to_translate": "📝 What You'll Translate",
+      "sections": "• **Command descriptions** — What users see when typing commands\n• **Bot responses** — Messages the bot sends\n• **Map information** — Location names, event names, buttons\n• **Error messages** — When something goes wrong",
+      "important_rules": "⚠️ Important Guidelines",
+      "rules": "• Keep text inside `{{brackets}}` exactly as-is — these are placeholders\n• Don't change any of the key names, only the text values\n• Keep the same file structure as the English version\n• Command descriptions must be under 100 characters",
+      "footer": "Thank you for helping make this bot accessible to more players! 💙"
     }
   },
   "image_renderer": {
@@ -108,7 +110,7 @@
       "no_events": "No events upcoming in the next 24 hours.",
       "no_major_events": "No Major Events",
       "time_until": "Time Until",
-      "conditions": "Conditions",
+      "conditions": " Current Conditions",
       "locations": "Locations",
       "upcoming": "Upcoming",
       "in_hours": "in {{hours}}h"

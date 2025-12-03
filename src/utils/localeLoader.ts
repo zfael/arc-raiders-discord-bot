@@ -3,18 +3,51 @@ import * as path from "node:path";
 import { logger } from "./logger";
 
 /**
- * Locale code mapping from our file names to Discord locale codes
- * See: https://discord.com/developers/docs/reference#locales
+ * Locale configuration - single source of truth for all locale mappings.
+ * See Discord locale codes: https://discord.com/developers/docs/reference#locales
+ *
+ * Each entry maps our file name to:
+ * - discordCode: The primary Discord locale code (used for command registration)
+ * - aliases: Additional Discord locale codes that should use this file (optional)
+ *
+ * To add a new language:
+ * 1. Create the locale file (e.g., src/locales/fr.json)
+ * 2. Add an entry here with the Discord locale code
+ * 3. Run `npm run deploy-commands` to register localized commands
  */
-const LOCALE_MAP: Record<string, string> = {
-  en: "en-US",
-  es: "es-ES",
-  ru: "ru",
-  // Add more mappings as needed:
-  // fr: "fr",
-  // de: "de",
-  // pt: "pt-BR",
+interface LocaleConfig {
+  discordCode: string;
+  aliases?: string[];
+}
+
+const LOCALE_CONFIG: Record<string, LocaleConfig> = {
+  en: { discordCode: "en-US", aliases: ["en-GB"] },
+  es: { discordCode: "es-ES", aliases: ["es-419"] }, // es-419 = Latin American Spanish
+  ru: { discordCode: "ru" },
+  "pt-br": { discordCode: "pt-BR" },
+  // Add more locales as needed:
+  // fr: { discordCode: "fr" },
+  // de: { discordCode: "de" },
 };
+
+/**
+ * Maps our file names to Discord locale codes (for command registration)
+ * e.g., "pt-br" -> "pt-BR"
+ */
+export const FILE_TO_DISCORD_LOCALE: Record<string, string> = Object.fromEntries(
+  Object.entries(LOCALE_CONFIG).map(([file, config]) => [file, config.discordCode]),
+);
+
+/**
+ * Maps Discord locale codes to our file names (for runtime translations)
+ * e.g., "pt-BR" -> "pt-br", "es-419" -> "es"
+ */
+export const DISCORD_TO_FILE_LOCALE: Record<string, string> = Object.fromEntries(
+  Object.entries(LOCALE_CONFIG).flatMap(([file, config]) => [
+    [config.discordCode, file],
+    ...(config.aliases?.map((alias) => [alias, file]) ?? []),
+  ]),
+);
 
 interface CommandMetadata {
   name: string;
@@ -82,7 +115,7 @@ export function buildCommandLocalizations(
     // Skip English as it's the default
     if (localeName === "en") continue;
 
-    const discordLocale = LOCALE_MAP[localeName];
+    const discordLocale = FILE_TO_DISCORD_LOCALE[localeName];
     if (!discordLocale) {
       logger.warn(`No Discord locale mapping found for: ${localeName}`);
       continue;
@@ -128,7 +161,7 @@ export function buildOptionLocalizations(
     // Skip English as it's the default
     if (localeName === "en") continue;
 
-    const discordLocale = LOCALE_MAP[localeName];
+    const discordLocale = FILE_TO_DISCORD_LOCALE[localeName];
     if (!discordLocale) continue;
 
     const metadata = localeData.command_metadata?.[commandName];

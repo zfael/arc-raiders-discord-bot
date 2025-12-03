@@ -131,10 +131,18 @@ const SettingsCommand: Command = {
       }
     } catch (error) {
       logger.error({ err: error }, "Error executing settings command");
-      await interaction.reply({
-        content: t("common.error"),
-        ephemeral: true,
-      });
+      // Use followUp() instead of reply() since reply() may have already been called
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: t("common.error"),
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          content: t("common.error"),
+          ephemeral: true,
+        });
+      }
     }
   },
 };
