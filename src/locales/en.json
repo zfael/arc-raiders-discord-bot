@@ -110,7 +110,7 @@
       "no_events": "No events upcoming in the next 24 hours.",
       "no_major_events": "No Major Events",
       "time_until": "Time Until",
-      "conditions": " Current Conditions",
+      "conditions": "Conditions",
       "locations": "Locations",
       "upcoming": "Upcoming",
       "in_hours": "in {{hours}}h"
