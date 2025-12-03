@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { MapRotation } from "../types";
-import { DISCORD_TO_FILE_LOCALE } from "./localeLoader";
+import { DISCORD_TO_FILE_LOCALE, getLocalesWithMapAssets } from "./localeLoader";
 import { logger } from "./logger";
 
 // Simple in-memory cache to avoid repeated disk reads during mass updates
@@ -10,13 +10,19 @@ import { logger } from "./logger";
 const imageCache = new Map<string, Buffer>();
 let cachedHour: number | null = null;
 
-// Available image locales (folders that exist in generatedMaps)
-const AVAILABLE_IMAGE_LOCALES = ["en", "es", "pt-br"];
+const AVAILABLE_IMAGE_LOCALES = new Set(getLocalesWithMapAssets());
+if (!AVAILABLE_IMAGE_LOCALES.has("en")) {
+  AVAILABLE_IMAGE_LOCALES.add("en");
+}
 
 /**
  * Resolves a locale to a valid image locale folder name.
  * Normalizes Discord locales (e.g., "pt-BR" -> "pt-br") and falls back to "en" if not available.
  */
+function hasImageLocale(locale: string | undefined): boolean {
+  return !!locale && AVAILABLE_IMAGE_LOCALES.has(locale);
+}
+
 function resolveImageLocale(locale: string): string {
   if (!locale || typeof locale !== "string") {
     return "en";
@@ -26,30 +32,34 @@ function resolveImageLocale(locale: string): string {
   const normalizedLocale = locale.toLowerCase();
 
   // Check if it's directly available
-  if (AVAILABLE_IMAGE_LOCALES.includes(normalizedLocale)) {
+  if (hasImageLocale(normalizedLocale)) {
     return normalizedLocale;
   }
 
   // Try Discord locale mapping (e.g., "pt-BR" -> "pt-br")
   const mappedLocale = DISCORD_TO_FILE_LOCALE[locale];
-  if (mappedLocale && AVAILABLE_IMAGE_LOCALES.includes(mappedLocale)) {
+  if (hasImageLocale(mappedLocale)) {
     return mappedLocale;
   }
 
   // Try with normalized version of Discord mapping
   const normalizedMapped = DISCORD_TO_FILE_LOCALE[normalizedLocale];
-  if (normalizedMapped && AVAILABLE_IMAGE_LOCALES.includes(normalizedMapped)) {
+  if (hasImageLocale(normalizedMapped)) {
     return normalizedMapped;
   }
 
   // Try just the language code (e.g., "es-ES" -> "es")
   const langCode = locale.split("-")[0].toLowerCase();
-  if (AVAILABLE_IMAGE_LOCALES.includes(langCode)) {
+  if (hasImageLocale(langCode)) {
     return langCode;
   }
 
-  // Default to English
-  return "en";
+  // Default to English if available, otherwise try first known locale
+  if (hasImageLocale("en")) {
+    return "en";
+  }
+  const iterator = AVAILABLE_IMAGE_LOCALES.values().next();
+  return iterator.done ? "en" : iterator.value;
 }
 
 /**
