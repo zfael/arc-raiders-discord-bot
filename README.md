@@ -240,6 +240,7 @@ The bot automatically manages this table. You can back up or inspect it directly
      message_id text,
      last_updated text,
      mobile_friendly boolean default false,
+     locale text default 'en',
      created_at timestamptz default timezone('utc', now()),
      updated_at timestamptz default timezone('utc', now())
    );
