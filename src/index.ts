@@ -46,7 +46,7 @@ for (const file of commandFiles) {
 }
 
 // Attach commands to client
-(client as any).commands = commands;
+client.commands = commands;
 
 // Load events
 const eventsPath = path.join(__dirname, "events");
@@ -76,7 +76,7 @@ import { handleInteraction } from "./events/interactionCreate";
 client.on("interactionCreate", async (interaction) => {
   // Handle slash commands
   if (interaction.isChatInputCommand()) {
-    const command = (client as any).commands.get(interaction.commandName);
+    const command = client.commands.get(interaction.commandName);
     if (!command) {
       logger.warn(`No command matching ${interaction.commandName} was found.`);
       return;
