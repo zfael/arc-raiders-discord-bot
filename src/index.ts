@@ -127,11 +127,13 @@ const server = http.createServer((req, res) => {
   if (req.url === "/health" && req.method === "GET") {
     const isReady = client.isReady();
     res.writeHead(isReady ? 200 : 503, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: isReady ? "ok" : "not ready",
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
-    }));
+    res.end(
+      JSON.stringify({
+        status: isReady ? "ok" : "not ready",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+      }),
+    );
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not Found" }));
