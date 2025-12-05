@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import * as http from "node:http";
 import * as path from "node:path";
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { config } from "dotenv";
@@ -119,3 +120,24 @@ process.on("SIGTERM", () => {
 
 // Login to Discord
 client.login(process.env.DISCORD_TOKEN);
+
+// Start health check server
+const PORT = process.env.PORT || 6767;
+const server = http.createServer((req, res) => {
+  if (req.url === "/health" && req.method === "GET") {
+    const isReady = client.isReady();
+    res.writeHead(isReady ? 200 : 503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      status: isReady ? "ok" : "not ready",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    }));
+  } else {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Not Found" }));
+  }
+});
+
+server.listen(PORT, () => {
+  logger.info(`Health check server listening on port ${PORT}`);
+});

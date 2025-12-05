@@ -17,6 +17,8 @@ export const i18nPromise = i18n
     fallbackLng: "en",
     supportedLngs: availableLocales, // Explicitly tell i18next which locales to support (including hyphens like pt-br)
     preload: availableLocales,
+    lowerCaseLng: true, // Ensure i18next keeps locale keys lowercase (matches our filenames)
+    load: "currentOnly", // Avoid loading fallback variants like pt or pt-br vs pt-BR
     ns: ["translation"],
     defaultNS: "translation",
     backend: {

@@ -1,5 +1,6 @@
 import type { ServerConfig } from "../types";
 import { logger } from "./logger";
+import { isLocaleAvailable } from "./localeLoader";
 import { supabase } from "./supabaseClient";
 
 const SERVERS_TABLE = "servers";
@@ -121,6 +122,12 @@ export async function setMobileFriendly(guildId: string, enabled: boolean): Prom
  */
 export async function setServerLocale(guildId: string, locale: string): Promise<void> {
   try {
+    if (!isLocaleAvailable(locale)) {
+      const errorMessage = `Unsupported locale "${locale}" rejected for guild ${guildId}`;
+      logger.warn(errorMessage);
+      throw new Error(errorMessage);
+    }
+
     const { error } = await supabase
       .from(SERVERS_TABLE)
       .update({ locale: locale })
