@@ -1,4 +1,9 @@
-import type { ChatInputCommandInteraction, ClientEvents, SlashCommandBuilder } from "discord.js";
+import type {
+  ChatInputCommandInteraction,
+  ClientEvents,
+  Collection,
+  SlashCommandBuilder,
+} from "discord.js";
 
 export interface ServerConfigEntry {
   channelId: string;
@@ -35,4 +40,10 @@ export interface MapRotation {
   blueGateMajor: string;
   stellaMontisMinor: string;
   stellaMontisMajor: string;
+}
+
+declare module "discord.js" {
+  export interface Client {
+    commands: Collection<string, Command>;
+  }
 }

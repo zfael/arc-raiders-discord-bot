@@ -15,7 +15,7 @@ import {
   getNextRotationTimestamp,
   MAP_ROTATIONS,
 } from "../config/mapRotation";
-import { getT } from "./i18n";
+import { getT, translateEvent } from "./i18n";
 import { generateMapImage } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
@@ -52,21 +52,14 @@ export async function createMapRotationEmbed(
     .setColor(primaryColor)
     .setImage("attachment://map-status.png");
 
-  // Helper to translate event names (basic mapping)
-  const translateEvent = (event: string) => {
-    if (event === "None") return t("map_rotation.events.none");
-    const key = event.toLowerCase();
-    return t(`map_rotation.events.${key}`, { defaultValue: event });
-  };
-
   // Helper to format location events with translation
   const formatLocationEventsTranslated = (major: string, minor: string) => {
     const parts = [];
     if (major !== "None") {
-      parts.push(`${CONDITION_EMOJIS[major]} **${translateEvent(major)}**`);
+      parts.push(`${CONDITION_EMOJIS[major]} **${translateEvent(t, major)}**`);
     }
     if (minor !== "None") {
-      parts.push(`${CONDITION_EMOJIS[minor]} ${translateEvent(minor)}`);
+      parts.push(`${CONDITION_EMOJIS[minor]} ${translateEvent(t, minor)}`);
     }
     return parts.length > 0 ? parts.join("\n") : t("map_rotation.events.none");
   };

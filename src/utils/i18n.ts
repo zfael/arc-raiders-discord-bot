@@ -157,3 +157,14 @@ export const getT = (locale: string) => {
     return typeof result === "string" ? result : String(result || key);
   };
 };
+
+/**
+ * Helper to translate event names (basic mapping)
+ * @param t The translation function
+ * @param event The event name to translate
+ */
+export const translateEvent = (t: (key: string, options?: any) => string, event: string) => {
+  if (event === "None") return t("map_rotation.events.none");
+  const key = event.toLowerCase();
+  return t(`map_rotation.events.${key}`, { defaultValue: event });
+};

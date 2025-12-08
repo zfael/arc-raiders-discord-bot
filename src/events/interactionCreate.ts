@@ -10,9 +10,9 @@ import {
   CONDITION_EMOJIS,
   getCurrentRotation,
   getNextRotationTimestamp,
-  MAP_ROTATIONS,
 } from "../config/mapRotation";
-import { getT } from "../utils/i18n";
+import { getT, translateEvent } from "../utils/i18n";
+import { generateForecast } from "../utils/forecastGenerator";
 import { interactionLockManager } from "../utils/interactionLock";
 import { logger } from "../utils/logger";
 import { createMapRotationEmbed } from "../utils/messageManager";
@@ -206,14 +206,6 @@ export async function handleInteraction(interaction: Interaction) {
       return [row1, row2];
     };
 
-    // Helper to translate event names (basic mapping)
-    const translateEvent = (event: string) => {
-      if (event === "None") return t("map_rotation.events.none");
-      const key = event.toLowerCase();
-      // Check if key exists in translation (simple check)
-      return t(`map_rotation.events.${key}`, { defaultValue: event });
-    };
-
     // handle view mode switching
     if (customId === "view_mode_major") {
       await interaction.editReply({ components: getButtons("major") });
@@ -261,79 +253,23 @@ export async function handleInteraction(interaction: Interaction) {
       const currentHour = current.hour;
       const nextRotationTs = getNextRotationTimestamp();
 
-      embed.setDescription(
-        `${t("map_rotation.forecast.title_location", { location: locationName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
-      );
-      embed.setImage("attachment://map-status.png");
-      embed.setFields([]);
+      const { descriptionSuffix, fields } = generateForecast({
+        t,
+        currentHour,
+        nextRotationTs,
+        filter: { type: "location", value: location },
+        mobileFriendly,
+      });
 
-      if (mobileFriendly) {
-        let description = `${t("map_rotation.forecast.title_location", { location: locationName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
-        let hasEvents = false;
+      let description = `${t("map_rotation.forecast.title_location", { location: locationName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
 
-        for (let i = 1; i <= 24; i++) {
-          const hourIndex = (currentHour + i) % 24;
-          const rotation = MAP_ROTATIONS[hourIndex];
-          const timestamp = nextRotationTs + (i - 1) * 3600;
-          const timeLabel = `<t:${timestamp}:R>`;
-
-          const major = rotation[`${location}Major` as keyof typeof rotation];
-          const minor = rotation[`${location}Minor` as keyof typeof rotation];
-
-          if (major !== "None" || minor !== "None") {
-            let eventText = "";
-            if (major !== "None")
-              eventText += `${CONDITION_EMOJIS[major]} ${translateEvent(String(major))} `;
-            if (minor !== "None")
-              eventText += `${CONDITION_EMOJIS[minor]} ${translateEvent(String(minor))}`;
-
-            description += `**${timeLabel}** • ${eventText}\n`;
-            hasEvents = true;
-          }
-        }
-
-        if (!hasEvents) description += t("map_rotation.forecast.no_events");
-        embed.setDescription(description);
-      } else {
-        // Desktop: Inline Fields
-        let hasEvents = false;
-        let timeCol = "";
-        let conditionCol = "";
-
-        for (let i = 1; i <= 24; i++) {
-          const hourIndex = (currentHour + i) % 24;
-          const rotation = MAP_ROTATIONS[hourIndex];
-          const timestamp = nextRotationTs + (i - 1) * 3600;
-          const timeLabel = `<t:${timestamp}:R>`;
-
-          const major = rotation[`${location}Major` as keyof typeof rotation];
-          const minor = rotation[`${location}Minor` as keyof typeof rotation];
-
-          if (major !== "None" || minor !== "None") {
-            let eventText = "";
-            if (major !== "None")
-              eventText += `${CONDITION_EMOJIS[major]} ${translateEvent(String(major))} `;
-            if (minor !== "None")
-              eventText += `${CONDITION_EMOJIS[minor]} ${translateEvent(String(minor))}`;
-
-            timeCol += `${timeLabel}\n`;
-            conditionCol += `${eventText}\n`;
-            hasEvents = true;
-          }
-        }
-
-        if (hasEvents) {
-          embed.addFields(
-            { name: t("map_rotation.forecast.time_until"), value: timeCol, inline: true },
-            { name: t("map_rotation.forecast.conditions"), value: conditionCol, inline: true },
-            { name: "\u200b", value: "\u200b", inline: true },
-          );
-        } else {
-          embed.setDescription(
-            `${embed.data.description}\n\n${t("map_rotation.forecast.no_events")}`,
-          );
-        }
+      if (mobileFriendly || (!mobileFriendly && !fields.length)) {
+        description += descriptionSuffix;
       }
+
+      embed.setDescription(description.trim()); // trim to remove extra newlines if any
+      embed.setImage("attachment://map-status.png");
+      embed.setFields(fields);
 
       const buttons = getButtons("map");
       (buttons[1].components[2] as ButtonBuilder).setDisabled(false);
@@ -346,108 +282,28 @@ export async function handleInteraction(interaction: Interaction) {
     if (customId.startsWith("view_event_")) {
       const eventType = customId.replace("view_event_", "");
       const emoji = eventType === "None" ? "✅" : CONDITION_EMOJIS[eventType] || "";
-      const eventName = translateEvent(eventType);
+      const eventName = translateEvent(t, eventType);
 
       const currentHour = current.hour;
       const nextRotationTs = getNextRotationTimestamp();
-      const locations = ["dam", "buriedCity", "spaceport", "blueGate", "stellaMontis"];
 
-      embed.setDescription(
-        `${t("map_rotation.forecast.title_event", { emoji, event: eventName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
-      );
-      embed.setImage("attachment://map-status.png");
-      embed.setFields([]);
+      const { descriptionSuffix, fields } = generateForecast({
+        t,
+        currentHour,
+        nextRotationTs,
+        filter: { type: "event", value: eventType },
+        mobileFriendly,
+      });
 
-      if (mobileFriendly) {
-        let description = `${t("map_rotation.forecast.title_event", { emoji, event: eventName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
-        let hasEvents = false;
+      let description = `${t("map_rotation.forecast.title_event", { emoji, event: eventName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
 
-        for (let i = 1; i <= 24; i++) {
-          const hourIndex = (currentHour + i) % 24;
-          const rotation = MAP_ROTATIONS[hourIndex];
-          const timestamp = nextRotationTs + (i - 1) * 3600;
-          const timeLabel = `<t:${timestamp}:R>`;
-
-          const occurringLocations = [];
-          for (const loc of locations) {
-            if (
-              rotation[`${loc}Major` as keyof typeof rotation] === eventType ||
-              rotation[`${loc}Minor` as keyof typeof rotation] === eventType
-            ) {
-              // Map loc to translation key
-              const locationKeyMap: Record<string, string> = {
-                dam: "dam",
-                buriedCity: "buried_city",
-                spaceport: "spaceport",
-                blueGate: "blue_gate",
-                stellaMontis: "stella_montis",
-              };
-              const locKey = locationKeyMap[loc] || loc;
-              const locName = t(`map_rotation.locations.${locKey}`);
-              occurringLocations.push(locName);
-            }
-          }
-
-          if (occurringLocations.length > 0) {
-            const locText = occurringLocations.join(", ");
-            description += `**${timeLabel}** • ${locText}\n`;
-            hasEvents = true;
-          }
-        }
-
-        if (!hasEvents) description += t("map_rotation.forecast.no_events");
-        embed.setDescription(description);
-      } else {
-        // Desktop: Inline Fields
-        let hasEvents = false;
-        let timeCol = "";
-        let locCol = "";
-
-        for (let i = 1; i <= 24; i++) {
-          const hourIndex = (currentHour + i) % 24;
-          const rotation = MAP_ROTATIONS[hourIndex];
-          const timestamp = nextRotationTs + (i - 1) * 3600;
-          const timeLabel = `<t:${timestamp}:R>`;
-
-          const occurringLocations = [];
-          for (const loc of locations) {
-            if (
-              rotation[`${loc}Major` as keyof typeof rotation] === eventType ||
-              rotation[`${loc}Minor` as keyof typeof rotation] === eventType
-            ) {
-              const locationKeyMap: Record<string, string> = {
-                dam: "dam",
-                buriedCity: "buried_city",
-                spaceport: "spaceport",
-                blueGate: "blue_gate",
-                stellaMontis: "stella_montis",
-              };
-              const locKey = locationKeyMap[loc] || loc;
-              const locName = t(`map_rotation.locations.${locKey}`);
-              occurringLocations.push(locName);
-            }
-          }
-
-          if (occurringLocations.length > 0) {
-            const locText = occurringLocations.join(", ");
-            timeCol += `${timeLabel}\n`;
-            locCol += `${locText}\n`;
-            hasEvents = true;
-          }
-        }
-
-        if (hasEvents) {
-          embed.addFields(
-            { name: t("map_rotation.forecast.time_until"), value: timeCol, inline: true },
-            { name: t("map_rotation.forecast.locations"), value: locCol, inline: true },
-            { name: "\u200b", value: "\u200b", inline: true },
-          );
-        } else {
-          embed.setDescription(
-            `${embed.data.description}\n\n${t("map_rotation.forecast.no_events")}`,
-          );
-        }
+      if (mobileFriendly || (!mobileFriendly && !fields.length)) {
+        description += descriptionSuffix;
       }
+
+      embed.setDescription(description.trim());
+      embed.setImage("attachment://map-status.png");
+      embed.setFields(fields);
 
       const majorEvents = ["Harvester", "Night", "Storm", "Tower", "Bunker", "Matriarch"];
       const mode = majorEvents.includes(eventType) ? "major" : "minor";
