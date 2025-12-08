@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# GitHub
+.github/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+*.spec.ts
+
+# Development files
+.prettierrc
+biome.jsonc
+.biomeignore
+
+# Documentation
+README.md
+CONTRIBUTING.md
+LICENSE
+
+# Scripts
+start-bot-pm2.bat
