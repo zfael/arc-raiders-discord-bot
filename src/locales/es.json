@@ -22,6 +22,10 @@
         "locale": {
           "name": "idioma",
           "description": "Establece el idioma del bot en este servidor"
+        },
+        "notification-method": {
+          "name": "metodo-notificacion",
+          "description": "Cómo se publican las actualizaciones del mapa en el canal"
         }
       }
     },
@@ -48,9 +52,15 @@
     "settings": {
       "mobile_friendly_updated": "El modo vista móvil ahora está **{{status}}**.",
       "locale_updated": "Idioma establecido en **{{locale}}**.",
+      "notification_method_updated": "Método de notificación actualizado a: **{{method}}**",
       "no_changes": "No se realizaron cambios.",
       "enabled": "ACTIVADO",
-      "disabled": "DESACTIVADO"
+      "disabled": "DESACTIVADO",
+      "notification_methods": {
+        "pin-edit": "Anclar y Editar (1 mensaje actualizado)",
+        "post-delete": "Publicar cada hora y Eliminar anterior",
+        "post-keep": "Publicar cada hora y Mantener historial"
+      }
     },
     "set_channel": {
       "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles."

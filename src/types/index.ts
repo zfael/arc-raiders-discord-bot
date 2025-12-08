@@ -5,6 +5,8 @@ import type {
   SlashCommandBuilder,
 } from "discord.js";
 
+export type NotificationMethod = "pin-edit" | "post-delete" | "post-keep";
+
 export interface ServerConfigEntry {
   channelId: string;
   serverName?: string;
@@ -12,6 +14,7 @@ export interface ServerConfigEntry {
   lastUpdated?: string;
   mobileFriendly?: boolean;
   locale?: string;
+  notificationMethod?: NotificationMethod;
 }
 
 export interface ServerConfig {

@@ -33,10 +33,4 @@ export function initScheduler(client: Client): void {
   );
 
   logger.info("Map rotation cron scheduler initialized (runs at :00 of every hour UTC)");
-
-  // Run immediately on startup
-  logger.info("Running initial map rotation update...");
-  updateMapStatus(client).then(() => {
-    logger.info("Initial update complete");
-  });
 }
