@@ -66,12 +66,96 @@ The bot tracks these condition types across all maps:
 
 ## Prerequisites
 
-- Node.js 18.x or higher
-- npm or yarn
+- Docker and Docker Compose (for Docker installation)
+- OR Node.js 24.x or higher (for manual installation)
 - A Discord Bot Token from [Discord Developer Portal](https://discord.com/developers/applications)
 - Supabase project URL and Service Role key (used for persisting server/message metadata)
 
 ## Installation
+
+### Option 1: Docker (Recommended)
+
+The easiest way to run the bot is using Docker. Pre-built multi-architecture images are available on GitHub Container Registry.
+
+#### Using Docker Compose
+
+1. **Create a `.env` file** with your configuration:
+
+   ```env
+   DISCORD_TOKEN=your_bot_token_here
+   CLIENT_ID=your_client_id_here
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   LOG_LEVEL=info
+   PORT=6767
+   ```
+
+2. **Create a `docker-compose.yml` file**:
+
+   ```yaml
+   version: '3.8'
+
+   services:
+     arc-raiders-bot:
+       image: ghcr.io/zfael/arc-raiders-discord-bot:latest
+       container_name: arc-raiders-discord-bot
+       restart: unless-stopped
+       env_file:
+         - .env
+       ports:
+         - "6767:6767"
+       environment:
+         - TZ=UTC
+   ```
+
+3. **Start the bot**:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **View logs**:
+
+   ```bash
+   docker-compose logs -f
+   ```
+
+5. **Stop the bot**:
+
+   ```bash
+   docker-compose down
+   ```
+
+#### Using Docker Run
+
+Alternatively, run directly with Docker:
+
+```bash
+docker run -d \
+  --name arc-raiders-discord-bot \
+  --restart unless-stopped \
+  -p 6767:6767 \
+  --env-file .env \
+  ghcr.io/zfael/arc-raiders-discord-bot:latest
+```
+
+#### Available Image Tags
+
+- `latest` - Latest stable release from main branch
+- `v1.0.0` - Specific version tags
+- `main` - Latest commit on main branch (may be unstable)
+
+#### Multi-Architecture Support
+
+Images are built for both:
+- `linux/amd64` (x86_64 / Intel/AMD)
+- `linux/arm64` (ARM64 / Apple Silicon / Raspberry Pi)
+
+Docker will automatically pull the correct architecture for your system.
+
+### Option 2: Manual Installation
+
+If you prefer to run without Docker:
 
 1. **Clone the repository**
 
