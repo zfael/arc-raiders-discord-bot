@@ -11,7 +11,12 @@ import {
   loadAvailableLocales,
 } from "../utils/localeLoader";
 import { logger } from "../utils/logger";
-import { getServerConfigs, setMobileFriendly, setServerLocale } from "../utils/serverConfig";
+import {
+  getServerConfigs,
+  setMobileFriendly,
+  setNotificationMethod,
+  setServerLocale,
+} from "../utils/serverConfig";
 
 const locales = loadAvailableLocales();
 const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
@@ -24,6 +29,11 @@ const mobileFriendlyLocalizations = buildOptionLocalizations(
   locales,
 );
 const localeOptionLocalizations = buildOptionLocalizations("settings", "locale", locales);
+const notificationMethodLocalizations = buildOptionLocalizations(
+  "settings",
+  "notification-method",
+  locales,
+);
 
 const SettingsCommand: Command = {
   data: new SlashCommandBuilder()
@@ -53,6 +63,19 @@ const SettingsCommand: Command = {
           })),
         ),
     )
+    .addStringOption((option) =>
+      option
+        .setName("notification-method")
+        .setDescription("How map updates are posted to the channel")
+        .setNameLocalizations(notificationMethodLocalizations.nameLocalizations)
+        .setDescriptionLocalizations(notificationMethodLocalizations.descriptionLocalizations)
+        .setRequired(false)
+        .addChoices(
+          { name: "📌 Pin & Edit (1 updated message)", value: "pin-edit" },
+          { name: "🔄 Hourly Post & Delete Old", value: "post-delete" },
+          { name: "📝 Hourly Post & Keep History", value: "post-keep" },
+        ),
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) as Command["data"],
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId) {
@@ -78,8 +101,13 @@ const SettingsCommand: Command = {
 
     const mobileFriendly = interaction.options.getBoolean("mobile-friendly");
     const locale = interaction.options.getString("locale");
+    const notificationMethod = interaction.options.getString("notification-method") as
+      | "pin-edit"
+      | "post-delete"
+      | "post-keep"
+      | null;
 
-    if (mobileFriendly === null && locale === null) {
+    if (mobileFriendly === null && locale === null && notificationMethod === null) {
       await interaction.reply({
         content: t("commands.settings.no_changes"),
         ephemeral: true,
@@ -105,6 +133,12 @@ const SettingsCommand: Command = {
         const localeData = locales.get(locale);
         const localeName = localeData?._language_name || locale;
         responseMessage += `${newT("commands.settings.locale_updated", { locale: localeName })}\n`;
+      }
+
+      if (notificationMethod !== null) {
+        await setNotificationMethod(interaction.guildId, notificationMethod);
+        const methodName = t(`commands.settings.notification_methods.${notificationMethod}`);
+        responseMessage += `${t("commands.settings.notification_method_updated", { method: methodName })}\n`;
       }
 
       await interaction.reply({

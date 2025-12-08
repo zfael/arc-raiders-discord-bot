@@ -313,26 +313,40 @@ export async function postOrUpdateInChannel(
     const configs = await getServerConfigs();
     const config = configs[guildId];
     const mobileFriendly = config?.mobileFriendly ?? false;
+    const notificationMethod = config?.notificationMethod ?? "pin-edit";
     // Use override if provided, otherwise fetch from config
     const locale = localeOverride || config?.locale || channel.guild?.preferredLocale || "en";
 
     const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
     let message: Message;
 
-    if (
-      existingMessageId != null &&
-      typeof existingMessageId === "string" &&
-      existingMessageId.trim() !== ""
-    ) {
-      try {
-        message = await channel.messages.fetch(existingMessageId);
-        await message.edit({
-          embeds: [embed],
-          files: files,
-          components: components,
-        });
-      } catch (_error) {
-        logger.warn(`Message not found in ${channelId}, creating a new one.`);
+    // Handle different notification methods
+    if (notificationMethod === "pin-edit") {
+      // Option 1: Pin and Edit (current behavior)
+      if (
+        existingMessageId != null &&
+        typeof existingMessageId === "string" &&
+        existingMessageId.trim() !== ""
+      ) {
+        try {
+          message = await channel.messages.fetch(existingMessageId);
+          await message.edit({
+            embeds: [embed],
+            files: files,
+            components: components,
+          });
+          logger.info(`Updated pinned message in ${channelId}`);
+        } catch (_error) {
+          logger.warn(`Message not found in ${channelId}, creating a new one.`);
+          message = await channel.send({
+            embeds: [embed],
+            files: files,
+            components: components,
+          });
+          await message.pin().catch(catchPinError);
+          logger.info(`Created and pinned a new message in ${channelId}`);
+        }
+      } else {
         message = await channel.send({
           embeds: [embed],
           files: files,
@@ -341,17 +355,42 @@ export async function postOrUpdateInChannel(
         await message.pin().catch(catchPinError);
         logger.info(`Created and pinned a new message in ${channelId}`);
       }
-    } else {
+      await setServerMessageState(guildId, message.id, new Date().toISOString());
+    } else if (notificationMethod === "post-delete") {
+      // Option 2: Post new and delete old
+      if (
+        existingMessageId != null &&
+        typeof existingMessageId === "string" &&
+        existingMessageId.trim() !== ""
+      ) {
+        try {
+          const oldMessage = await channel.messages.fetch(existingMessageId);
+          await oldMessage.delete().catch((error) => {
+            logger.warn({ error }, `Failed to delete old message ${existingMessageId}`);
+          });
+        } catch (_error) {
+          logger.warn(`Old message ${existingMessageId} not found, skipping deletion`);
+        }
+      }
+
       message = await channel.send({
         embeds: [embed],
         files: files,
         components: components,
       });
-      await message.pin().catch(catchPinError);
-      logger.info(`Created and pinned a new message in ${channelId}`);
+      logger.info(`Posted new message in ${channelId} (post-delete mode)`);
+      await setServerMessageState(guildId, message.id, new Date().toISOString());
+    } else if (notificationMethod === "post-keep") {
+      // Option 3: Post new and keep history
+      message = await channel.send({
+        embeds: [embed],
+        files: files,
+        components: components,
+      });
+      logger.info(`Posted new message in ${channelId} (post-keep mode)`);
+      // Don't store message ID for post-keep mode, or set to null
+      await setServerMessageState(guildId, message.id, new Date().toISOString());
     }
-
-    await setServerMessageState(guildId, message.id, new Date().toISOString());
   } catch (error) {
     logger.error(
       { type: (error as any)?.type, message: (error as any)?.message },

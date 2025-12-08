@@ -1,4 +1,4 @@
-import type { ServerConfig } from "../types";
+import type { NotificationMethod, ServerConfig } from "../types";
 import { logger } from "./logger";
 import { isLocaleAvailable } from "./localeLoader";
 import { supabase } from "./supabaseClient";
@@ -13,6 +13,7 @@ interface ServerRow {
   last_updated: string | null;
   mobile_friendly: boolean | null;
   locale: string | null;
+  notification_method: string | null;
 }
 
 /**
@@ -24,7 +25,7 @@ export async function getServerConfigs(): Promise<ServerConfig> {
     const { data, error } = await supabase
       .from(SERVERS_TABLE)
       .select(
-        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale",
+        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale, notification_method",
       );
 
     if (error) {
@@ -45,6 +46,7 @@ export async function getServerConfigs(): Promise<ServerConfig> {
         lastUpdated: row.last_updated ?? undefined,
         mobileFriendly: row.mobile_friendly ?? false,
         locale: row.locale ?? "en",
+        notificationMethod: (row.notification_method as NotificationMethod) ?? "pin-edit",
       };
       return acc;
     }, {} as ServerConfig);
@@ -138,6 +140,28 @@ export async function setServerLocale(guildId: string, locale: string): Promise<
     }
   } catch (error) {
     logger.error({ err: error }, "Error updating server locale");
+    throw error;
+  }
+}
+
+/**
+ * Updates the notification method for a server.
+ */
+export async function setNotificationMethod(
+  guildId: string,
+  method: NotificationMethod,
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from(SERVERS_TABLE)
+      .update({ notification_method: method })
+      .eq("guild_id", guildId);
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    logger.error({ err: error }, "Error updating notification method");
     throw error;
   }
 }

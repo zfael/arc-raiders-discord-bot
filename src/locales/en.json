@@ -23,6 +23,10 @@
         "locale": {
           "name": "locale",
           "description": "Set the language for the bot in this server"
+        },
+        "notification-method": {
+          "name": "notification-method",
+          "description": "How map updates are posted to the channel"
         }
       }
     },
@@ -49,9 +53,15 @@
     "settings": {
       "mobile_friendly_updated": "Mobile-friendly mode is now **{{status}}**.",
       "locale_updated": "Language set to **{{locale}}**.",
+      "notification_method_updated": "Notification method updated to: **{{method}}**",
       "no_changes": "No changes were made.",
       "enabled": "ENABLED",
-      "disabled": "DISABLED"
+      "disabled": "DISABLED",
+      "notification_methods": {
+        "pin-edit": "Pin & Edit (1 updated message)",
+        "post-delete": "Hourly Post & Delete Old",
+        "post-keep": "Hourly Post & Keep History"
+      }
     },
     "set_channel": {
       "success": "Map rotation updates will now be sent to {{channel}}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use `/settings mobile-friendly: True` to switch to a mobile-optimized layout."
