@@ -147,7 +147,7 @@ const SettingsCommand: Command = {
       });
 
       logger.info(
-        `Settings updated for guild ${interaction.guildId}: mobileFriendly=${mobileFriendly}, locale=${locale}`,
+        `Settings updated for guild ${interaction.guildId}: mobileFriendly=${mobileFriendly}, locale=${locale}, notificationMethod=${notificationMethod}`,
       );
 
       // Trigger immediate update of the map message
