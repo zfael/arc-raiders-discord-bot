@@ -62,3 +62,95 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Local Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+      - name: Create deployment directory and .env file on server
+        env:
+          ENV_CONTENT: ${{ secrets.ENV_FILE }}
+        run: |
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }} << 'ENDSSH'
+            mkdir -p ~/arc-raiders-bot
+            cat > ~/arc-raiders-bot/.env << 'ENDENV'
+          ENDSSH
+          
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }} \
+            "cat >> ~/arc-raiders-bot/.env" <<< "$ENV_CONTENT"
+          
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }} \
+            "echo 'ENDENV' >> ~/arc-raiders-bot/.env"
+
+      - name: Copy docker-compose.yml to server
+        run: |
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" scp -o StrictHostKeyChecking=no \
+            docker-compose.yml \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }}:~/arc-raiders-bot/
+
+      - name: Deploy with docker-compose
+        run: |
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }} << 'EOF'
+            cd ~/arc-raiders-bot
+            echo "Pulling latest Docker image..."
+            docker-compose pull
+            echo "Restarting service..."
+            docker-compose up -d
+            echo "Deployment complete!"
+          EOF
+
+      - name: Wait for service to be ready
+        run: |
+          echo "Waiting for bot to become healthy..."
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }} << 'EOF'
+            for i in {1..12}; do
+              if curl -f http://localhost:6767/health 2>/dev/null; then
+                echo "✅ Bot is healthy!"
+                echo "Health check response:"
+                curl -s http://localhost:6767/health | jq .
+                exit 0
+              fi
+              echo "Attempt $i/12: Waiting for health check..."
+              sleep 5
+            done
+            echo "❌ Health check failed after 60 seconds"
+            echo "Container logs:"
+            cd ~/arc-raiders-bot
+            docker-compose logs --tail=50
+            exit 1
+          EOF
+
+      - name: Show deployment logs
+        if: success()
+        run: |
+          echo "Fetching deployment logs..."
+          sshpass -p "${{ secrets.LOCAL_SERVER_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.LOCAL_SERVER_SSH_USER }}@${{ secrets.LOCAL_SERVER_SSH_HOST_IP }} \
+            "cd ~/arc-raiders-bot && docker-compose logs --tail=30"
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "### Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Server:** ${{ secrets.LOCAL_SERVER_SSH_HOST_IP }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Path:** ~/arc-raiders-bot" >> $GITHUB_STEP_SUMMARY
+          echo "**Health Check:** http://localhost:6767/health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The bot is now running with the latest Docker image." >> $GITHUB_STEP_SUMMARY
