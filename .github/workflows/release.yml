@@ -69,7 +69,6 @@ jobs:
         id: version_bump
         run: |
           latest_tag="${{ steps.get_latest_tag.outputs.latest_tag }}"
-          commits="${{ steps.commits.outputs.commits }}"
           manual_bump="${{ inputs.version_bump }}"
           
           # Remove 'v' prefix for version calculation
@@ -81,11 +80,11 @@ jobs:
             bump_type="$manual_bump"
             echo "Using manual bump type: $bump_type"
           else
-            # Auto-detect from commits
-            if echo "$commits" | grep -qiE "^(feat|feature)(\(.+\))?!:|BREAKING CHANGE:|breaking:"; then
+            # Auto-detect from commits by checking git log directly
+            if git log ${latest_tag}..HEAD --pretty=format:"%s" | grep -qiE "^(feat|feature)(\(.+\))?!:|BREAKING CHANGE:|breaking:"; then
               bump_type="major"
               echo "Detected BREAKING CHANGE - major bump"
-            elif echo "$commits" | grep -qiE "^(feat|feature)(\(.+\))?:"; then
+            elif git log ${latest_tag}..HEAD --pretty=format:"%s" | grep -qiE "^(feat|feature)(\(.+\))?:"; then
               bump_type="minor"
               echo "Detected feature commits - minor bump"
             else
