@@ -86,6 +86,9 @@ jobs:
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+        env:
+          TS_OAUTH_CLIENT_ID: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          TS_OAUTH_SECRET: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
 
       - name: Install sshpass
         run: |
