@@ -84,11 +84,7 @@ jobs:
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
-          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
-        env:
-          TS_OAUTH_CLIENT_ID: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          TS_OAUTH_SECRET: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
       - name: Install sshpass
         run: |
