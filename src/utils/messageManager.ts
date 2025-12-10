@@ -418,7 +418,7 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
   // Process in chunks to avoid rate limits/overload
   // Increased to 50 for mass updates (Discord rate limit is 50 requests/sec globally, but per-channel is lower)
   // Since we are mostly editing messages, 50 parallel requests is reasonable.
-  const CHUNK_SIZE = 50;
+  const CHUNK_SIZE = Number(process.env.MESSAGE_PROCESSING_CHUNKS) || 50;
   for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
     const chunkStart = Date.now();
     const chunk = entries.slice(i, i + CHUNK_SIZE);
