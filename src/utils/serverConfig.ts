@@ -18,15 +18,23 @@ interface ServerRow {
 
 /**
  * Reads all server configurations from Supabase.
+ * @param notificationMethods Optional array of notification methods to filter by at SQL level.
  * @returns The server configurations keyed by guildId.
  */
-export async function getServerConfigs(): Promise<ServerConfig> {
+export async function getServerConfigs(notificationMethods?: string[]): Promise<ServerConfig> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from(SERVERS_TABLE)
       .select(
         "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale, notification_method",
       );
+
+    // Filter by notification methods at SQL level if specified
+    if (notificationMethods && notificationMethods.length > 0) {
+      query = query.in("notification_method", notificationMethods);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw error;

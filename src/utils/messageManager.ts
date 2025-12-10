@@ -402,10 +402,14 @@ export async function postOrUpdateInChannel(
 /**
  * Iterates through all configured servers and updates their map rotation messages.
  * @param {Client} client The Discord client.
+ * @param {string[]} filterByNotificationMethod Optional array of notification methods to filter by.
  */
-export async function postOrUpdateMapMessages(client: Client): Promise<void> {
+export async function postOrUpdateMapMessages(
+  client: Client,
+  filterByNotificationMethod?: string[],
+): Promise<void> {
   const start = Date.now();
-  const serverConfigs = await getServerConfigs();
+  const serverConfigs = await getServerConfigs(filterByNotificationMethod);
 
   // Filter by TEST_GUILD_ID if configured (for local testing)
   const testGuildId = process.env.TEST_GUILD_ID;
