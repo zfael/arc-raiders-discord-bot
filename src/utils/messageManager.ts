@@ -401,6 +401,7 @@ export async function postOrUpdateInChannel(
 
 /**
  * Iterates through all configured servers and updates their map rotation messages.
+ * Uses a queue-based approach with concurrent workers for optimal performance.
  * @param {Client} client The Discord client.
  * @param {string[]} filterByNotificationMethod Optional array of notification methods to filter by.
  */
@@ -430,26 +431,57 @@ export async function postOrUpdateMapMessages(
     return;
   }
 
-  logger.info(`Starting update for ${entries.length} servers...`);
+  // Queue-based processing with configurable concurrency
+  const CONCURRENT_WORKERS = Number(process.env.MESSAGE_PROCESSING_WORKERS) || 5;
+  logger.info(`Starting update for ${entries.length} servers with ${CONCURRENT_WORKERS} concurrent workers...`);
 
-  // Process in chunks to avoid rate limits/overload
-  // Increased to 50 for mass updates (Discord rate limit is 50 requests/sec globally, but per-channel is lower)
-  // Since we are mostly editing messages, 50 parallel requests is reasonable.
-  const CHUNK_SIZE = Number(process.env.MESSAGE_PROCESSING_CHUNKS) || 50;
-  for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
-    const chunkStart = Date.now();
-    const chunk = entries.slice(i, i + CHUNK_SIZE);
-    await Promise.all(
-      chunk.map(([guildId, config]) =>
-        postOrUpdateInChannel(client, guildId, config.channelId, config.messageId),
-      ),
-    );
-    logger.info(
-      `Chunk ${Math.floor(i / CHUNK_SIZE) + 1} processed in ${Date.now() - chunkStart}ms`,
-    );
+  // Context to track processing state
+  const context = {
+    queueIndex: 0,
+    processed: 0,
+    errors: 0,
+  };
+
+  const worker = async (workerId: number) => {
+    while (true) {
+      // Atomically get next index and increment
+      const currentIndex = context.queueIndex++;
+
+      // Check if we've exhausted the queue
+      if (currentIndex >= entries.length) break;
+
+      const [guildId, config] = entries[currentIndex];
+
+      try {
+        await postOrUpdateInChannel(client, guildId, config.channelId, config.messageId);
+        context.processed++;
+
+        if (context.processed % 10 === 0) {
+          logger.info(`Progress: ${context.processed}/${entries.length} servers processed`);
+        }
+      } catch (error) {
+        context.errors++;
+        logger.error(
+          { guildId, channelId: config.channelId, error },
+          `Worker ${workerId}: Failed to process server`,
+        );
+      }
+    }
+  };
+
+  // Start concurrent workers
+  const workers: Promise<void>[] = [];
+  for (let i = 0; i < CONCURRENT_WORKERS; i++) {
+    workers.push(worker(i + 1));
   }
 
-  logger.info(`All updates completed in ${Date.now() - start}ms`);
+  // Wait for all workers to complete
+  await Promise.all(workers);
+
+  const duration = Date.now() - start;
+  logger.info(
+    `All updates completed in ${duration}ms (${context.processed} successful, ${context.errors} errors, avg ${Math.round(duration / entries.length)}ms per server)`,
+  );
 }
 
 const catchPinError = (error: unknown) => {
