@@ -406,7 +406,7 @@ export async function postOrUpdateInChannel(
 export async function postOrUpdateMapMessages(client: Client): Promise<void> {
   const start = Date.now();
   const serverConfigs = await getServerConfigs();
-  
+
   // Filter by TEST_GUILD_ID if configured (for local testing)
   const testGuildId = process.env.TEST_GUILD_ID;
   const entries = testGuildId
@@ -418,7 +418,11 @@ export async function postOrUpdateMapMessages(client: Client): Promise<void> {
   }
 
   if (entries.length === 0) {
-    logger.info(testGuildId ? `No configuration found for test guild ${testGuildId}.` : "No servers configured for updates.");
+    logger.info(
+      testGuildId
+        ? `No configuration found for test guild ${testGuildId}.`
+        : "No servers configured for updates.",
+    );
     return;
   }
 
