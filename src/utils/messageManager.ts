@@ -433,7 +433,9 @@ export async function postOrUpdateMapMessages(
 
   // Queue-based processing with configurable concurrency
   const CONCURRENT_WORKERS = Number(process.env.MESSAGE_PROCESSING_WORKERS) || 5;
-  logger.info(`Starting update for ${entries.length} servers with ${CONCURRENT_WORKERS} concurrent workers...`);
+  logger.info(
+    `Starting update for ${entries.length} servers with ${CONCURRENT_WORKERS} concurrent workers...`,
+  );
 
   // Context to track processing state
   const context = {
