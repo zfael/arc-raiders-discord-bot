@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as http from "node:http";
 import * as path from "node:path";
-import { Client, Collection, GatewayIntentBits } from "discord.js";
+import { Client, Collection, GatewayIntentBits, MessageFlags } from "discord.js";
 import { config } from "dotenv";
 import type { Command, Event } from "./types";
 import { logger } from "./utils/logger";
@@ -99,7 +99,7 @@ client.on("interactionCreate", async (interaction) => {
       logger.error({ err: error }, `Error executing command ${interaction.commandName}`);
       const errorMessage = {
         content: "There was an error while executing this command!",
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       };
 
       if (interaction.replied || interaction.deferred) {

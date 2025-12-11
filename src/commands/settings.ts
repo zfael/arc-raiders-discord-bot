@@ -1,5 +1,6 @@
 import {
   type ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -82,7 +83,7 @@ const SettingsCommand: Command = {
       const t = getT(interaction.locale);
       await interaction.reply({
         content: t("common.error"),
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       });
       return;
     }
@@ -110,7 +111,7 @@ const SettingsCommand: Command = {
     if (mobileFriendly === null && locale === null && notificationMethod === null) {
       await interaction.reply({
         content: t("commands.settings.no_changes"),
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       });
       return;
     }
@@ -143,7 +144,7 @@ const SettingsCommand: Command = {
 
       await interaction.reply({
         content: responseMessage,
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       });
 
       logger.info(
@@ -167,7 +168,7 @@ const SettingsCommand: Command = {
       logger.error({ err: error }, "Error executing settings command");
       await interaction.reply({
         content: t("common.error"),
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       });
     }
   },
