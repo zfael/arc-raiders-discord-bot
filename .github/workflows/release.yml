@@ -120,55 +120,84 @@ jobs:
           latest_tag="${{ steps.get_latest_tag.outputs.latest_tag }}"
           new_tag="${{ steps.version_bump.outputs.new_tag }}"
           
-          # Create changelog sections
-          features=""
-          fixes=""
-          breaking=""
-          other=""
+          echo "Generating changelog from ${latest_tag} to HEAD"
           
-          # Get commits with full message
+          # Create temporary files for each section
+          breaking_file=$(mktemp)
+          features_file=$(mktemp)
+          fixes_file=$(mktemp)
+          other_file=$(mktemp)
+          
+          # Process each commit
           git log ${latest_tag}..HEAD --pretty=format:"%H|||%s|||%b" | while IFS='|||' read -r hash subject body; do
-            # Check for breaking changes
-            if echo "$subject" | grep -qiE "^(feat|fix|refactor|chore)(\(.+\))?!:" || echo "$body" | grep -qi "BREAKING CHANGE:"; then
-              breaking="${breaking}- ${subject} (${hash:0:7})\n"
+            short_hash="${hash:0:7}"
+            
+            # Check for breaking changes first
+            if echo "$subject" | grep -qE "^[^:]+!:" || echo "$body" | grep -qi "BREAKING CHANGE:"; then
+              echo "- ${subject} (\`${short_hash}\`)" >> "$breaking_file"
             # Features
-            elif echo "$subject" | grep -qiE "^feat(\(.+\))?:"; then
-              features="${features}- ${subject#feat*: } (${hash:0:7})\n"
+            elif echo "$subject" | grep -qiE "^feat(\([^)]+\))?:"; then
+              # Extract description after "feat: " or "feat(scope): "
+              desc=$(echo "$subject" | sed -E 's/^feat(\([^)]+\))?:[[:space:]]*//')
+              echo "- ${desc} (\`${short_hash}\`)" >> "$features_file"
             # Fixes
-            elif echo "$subject" | grep -qiE "^fix(\(.+\))?:"; then
-              fixes="${fixes}- ${subject#fix*: } (${hash:0:7})\n"
-            # Other
+            elif echo "$subject" | grep -qiE "^fix(\([^)]+\))?:"; then
+              # Extract description after "fix: " or "fix(scope): "
+              desc=$(echo "$subject" | sed -E 's/^fix(\([^)]+\))?:[[:space:]]*//')
+              echo "- ${desc} (\`${short_hash}\`)" >> "$fixes_file"
+            # Refactor, docs, style, test, chore, etc.
+            elif echo "$subject" | grep -qiE "^(refactor|docs|style|test|chore|perf|ci|build)(\([^)]+\))?:"; then
+              # Extract type and description
+              type=$(echo "$subject" | sed -E 's/^([^:(]+)(\([^)]+\))?:.*/\1/')
+              desc=$(echo "$subject" | sed -E 's/^[^:]+:[[:space:]]*//')
+              echo "- **${type}**: ${desc} (\`${short_hash}\`)" >> "$other_file"
+            # Unformatted commits
             else
-              other="${other}- ${subject} (${hash:0:7})\n"
+              echo "- ${subject} (\`${short_hash}\`)" >> "$other_file"
             fi
           done
           
           # Build changelog
           changelog="## What's Changed\n\n"
           
-          if [ -n "$breaking" ]; then
-            changelog="${changelog}### ⚠️ BREAKING CHANGES\n\n${breaking}\n"
+          if [ -s "$breaking_file" ]; then
+            changelog="${changelog}### ⚠️ BREAKING CHANGES\n\n"
+            changelog="${changelog}$(cat $breaking_file)\n\n"
           fi
           
-          if [ -n "$features" ]; then
-            changelog="${changelog}### ✨ Features\n\n${features}\n"
+          if [ -s "$features_file" ]; then
+            changelog="${changelog}### ✨ Features\n\n"
+            changelog="${changelog}$(cat $features_file)\n\n"
           fi
           
-          if [ -n "$fixes" ]; then
-            changelog="${changelog}### 🐛 Bug Fixes\n\n${fixes}\n"
+          if [ -s "$fixes_file" ]; then
+            changelog="${changelog}### 🐛 Bug Fixes\n\n"
+            changelog="${changelog}$(cat $fixes_file)\n\n"
           fi
           
-          if [ -n "$other" ]; then
-            changelog="${changelog}### 🔧 Other Changes\n\n${other}\n"
+          if [ -s "$other_file" ]; then
+            changelog="${changelog}### 🔧 Other Changes\n\n"
+            changelog="${changelog}$(cat $other_file)\n\n"
           fi
           
-          changelog="${changelog}\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${latest_tag}...${new_tag}"
+          # Add full changelog link
+          changelog="${changelog}---\n\n"
+          changelog="${changelog}**Full Changelog**: https://github.com/${{ github.repository }}/compare/${latest_tag}...${new_tag}\n"
           
-          # Save to file and output
+          # Clean up temp files
+          rm -f "$breaking_file" "$features_file" "$fixes_file" "$other_file"
+          
+          # Save to file
           echo -e "$changelog" > RELEASE_NOTES.md
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$changelog" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Output for GitHub Actions (properly escaped)
+          {
+            echo "changelog<<CHANGELOG_EOF"
+            echo -e "$changelog"
+            echo "CHANGELOG_EOF"
+          } >> $GITHUB_OUTPUT
+          
+          echo "Changelog generated successfully"
 
       - name: Display release information
         run: |
@@ -199,27 +228,40 @@ jobs:
           echo "Created and pushed tag: $new_tag"
 
       - name: Create GitHub Release
-        if: inputs.dry_run == false
-        uses: actions/create-release@v1
+        if: inputs.dry_run == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version_bump.outputs.new_tag }}
-          release_name: Release ${{ steps.version_bump.outputs.new_tag }}
-          body_path: RELEASE_NOTES.md
-          draft: false
-          prerelease: ${{ inputs.prerelease }}
+        run: |
+          # Read the changelog
+          changelog=$(cat RELEASE_NOTES.md)
+          
+          # Create the release using GitHub CLI
+          gh release create "${{ steps.version_bump.outputs.new_tag }}" \
+            --title "Release ${{ steps.version_bump.outputs.new_tag }}" \
+            --notes-file RELEASE_NOTES.md \
+            ${{ inputs.prerelease == 'true' && '--prerelease' || '' }} \
+            --target ${{ github.sha }}
+          
+          echo "✅ Release ${{ steps.version_bump.outputs.new_tag }} created successfully"
 
       - name: Summary
         run: |
-          echo "### Release Created! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ steps.version_bump.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Type:** ${{ steps.version_bump.outputs.bump_type }} bump" >> $GITHUB_STEP_SUMMARY
-          echo "**Commits:** ${{ steps.commits.outputs.commit_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ steps.version_bump.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Previous Version**: ${{ steps.get_latest_tag.outputs.latest_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Type**: ${{ steps.version_bump.outputs.bump_type }} bump" >> $GITHUB_STEP_SUMMARY
+          echo "**Commits**: ${{ steps.commits.outputs.commit_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Docker images will be built automatically at:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ github.repository }}:${{ steps.version_bump.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ github.repository }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Changelog" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version_bump.outputs.new_tag }})" >> $GITHUB_STEP_SUMMARY
+          cat RELEASE_NOTES.md >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.version_bump.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version_bump.outputs.new_tag }})" >> $GITHUB_STEP_SUMMARY
