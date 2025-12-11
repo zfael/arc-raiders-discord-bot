@@ -128,12 +128,18 @@ jobs:
           fixes_file=$(mktemp)
           other_file=$(mktemp)
           
-          # Process each commit
-          git log ${latest_tag}..HEAD --pretty=format:"%H|||%s|||%b" | while IFS='|||' read -r hash subject body; do
+          # Get commit list (hash and subject only, ignore body to avoid multi-line issues)
+          git log ${latest_tag}..HEAD --pretty=format:"%H %s" | while read -r hash subject; do
+            # Get just the first 7 chars of hash
             short_hash="${hash:0:7}"
+            # Everything after the hash is the subject
+            subject="${hash#????????}"
             
-            # Check for breaking changes first
-            if echo "$subject" | grep -qE "^[^:]+!:" || echo "$body" | grep -qi "BREAKING CHANGE:"; then
+            # Check for breaking changes (! in commit type)
+            if echo "$subject" | grep -qE "^[^:]+!:"; then
+              echo "- ${subject} (\`${short_hash}\`)" >> "$breaking_file"
+            # Check for BREAKING CHANGE in commit body
+            elif git log --format=%B -n 1 $hash | grep -qi "BREAKING CHANGE:"; then
               echo "- ${subject} (\`${short_hash}\`)" >> "$breaking_file"
             # Features
             elif echo "$subject" | grep -qiE "^feat(\([^)]+\))?:"; then
@@ -228,7 +234,7 @@ jobs:
           echo "Created and pushed tag: $new_tag"
 
       - name: Create GitHub Release
-        if: inputs.dry_run == 'false'
+        if: inputs.dry_run == false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
