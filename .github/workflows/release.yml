@@ -128,18 +128,20 @@ jobs:
           fixes_file=$(mktemp)
           other_file=$(mktemp)
           
-          # Get commit list (hash and subject only, ignore body to avoid multi-line issues)
-          git log ${latest_tag}..HEAD --pretty=format:"%H %s" | while read -r hash subject; do
-            # Get just the first 7 chars of hash
-            short_hash="${hash:0:7}"
-            # Everything after the hash is the subject
-            subject="${hash#????????}"
+          # Process commits using --oneline format (short hash + subject)
+          git log ${latest_tag}..HEAD --oneline | while read -r line; do
+            # Extract short hash (first word) and subject (rest of line)
+            short_hash=$(echo "$line" | awk '{print $1}')
+            subject=$(echo "$line" | cut -d' ' -f2-)
+            
+            # Skip empty lines
+            [ -z "$short_hash" ] && continue
             
             # Check for breaking changes (! in commit type)
             if echo "$subject" | grep -qE "^[^:]+!:"; then
               echo "- ${subject} (\`${short_hash}\`)" >> "$breaking_file"
             # Check for BREAKING CHANGE in commit body
-            elif git log --format=%B -n 1 $hash | grep -qi "BREAKING CHANGE:"; then
+            elif git log --format=%B -n 1 $short_hash | grep -qi "BREAKING CHANGE:"; then
               echo "- ${subject} (\`${short_hash}\`)" >> "$breaking_file"
             # Features
             elif echo "$subject" | grep -qiE "^feat(\([^)]+\))?:"; then
