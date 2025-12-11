@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
+  MessageFlags,
   type Interaction,
 } from "discord.js";
 import {
@@ -33,7 +34,7 @@ export async function handleInteraction(interaction: Interaction) {
       const t = getT(interaction.locale);
       await interaction.reply({
         content: t("map_rotation.locked", { remaining }),
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       });
       return;
     }
