@@ -1,0 +1,60 @@
+name: Cleanup PR Docker Images
+
+on:
+  pull_request:
+    types: [closed]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    # Only run if PR was merged and had the docker-build label
+    if: |
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'docker-build')
+    permissions:
+      packages: write
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete PR Docker image
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          IMAGE_TAG="pr-${PR_NUMBER}"
+          
+          echo "Attempting to delete image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG}"
+          
+          # Get the package version ID for the specific tag
+          PACKAGE_VERSION_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/users/${{ github.repository_owner }}/packages/container/${{ github.event.repository.name }}/versions" \
+            | jq -r ".[] | select(.metadata.container.tags[] | contains(\"${IMAGE_TAG}\")) | .id")
+          
+          if [ -n "$PACKAGE_VERSION_ID" ]; then
+            echo "Found package version ID: ${PACKAGE_VERSION_ID}"
+            curl -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/users/${{ github.repository_owner }}/packages/container/${{ github.event.repository.name }}/versions/${PACKAGE_VERSION_ID}"
+            echo "✅ Successfully deleted image tag: ${IMAGE_TAG}"
+          else
+            echo "⚠️  No image found with tag: ${IMAGE_TAG}"
+          fi
+
+      - name: Cleanup summary
+        run: |
+          echo "### Docker Image Cleanup 🧹" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image tag deleted:** \`pr-${{ github.event.pull_request.number }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The Docker image for this PR has been removed from the registry." >> $GITHUB_STEP_SUMMARY
