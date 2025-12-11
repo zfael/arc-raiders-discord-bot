@@ -7,6 +7,8 @@ import type { Command, Event } from "./types";
 import { logger } from "./utils/logger";
 import { initScheduler } from "./utils/mapScheduler";
 import { setupLockExpiration } from "./utils/messageManager";
+import { setupRateLimitMonitoring } from "./utils/rateLimitMonitor";
+import { patchDiscordRateLimiting } from "./utils/discordApiPatch";
 
 // Load environment variables
 config();
@@ -70,7 +72,15 @@ for (const file of eventFiles) {
 
 // Initialize the map rotation scheduler
 initScheduler(client);
+
+// Setup message lock expiration handling
 setupLockExpiration(client);
+
+// Patch Discord REST client for automatic rate limit handling
+patchDiscordRateLimiting(client);
+
+// Setup rate limit monitoring
+setupRateLimitMonitoring(client);
 
 import { handleInteraction } from "./events/interactionCreate";
 
