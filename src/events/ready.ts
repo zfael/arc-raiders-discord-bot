@@ -4,7 +4,7 @@ import { logger } from "../utils/logger";
 import { updateMapStatus } from "../utils/mapScheduler";
 
 const event: Event = {
-  name: "ready",
+  name: "clientReady",
   once: true,
 
   async execute(client: Client) {
