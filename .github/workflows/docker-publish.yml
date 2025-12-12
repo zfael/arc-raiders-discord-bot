@@ -191,3 +191,130 @@ jobs:
           echo "**Health Check:** http://localhost:6767/health" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The bot is now running with the latest Docker image." >> $GITHUB_STEP_SUMMARY
+
+  notify-discord:
+    name: Send Discord Notification
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always() && startsWith(github.ref, 'refs/tags/v') && secrets.DISCORD_WEBHOOK_URL != ''
+    continue-on-error: true
+    permissions:
+      contents: read
+
+    steps:
+      - name: Extract tag version
+        id: tag
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+          echo "Extracted tag: $TAG"
+
+      - name: Fetch release data
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching release data for ${{ steps.tag.outputs.version }}..."
+          
+          # Fetch release data
+          RELEASE_JSON=$(gh release view ${{ steps.tag.outputs.version }} \
+            --repo ${{ github.repository }} \
+            --json body,name,url)
+          
+          # Extract fields
+          RELEASE_NAME=$(echo "$RELEASE_JSON" | jq -r '.name')
+          RELEASE_URL=$(echo "$RELEASE_JSON" | jq -r '.url')
+          RELEASE_BODY=$(echo "$RELEASE_JSON" | jq -r '.body')
+          
+          # Save to outputs (use base64 to handle multiline)
+          echo "name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "url=$RELEASE_URL" >> $GITHUB_OUTPUT
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Release data fetched successfully"
+
+      - name: Send Discord webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          echo "Preparing Discord webhook payload..."
+          
+          # Get timestamp in ISO 8601 format
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+          
+          # Prepare changelog (truncate if needed)
+          CHANGELOG=$(cat << 'EOF'
+          ${{ steps.release.outputs.body }}
+          EOF
+          )
+          
+          # Truncate changelog if longer than 3800 chars
+          MAX_LENGTH=3800
+          if [ ${#CHANGELOG} -gt $MAX_LENGTH ]; then
+            CHANGELOG="${CHANGELOG:0:$MAX_LENGTH}...\n\n[📖 See full changelog](${{ steps.release.outputs.url }})"
+          fi
+          
+          # Escape JSON special characters
+          CHANGELOG_ESCAPED=$(echo "$CHANGELOG" | jq -Rs .)
+          
+          # Build JSON payload
+          PAYLOAD=$(cat <<JSON
+          {
+            "embeds": [{
+              "title": "🚀 ${{ steps.release.outputs.name }}",
+              "description": $CHANGELOG_ESCAPED,
+              "color": 3066993,
+              "url": "${{ steps.release.outputs.url }}",
+              "timestamp": "$TIMESTAMP",
+              "footer": {
+                "text": "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.version }}"
+              }
+            }]
+          }
+          JSON
+          )
+          
+          # Send webhook with retry logic
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          SUCCESS=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Sending webhook..."
+            
+            HTTP_CODE=$(curl -s -o /tmp/webhook_response.txt -w "%{http_code}" \
+              -X POST "$WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "✅ Discord webhook sent successfully (HTTP $HTTP_CODE)"
+              SUCCESS=true
+              break
+            else
+              echo "⚠️  Webhook failed with HTTP $HTTP_CODE"
+              cat /tmp/webhook_response.txt
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                SLEEP_TIME=$((5 * RETRY_COUNT))
+                echo "Retrying in ${SLEEP_TIME}s..."
+                sleep $SLEEP_TIME
+              fi
+            fi
+          done
+          
+          # Log result to step summary
+          if [ "$SUCCESS" = true ]; then
+            echo "### ✅ Discord Notification Sent" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Release notification posted to Discord webhook." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ Discord Notification Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Failed to send webhook after $MAX_RETRIES attempts." >> $GITHUB_STEP_SUMMARY
+            echo "Last HTTP code: $HTTP_CODE" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
