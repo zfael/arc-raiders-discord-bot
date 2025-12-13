@@ -262,6 +262,7 @@ jobs:
           # Build JSON payload
           PAYLOAD=$(cat <<JSON
           {
+            "content": "@everyone",
             "embeds": [{
               "title": "🚀 ${{ steps.release.outputs.name }}",
               "description": $CHANGELOG_ESCAPED,
