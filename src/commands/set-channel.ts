@@ -1,6 +1,7 @@
 import {
   ChannelType,
   type ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
   type TextChannel,
@@ -49,13 +50,13 @@ const SetChannelCommand: Command = {
     if (!interaction.guildId) {
       await interaction.reply({
         content: t("common.only_in_guild"),
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       });
       return;
     }
 
     // Defer reply immediately to prevent timeout while generating image
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: Number(MessageFlags.Ephemeral) });
 
     const channel = interaction.options.getChannel("channel", true) as TextChannel;
 

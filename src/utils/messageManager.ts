@@ -15,7 +15,7 @@ import {
   getNextRotationTimestamp,
   MAP_ROTATIONS,
 } from "../config/mapRotation";
-import { getT } from "./i18n";
+import { getT, translateEvent } from "./i18n";
 import { generateMapImage } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
@@ -52,21 +52,14 @@ export async function createMapRotationEmbed(
     .setColor(primaryColor)
     .setImage("attachment://map-status.png");
 
-  // Helper to translate event names (basic mapping)
-  const translateEvent = (event: string) => {
-    if (event === "None") return t("map_rotation.events.none");
-    const key = event.toLowerCase();
-    return t(`map_rotation.events.${key}`, { defaultValue: event });
-  };
-
   // Helper to format location events with translation
   const formatLocationEventsTranslated = (major: string, minor: string) => {
     const parts = [];
     if (major !== "None") {
-      parts.push(`${CONDITION_EMOJIS[major]} **${translateEvent(major)}**`);
+      parts.push(`${CONDITION_EMOJIS[major]} **${translateEvent(t, major)}**`);
     }
     if (minor !== "None") {
-      parts.push(`${CONDITION_EMOJIS[minor]} ${translateEvent(minor)}`);
+      parts.push(`${CONDITION_EMOJIS[minor]} ${translateEvent(t, minor)}`);
     }
     return parts.length > 0 ? parts.join("\n") : t("map_rotation.events.none");
   };
@@ -320,26 +313,40 @@ export async function postOrUpdateInChannel(
     const configs = await getServerConfigs();
     const config = configs[guildId];
     const mobileFriendly = config?.mobileFriendly ?? false;
+    const notificationMethod = config?.notificationMethod ?? "pin-edit";
     // Use override if provided, otherwise fetch from config
     const locale = localeOverride || config?.locale || channel.guild?.preferredLocale || "en";
 
     const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
     let message: Message;
 
-    if (
-      existingMessageId != null &&
-      typeof existingMessageId === "string" &&
-      existingMessageId.trim() !== ""
-    ) {
-      try {
-        message = await channel.messages.fetch(existingMessageId);
-        await message.edit({
-          embeds: [embed],
-          files: files,
-          components: components,
-        });
-      } catch (_error) {
-        logger.warn(`Message not found in ${channelId}, creating a new one.`);
+    // Handle different notification methods
+    if (notificationMethod === "pin-edit") {
+      // Option 1: Pin and Edit (current behavior)
+      if (
+        existingMessageId != null &&
+        typeof existingMessageId === "string" &&
+        existingMessageId.trim() !== ""
+      ) {
+        try {
+          message = await channel.messages.fetch(existingMessageId);
+          await message.edit({
+            embeds: [embed],
+            files: files,
+            components: components,
+          });
+          logger.info(`Updated pinned message in ${channelId}`);
+        } catch (_error) {
+          logger.warn(`Message not found in ${channelId}, creating a new one.`);
+          message = await channel.send({
+            embeds: [embed],
+            files: files,
+            components: components,
+          });
+          await message.pin().catch(catchPinError);
+          logger.info(`Created and pinned a new message in ${channelId}`);
+        }
+      } else {
         message = await channel.send({
           embeds: [embed],
           files: files,
@@ -348,17 +355,42 @@ export async function postOrUpdateInChannel(
         await message.pin().catch(catchPinError);
         logger.info(`Created and pinned a new message in ${channelId}`);
       }
-    } else {
+      await setServerMessageState(guildId, message.id, new Date().toISOString());
+    } else if (notificationMethod === "post-delete") {
+      // Option 2: Post new and delete old
+      if (
+        existingMessageId != null &&
+        typeof existingMessageId === "string" &&
+        existingMessageId.trim() !== ""
+      ) {
+        try {
+          const oldMessage = await channel.messages.fetch(existingMessageId);
+          await oldMessage.delete().catch((error) => {
+            logger.warn({ error }, `Failed to delete old message ${existingMessageId}`);
+          });
+        } catch (_error) {
+          logger.warn(`Old message ${existingMessageId} not found, skipping deletion`);
+        }
+      }
+
       message = await channel.send({
         embeds: [embed],
         files: files,
         components: components,
       });
-      await message.pin().catch(catchPinError);
-      logger.info(`Created and pinned a new message in ${channelId}`);
+      logger.info(`Posted new message in ${channelId} (post-delete mode)`);
+      await setServerMessageState(guildId, message.id, new Date().toISOString());
+    } else if (notificationMethod === "post-keep") {
+      // Option 3: Post new and keep history
+      message = await channel.send({
+        embeds: [embed],
+        files: files,
+        components: components,
+      });
+      logger.info(`Posted new message in ${channelId} (post-keep mode)`);
+      // Don't store message ID for post-keep mode, or set to null
+      await setServerMessageState(guildId, message.id, new Date().toISOString());
     }
-
-    await setServerMessageState(guildId, message.id, new Date().toISOString());
   } catch (error) {
     logger.error(
       { type: (error as any)?.type, message: (error as any)?.message },
@@ -369,38 +401,89 @@ export async function postOrUpdateInChannel(
 
 /**
  * Iterates through all configured servers and updates their map rotation messages.
+ * Uses a queue-based approach with concurrent workers for optimal performance.
  * @param {Client} client The Discord client.
+ * @param {string[]} filterByNotificationMethod Optional array of notification methods to filter by.
  */
-export async function postOrUpdateMapMessages(client: Client): Promise<void> {
+export async function postOrUpdateMapMessages(
+  client: Client,
+  filterByNotificationMethod?: string[],
+): Promise<void> {
   const start = Date.now();
-  const serverConfigs = await getServerConfigs();
-  const entries = Object.entries(serverConfigs);
+  const serverConfigs = await getServerConfigs(filterByNotificationMethod);
+
+  // Filter by TEST_GUILD_ID if configured (for local testing)
+  const testGuildId = process.env.TEST_GUILD_ID;
+  const entries = testGuildId
+    ? Object.entries(serverConfigs).filter(([guildId]) => guildId === testGuildId)
+    : Object.entries(serverConfigs);
+
+  if (testGuildId) {
+    logger.info(`TEST_GUILD_ID detected: filtering to guild ${testGuildId} only`);
+  }
 
   if (entries.length === 0) {
-    logger.info("No servers configured for updates.");
+    logger.info(
+      testGuildId
+        ? `No configuration found for test guild ${testGuildId}.`
+        : "No servers configured for updates.",
+    );
     return;
   }
 
-  logger.info(`Starting update for ${entries.length} servers...`);
+  // Queue-based processing with configurable concurrency
+  const CONCURRENT_WORKERS = Number(process.env.MESSAGE_PROCESSING_WORKERS) || 5;
+  logger.info(
+    `Starting update for ${entries.length} servers with ${CONCURRENT_WORKERS} concurrent workers...`,
+  );
 
-  // Process in chunks to avoid rate limits/overload
-  // Increased to 50 for mass updates (Discord rate limit is 50 requests/sec globally, but per-channel is lower)
-  // Since we are mostly editing messages, 50 parallel requests is reasonable.
-  const CHUNK_SIZE = 50;
-  for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
-    const chunkStart = Date.now();
-    const chunk = entries.slice(i, i + CHUNK_SIZE);
-    await Promise.all(
-      chunk.map(([guildId, config]) =>
-        postOrUpdateInChannel(client, guildId, config.channelId, config.messageId),
-      ),
-    );
-    logger.info(
-      `Chunk ${Math.floor(i / CHUNK_SIZE) + 1} processed in ${Date.now() - chunkStart}ms`,
-    );
+  // Context to track processing state
+  const context = {
+    queueIndex: 0,
+    processed: 0,
+    errors: 0,
+  };
+
+  const worker = async (workerId: number) => {
+    while (true) {
+      // Atomically get next index and increment
+      const currentIndex = context.queueIndex++;
+
+      // Check if we've exhausted the queue
+      if (currentIndex >= entries.length) break;
+
+      const [guildId, config] = entries[currentIndex];
+
+      try {
+        await postOrUpdateInChannel(client, guildId, config.channelId, config.messageId);
+        context.processed++;
+
+        if (context.processed % 10 === 0) {
+          logger.info(`Progress: ${context.processed}/${entries.length} servers processed`);
+        }
+      } catch (error) {
+        context.errors++;
+        logger.error(
+          { guildId, channelId: config.channelId, error },
+          `Worker ${workerId}: Failed to process server`,
+        );
+      }
+    }
+  };
+
+  // Start concurrent workers
+  const workers: Promise<void>[] = [];
+  for (let i = 0; i < CONCURRENT_WORKERS; i++) {
+    workers.push(worker(i + 1));
   }
 
-  logger.info(`All updates completed in ${Date.now() - start}ms`);
+  // Wait for all workers to complete
+  await Promise.all(workers);
+
+  const duration = Date.now() - start;
+  logger.info(
+    `All updates completed in ${duration}ms (${context.processed} successful, ${context.errors} errors, avg ${Math.round(duration / entries.length)}ms per server)`,
+  );
 }
 
 const catchPinError = (error: unknown) => {

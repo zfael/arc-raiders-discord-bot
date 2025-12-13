@@ -1,11 +1,14 @@
 import * as fs from "node:fs";
+import * as http from "node:http";
 import * as path from "node:path";
-import { Client, Collection, GatewayIntentBits } from "discord.js";
+import { Client, Collection, GatewayIntentBits, MessageFlags } from "discord.js";
 import { config } from "dotenv";
 import type { Command, Event } from "./types";
 import { logger } from "./utils/logger";
 import { initScheduler } from "./utils/mapScheduler";
 import { setupLockExpiration } from "./utils/messageManager";
+import { setupRateLimitMonitoring } from "./utils/rateLimitMonitor";
+import { patchDiscordRateLimiting } from "./utils/discordApiPatch";
 
 // Load environment variables
 config();
@@ -46,7 +49,7 @@ for (const file of commandFiles) {
 }
 
 // Attach commands to client
-(client as any).commands = commands;
+client.commands = commands;
 
 // Load events
 const eventsPath = path.join(__dirname, "events");
@@ -69,14 +72,22 @@ for (const file of eventFiles) {
 
 // Initialize the map rotation scheduler
 initScheduler(client);
+
+// Setup message lock expiration handling
 setupLockExpiration(client);
+
+// Patch Discord REST client for automatic rate limit handling
+patchDiscordRateLimiting(client);
+
+// Setup rate limit monitoring
+setupRateLimitMonitoring(client);
 
 import { handleInteraction } from "./events/interactionCreate";
 
 client.on("interactionCreate", async (interaction) => {
   // Handle slash commands
   if (interaction.isChatInputCommand()) {
-    const command = (client as any).commands.get(interaction.commandName);
+    const command = client.commands.get(interaction.commandName);
     if (!command) {
       logger.warn(`No command matching ${interaction.commandName} was found.`);
       return;
@@ -88,7 +99,7 @@ client.on("interactionCreate", async (interaction) => {
       logger.error({ err: error }, `Error executing command ${interaction.commandName}`);
       const errorMessage = {
         content: "There was an error while executing this command!",
-        ephemeral: true,
+        flags: Number(MessageFlags.Ephemeral),
       };
 
       if (interaction.replied || interaction.deferred) {
@@ -119,3 +130,26 @@ process.on("SIGTERM", () => {
 
 // Login to Discord
 client.login(process.env.DISCORD_TOKEN);
+
+// Start health check server
+const PORT = process.env.PORT || 6767;
+const server = http.createServer((req, res) => {
+  if (req.url === "/health" && req.method === "GET") {
+    const isReady = client.isReady();
+    res.writeHead(isReady ? 200 : 503, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: isReady ? "ok" : "not ready",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+      }),
+    );
+  } else {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Not Found" }));
+  }
+});
+
+server.listen(PORT, () => {
+  logger.info(`Health check server listening on port ${PORT}`);
+});

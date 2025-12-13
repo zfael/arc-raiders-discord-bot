@@ -1,4 +1,9 @@
-import { type ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import {
+  type ChatInputCommandInteraction,
+  EmbedBuilder,
+  MessageFlags,
+  SlashCommandBuilder,
+} from "discord.js";
 import type { Command } from "../types";
 import { getT } from "../utils/i18n";
 import { buildCommandLocalizations, loadAvailableLocales } from "../utils/localeLoader";
@@ -57,7 +62,7 @@ const command: Command = {
       )
       .setFooter({ text: t("commands.translations.footer") });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: Number(MessageFlags.Ephemeral) });
   },
 };
 

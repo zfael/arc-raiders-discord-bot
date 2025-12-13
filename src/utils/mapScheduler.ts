@@ -5,10 +5,15 @@ import { postOrUpdateMapMessages } from "./messageManager";
 
 /**
  * Update the map status message
+ * @param {Client} client The Discord client.
+ * @param {string[]} filterByNotificationMethod Optional array of notification methods to filter by.
  */
-export async function updateMapStatus(client: Client): Promise<void> {
+export async function updateMapStatus(
+  client: Client,
+  filterByNotificationMethod?: string[],
+): Promise<void> {
   try {
-    await postOrUpdateMapMessages(client);
+    await postOrUpdateMapMessages(client, filterByNotificationMethod);
   } catch (error) {
     logger.error({ err: error }, "Error updating map status");
   }
@@ -33,10 +38,4 @@ export function initScheduler(client: Client): void {
   );
 
   logger.info("Map rotation cron scheduler initialized (runs at :00 of every hour UTC)");
-
-  // Run immediately on startup
-  logger.info("Running initial map rotation update...");
-  updateMapStatus(client).then(() => {
-    logger.info("Initial update complete");
-  });
 }

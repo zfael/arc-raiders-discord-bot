@@ -1,0 +1,162 @@
+import type { Client } from "discord.js";
+import { DiscordAPIError } from "discord.js";
+import { logger } from "./logger";
+
+/**
+ * Discord API Rate Limiting Monkey Patch
+ *
+ * This module patches Discord.js's REST client to automatically handle rate limiting
+ * on ALL API calls. No manual wrapping required - just use Discord.js normally!
+ *
+ * Features:
+ * - Automatically intercepts all Discord API calls
+ * - Detects HTTP 429 rate limit responses
+ * - Retries with exponential backoff (up to 3 times)
+ * - Auto-generates context from API route for logging
+ * - Works transparently with all Discord.js operations
+ *
+ * Usage:
+ * ```typescript
+ * import { patchDiscordRateLimiting } from './utils/discordApiPatch';
+ * patchDiscordRateLimiting(client); // Call once on startup
+ *
+ * // Then use Discord.js normally - rate limiting is automatic!
+ * await channel.send({ content: 'Hello!' });
+ * await message.edit({ embeds: [embed] });
+ * ```
+ */
+
+interface RateLimitError {
+  message: string;
+  retry_after: number;
+  global: boolean;
+  code?: number;
+}
+
+/**
+ * Sleeps for the specified duration
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Extracts a meaningful context from the request details
+ */
+function extractContext(method: string, route: string, _options?: any): string {
+  // Clean up route for better readability
+  const cleanRoute = route
+    .replace(/\/\d+/g, "/:id") // Replace IDs with :id
+    .replace(/\/channels\/\d+/, "/channels/:id")
+    .replace(/\/guilds\/\d+/, "/guilds/:id")
+    .replace(/\/users\/\d+/, "/users/:id")
+    .replace(/\/messages\/\d+/, "/messages/:id");
+
+  return `${method} ${cleanRoute}`;
+}
+
+/**
+ * Wraps an async function with rate limit retry logic
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  context: string,
+  maxRetries: number = 3,
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      // Check if it's a Discord API rate limit error (HTTP 429)
+      if (error instanceof DiscordAPIError && error.status === 429) {
+        const rateLimitData = error.rawError as RateLimitError;
+        const retryAfter = rateLimitData.retry_after || 1;
+        const isGlobal = rateLimitData.global || false;
+        const scope = isGlobal ? "global" : "per-route";
+
+        logger.warn(
+          {
+            context,
+            attempt: attempt + 1,
+            maxRetries: maxRetries + 1,
+            retryAfter,
+            scope,
+            global: isGlobal,
+          },
+          `Rate limited (${scope}). Retrying after ${retryAfter}s...`,
+        );
+
+        if (attempt < maxRetries) {
+          // Wait for retry_after duration (convert to milliseconds)
+          await sleep(retryAfter * 1000);
+          continue;
+        } else {
+          logger.error(
+            {
+              context,
+              retryAfter,
+              scope,
+            },
+            `Max retries (${maxRetries + 1}) exceeded for rate limit`,
+          );
+          throw error;
+        }
+      }
+
+      // If it's not a rate limit error, throw immediately
+      throw error;
+    }
+  }
+
+  throw new Error("Unexpected error in rate limit retry logic");
+}
+
+/**
+ * Applies a monkey patch to Discord.js REST client to automatically handle rate limits
+ * This intercepts all REST API calls and wraps them with retry logic
+ */
+export function patchDiscordRateLimiting(client: Client): void {
+  const originalRequest = (client.rest as any).request;
+
+  if (!originalRequest) {
+    logger.warn("Could not patch Discord REST client - request method not found");
+    return;
+  }
+
+  // Track if already patched
+  if ((originalRequest as any).__rateLimitPatched) {
+    logger.debug("Discord REST client already patched for rate limiting");
+    return;
+  }
+
+  // Replace the request method with our wrapped version
+  (client.rest as any).request = async function (options: any) {
+    const method = options.method || "GET";
+    const route = options.path || options.url || "unknown";
+    const context = extractContext(method, route, options);
+
+    // Wrap the original request with retry logic
+    return withRetry(
+      () => originalRequest.call(this, options),
+      context,
+      3, // max retries
+    );
+  };
+
+  // Mark as patched
+  ((client.rest as any).request as any).__rateLimitPatched = true;
+
+  logger.info("Discord REST client patched for automatic rate limit handling");
+}
+
+/**
+ * Removes the monkey patch (for testing or cleanup)
+ */
+export function unpatchDiscordRateLimiting(client: Client): void {
+  const currentRequest = (client.rest as any).request;
+
+  if (currentRequest && (currentRequest as any).__originalRequest) {
+    (client.rest as any).request = (currentRequest as any).__originalRequest;
+    logger.info("Discord REST client rate limit patch removed");
+  }
+}

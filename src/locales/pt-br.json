@@ -22,6 +22,10 @@
         "locale": {
           "name": "locale",
           "description": "Defina o idioma do bot neste servidor."
+        },
+        "notification-method": {
+          "name": "notification-method",
+          "description": "Como as atualizações do mapa são publicadas no canal"
         }
       }
     },
@@ -48,9 +52,15 @@
     "settings": {
       "mobile_friendly_updated": "O modo compatível com dispositivos móveis agora está **{{status}}**.",
       "locale_updated": "Idioma definido para **{{locale}}**.",
+      "notification_method_updated": "Método de notificação atualizado para: **{{method}}**",
       "no_changes": "Nenhuma alteração foi feita.",
       "enabled": "ATIVADO",
-      "disabled": "DESATIVADO"
+      "disabled": "DESATIVADO",
+      "notification_methods": {
+        "pin-edit": "Fixar e Editar (1 mensagem atualizada)",
+        "post-delete": "Postar a cada hora e Deletar antiga",
+        "post-keep": "Postar a cada hora e Manter histórico"
+      }
     },
     "set_channel": {
       "success": "As atualizações de eventos do mapa agora serão enviadas para o canal {{channel}}.\n\n**Nota:** A visualização padrão está otimizada para **Desktop**. Se seus usuários acessam a internet principalmente por dispositivos móveis, use `/settings mobile-friendly: True` Para mudar para um layout otimizado para dispositivos móveis."

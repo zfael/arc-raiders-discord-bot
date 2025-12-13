@@ -1,4 +1,11 @@
-import type { ChatInputCommandInteraction, ClientEvents, SlashCommandBuilder } from "discord.js";
+import type {
+  ChatInputCommandInteraction,
+  ClientEvents,
+  Collection,
+  SlashCommandBuilder,
+} from "discord.js";
+
+export type NotificationMethod = "pin-edit" | "post-delete" | "post-keep";
 
 export interface ServerConfigEntry {
   channelId: string;
@@ -7,6 +14,7 @@ export interface ServerConfigEntry {
   lastUpdated?: string;
   mobileFriendly?: boolean;
   locale?: string;
+  notificationMethod?: NotificationMethod;
 }
 
 export interface ServerConfig {
@@ -35,4 +43,10 @@ export interface MapRotation {
   blueGateMajor: string;
   stellaMontisMinor: string;
   stellaMontisMajor: string;
+}
+
+declare module "discord.js" {
+  export interface Client {
+    commands: Collection<string, Command>;
+  }
 }
