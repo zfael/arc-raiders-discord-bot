@@ -36,6 +36,14 @@
         "channel": {
           "name": "canal",
           "description": "El canal para enviar actualizaciones"
+        },
+        "ping": {
+          "name": "mencionar",
+          "description": "A quién mencionar al publicar la actualización inicial (por defecto: ninguno)"
+        },
+        "role": {
+          "name": "rol",
+          "description": "Rol a mencionar (solo si mencionar=rol)"
         }
       }
     },
@@ -63,7 +71,8 @@
       }
     },
     "set_channel": {
-      "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles."
+      "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles.",
+      "role_required": "Seleccionaste `mencionar: Rol` pero no proporcionaste un rol. Por favor especifica la opción `rol`."
     },
     "translations": {
       "title": "🌍 Ayuda a Traducir Arc Raiders Bot",

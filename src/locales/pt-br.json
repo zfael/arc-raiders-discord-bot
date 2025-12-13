@@ -36,6 +36,14 @@
         "channel": {
           "name": "channel",
           "description": "Canal para enviar as atualizações:"
+        },
+        "ping": {
+          "name": "ping",
+          "description": "Quem mencionar ao publicar a atualização inicial (padrão: nenhum)"
+        },
+        "role": {
+          "name": "cargo",
+          "description": "Cargo a mencionar (apenas se ping=cargo)"
         }
       }
     },
@@ -63,7 +71,8 @@
       }
     },
     "set_channel": {
-      "success": "As atualizações de eventos do mapa agora serão enviadas para o canal {{channel}}.\n\n**Nota:** A visualização padrão está otimizada para **Desktop**. Se seus usuários acessam a internet principalmente por dispositivos móveis, use `/settings mobile-friendly: True` Para mudar para um layout otimizado para dispositivos móveis."
+      "success": "As atualizações de eventos do mapa agora serão enviadas para o canal {{channel}}.\n\n**Nota:** A visualização padrão está otimizada para **Desktop**. Se seus usuários acessam a internet principalmente por dispositivos móveis, use `/settings mobile-friendly: True` Para mudar para um layout otimizado para dispositivos móveis.",
+      "role_required": "Você selecionou `ping: Cargo` mas não informou um cargo. Por favor, informe a opção `cargo`."
     },
     "translations": {
       "title": "🌍 Help Translate Arc Raiders Bot",

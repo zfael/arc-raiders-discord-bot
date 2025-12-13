@@ -297,6 +297,7 @@ export async function postOrUpdateInChannel(
   channelId: string,
   existingMessageId?: string,
   localeOverride?: string,
+  pingOnCreate?: boolean,
 ): Promise<void> {
   try {
     // Try to resolve from cache first, then fetch if missing
@@ -320,6 +321,21 @@ export async function postOrUpdateInChannel(
     const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
     let message: Message;
 
+    const shouldPingOnCreate = Boolean(pingOnCreate);
+    const mentionText =
+      shouldPingOnCreate && config?.pingTarget === "everyone"
+        ? "@everyone"
+        : shouldPingOnCreate && config?.pingTarget === "role" && config?.pingRoleId
+          ? `<@&${config.pingRoleId}>`
+          : undefined;
+
+    const allowedMentions =
+      mentionText === "@everyone"
+        ? { parse: ["everyone"] as const }
+        : mentionText && config?.pingRoleId
+          ? { roles: [config.pingRoleId] }
+          : { parse: [] as const };
+
     // Handle different notification methods
     if (notificationMethod === "pin-edit") {
       // Option 1: Pin and Edit (current behavior)
@@ -339,18 +355,22 @@ export async function postOrUpdateInChannel(
         } catch (_error) {
           logger.warn(`Message not found in ${channelId}, creating a new one.`);
           message = await channel.send({
+            content: mentionText,
             embeds: [embed],
             files: files,
             components: components,
+            allowedMentions: allowedMentions,
           });
           await message.pin().catch(catchPinError);
           logger.info(`Created and pinned a new message in ${channelId}`);
         }
       } else {
         message = await channel.send({
+          content: mentionText,
           embeds: [embed],
           files: files,
           components: components,
+          allowedMentions: allowedMentions,
         });
         await message.pin().catch(catchPinError);
         logger.info(`Created and pinned a new message in ${channelId}`);
@@ -374,18 +394,22 @@ export async function postOrUpdateInChannel(
       }
 
       message = await channel.send({
+        content: mentionText,
         embeds: [embed],
         files: files,
         components: components,
+        allowedMentions: allowedMentions,
       });
       logger.info(`Posted new message in ${channelId} (post-delete mode)`);
       await setServerMessageState(guildId, message.id, new Date().toISOString());
     } else if (notificationMethod === "post-keep") {
       // Option 3: Post new and keep history
       message = await channel.send({
+        content: mentionText,
         embeds: [embed],
         files: files,
         components: components,
+        allowedMentions: allowedMentions,
       });
       logger.info(`Posted new message in ${channelId} (post-keep mode)`);
       // Don't store message ID for post-keep mode, or set to null
@@ -410,13 +434,21 @@ export async function postOrUpdateMapMessages(
   filterByNotificationMethod?: string[],
 ): Promise<void> {
   const start = Date.now();
-  const serverConfigs = await getServerConfigs(filterByNotificationMethod);
+  const serverConfigs = await getServerConfigs();
 
   // Filter by TEST_GUILD_ID if configured (for local testing)
   const testGuildId = process.env.TEST_GUILD_ID;
-  const entries = testGuildId
+  let entries = testGuildId
     ? Object.entries(serverConfigs).filter(([guildId]) => guildId === testGuildId)
     : Object.entries(serverConfigs);
+
+  // Filter by notification method if provided
+  if (filterByNotificationMethod && filterByNotificationMethod.length > 0) {
+    entries = entries.filter(([_guildId, config]) => {
+      const method = config?.notificationMethod ?? "pin-edit";
+      return filterByNotificationMethod.includes(method);
+    });
+  }
 
   if (testGuildId) {
     logger.info(`TEST_GUILD_ID detected: filtering to guild ${testGuildId} only`);
