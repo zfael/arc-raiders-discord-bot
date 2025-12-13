@@ -50,7 +50,9 @@ export async function getServerConfigs(): Promise<ServerConfig> {
         locale: row.locale ?? "en",
         pingTarget: (row.ping_target as "none" | "everyone" | "role" | undefined) ?? undefined,
         pingRoleId: row.ping_role_id ?? undefined,
-        notificationMethod: (row.notification_method as "pin-edit" | "post-delete" | "post-keep" | undefined) ?? undefined,
+        notificationMethod:
+          (row.notification_method as "pin-edit" | "post-delete" | "post-keep" | undefined) ??
+          undefined,
       };
       return acc;
     }, {} as ServerConfig);
