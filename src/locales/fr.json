@@ -1,0 +1,143 @@
+{
+  "_developer_note_do_not_edit": "Veuillez vous référer à ./docs/ADDING_LANGUAGES.md pour les instructions complètes sur l'ajout de nouvelles langues. Ne supprimez pas les clés. Le texte entre {{example}} sont des variables - conservez-les telles quelles.",
+  "_language_name": "Français",
+  "common": {
+    "error": "Une erreur est survenue lors de l'exécution de cette commande !",
+    "error_saving": "Une erreur est survenue lors de l'enregistrement de vos paramètres. Veuillez réessayer plus tard.",
+    "only_in_guild": "Cette commande ne peut être utilisée que dans un serveur."
+  },
+  "command_metadata": {
+    "_developer_note_do_not_edit": "Les descriptions ne doivent pas dépasser 100 caractères.",
+    "ping": {
+      "name": "ping",
+      "description": "Répond avec Pong ! et affiche la latence du bot"
+    },
+    "settings": {
+      "name": "settings",
+      "description": "Configurer les paramètres du bot pour ce serveur",
+      "options": {
+        "mobile-friendly": {
+          "name": "mobile-friendly",
+          "description": "Activer la vue mobile pour les mises à jour (par défaut : false)"
+        },
+        "locale": {
+          "name": "locale",
+          "description": "Définir la langue du bot dans ce serveur"
+        },
+        "notification-method": {
+          "name": "notification-method",
+          "description": "Choisir comment les mises à jour sont postées"
+        }
+      }
+    },
+    "set-channel": {
+      "name": "set-channel",
+      "description": "Définir le canal pour les mises à jour de la carte",
+      "options": {
+        "channel": {
+          "name": "channel",
+          "description": "Le canal où envoyer les mises à jour"
+        }
+      }
+    },
+    "translations": {
+      "name": "translations",
+      "description": "Apprenez à aider à traduire ce bot"
+    }
+  },
+  "commands": {
+    "ping": {
+      "pinging": "En cours de ping...",
+      "response": "🏓 Pong !\n📡 Latence : {{latency}}ms\n💓 Latence API : {{apiLatency}}ms"
+    },
+    "settings": {
+      "mobile_friendly_updated": "Le mode mobile-friendly est maintenant **{{status}}**.",
+      "locale_updated": "Langue définie sur **{{locale}}**.",
+      "notification_method_updated": "Méthode de notification mise à jour : **{{method}}**",
+      "no_changes": "Aucun changement effectué.",
+      "enabled": "ACTIVÉ",
+      "disabled": "DÉSACTIVÉ",
+      "notification_methods": {
+        "pin-edit": "Épingler & Modifier (1 message mis à jour)",
+        "post-delete": "Publier toutes les heures & Supprimer l'ancien",
+        "post-keep": "Publier toutes les heures & Conserver l'historique"
+      }
+    },
+    "set_channel": {
+      "success": "Les mises à jour de rotation de la carte seront désormais envoyées à {{channel}}.\n\n**Remarque :** La vue par défaut est optimisée pour **Desktop**. Si vos utilisateurs sont principalement sur mobile, utilisez `/settings mobile-friendly: True` pour passer à une disposition optimisée pour mobile."
+    },
+    "translations": {
+      "title": "🌍 Aidez à traduire le bot Arc Raiders",
+      "description": "Vous souhaitez voir ce bot dans votre langue ? Contribuer est facile et sans codage.",
+      "available_languages": "📚 Langues disponibles",
+      "how_to_help": "✨ Comment contribuer",
+      "steps": "1. Visitez notre dépôt GitHub\n2. Téléchargez le modèle anglais\n3. Traduisez tout le texte\n4. Soumettez votre traduction",
+      "what_to_translate": "📝 Ce que vous allez traduire",
+      "sections": "• **Commandes** — Texte visible lors de l'utilisation\n• **Réponses du bot** — Messages envoyés\n• **Carte** — Noms de lieux et événements\n• **Erreurs** — Messages d'erreur",
+      "important_rules": "⚠️ Règles importantes",
+      "rules": "• Conservez {{brackets}} tels quels\n• Ne changez que les valeurs textuelles\n• Gardez la structure du fichier\n• Descriptions <100 caractères",
+      "footer": "Merci d'aider à rendre ce bot accessible à plus de joueurs ! 💙"
+    }
+  },
+  "image_renderer": {
+    "forecast_header": "Prévisions (6 prochaines heures)"
+  },
+  "map_rotation": {
+    "title": "Arc Raiders - Statut de la rotation des cartes",
+    "footer": "Bot Arc Raiders • Mises à jour toutes les heures",
+    "locked": "🚫 Ce menu est actuellement utilisé par un autre utilisateur. Veuillez patienter {{remaining}} secondes.",
+    "buttons": {
+      "dam": "Barrage",
+      "buried_city": "Ville Enfouie",
+      "spaceport": "Port Spatial",
+      "blue_gate": "Portail Bleue",
+      "stella_montis": "Stella Montis",
+      "show_major": "Afficher les événements majeurs",
+      "show_minor": "Afficher les événements mineurs",
+      "show_map": "Afficher la carte",
+      "home": "Accueil"
+    },
+    "events": {
+      "harvester": "Reine",
+      "night": "Nuit",
+      "storm": "Tempête",
+      "tower": "Tour",
+      "bunker": "Bunker",
+      "matriarch": "Matriarche",
+      "husks": "Épaves",
+      "blooms": "Récolte",
+      "caches": "Caches",
+      "probes": "Sondes",
+      "none": "Aucun",
+      "major": "Majeur",
+      "minor": "Mineur"
+    },
+    "forecast": {
+      "header": "━━━━━━ 🔮 PRÉVISIONS (6 prochaines heures) ━━━━━━",
+      "title_location": "**Prévisions pour {{location}}**",
+      "title_event": "**Prévisions pour {{emoji}} {{event}}**",
+      "next_rotation": "Prochaine rotation : <t:{{timestamp}}:R>",
+      "no_events": "Aucun événement prévu dans les 24 prochaines heures.",
+      "no_major_events": "Aucun événement majeur",
+      "time_until": "Temps restant",
+      "conditions": "Conditions",
+      "locations": "Lieux",
+      "upcoming": "À venir",
+      "in_hours": "dans {{hours}}h"
+    },
+    "locations_short": {
+      "dam": "Barrage",
+      "buried_city": "Ville",
+      "spaceport": "Spatial",
+      "blue_gate": "Portail",
+      "stella_montis": "Stella"
+    },
+    "locations": {
+      "dam": "Champ de Bataille du Barrage",
+      "buried_city": "Ville Enfouie",
+      "spaceport": "Port Spatial",
+      "blue_gate": "Portail bleue",
+      "stella_montis": "Stella Montis"
+    }
+  }
+}
