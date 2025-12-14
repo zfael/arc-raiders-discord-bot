@@ -14,6 +14,7 @@ You can invite Arc Raiders Discord Bot to any Discord server using this link:
 
 1. **Invite the bot** using the link above and authorize it for your server.
 2. **Set the update channel** by using the `/set-channel` slash command in the channel where you want map rotation updates to appear. Only server admins can use this command.
+   - Optional: Provide the `role` option to mention a role on the initial post created by `/set-channel`.
 3. The bot will automatically post and update the Arc Raiders map rotation status every hour in the designated channel.
 4. **(Optional)** Use `/settings mobile-friendly: True` to enable mobile-optimized display mode.
 
@@ -307,6 +308,10 @@ All persistent state is stored in Supabase:
 | `message_id` | text | ID of pinned message |
 | `last_updated` | text | Last update timestamp |
 | `mobile_friendly` | boolean | Mobile-friendly mode setting |
+| `locale` | text | Language locale for translations |
+| `ping_target` | text | Who to ping on initial `/set-channel` post: `none` \| `everyone` \| `role` |
+| `ping_role_id` | text | Role ID to ping when `ping_target = role` |
+| `notification_method` | text | How map updates are posted: `pin-edit` \| `post-delete` \| `post-keep` |
 | `created_at` | timestamptz | Row creation time |
 | `updated_at` | timestamptz | Last modification time |
 
@@ -325,6 +330,9 @@ The bot automatically manages this table. You can back up or inspect it directly
      last_updated text,
      mobile_friendly boolean default false,
      locale text default 'en',
+     ping_target text default 'none',
+     ping_role_id text,
+     notification_method text default 'pin-edit',
      created_at timestamptz default timezone('utc', now()),
      updated_at timestamptz default timezone('utc', now())
    );

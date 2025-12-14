@@ -162,9 +162,10 @@ export const getT = (locale: string) => {
  * Helper to translate event names (basic mapping)
  * @param t The translation function
  * @param event The event name to translate
+ * @returns The translated event name
  */
-export const translateEvent = (t: (key: string, options?: any) => string, event: string) => {
+export function translateEvent(t: (key: string, options?: any) => string, event: string): string {
   if (event === "None") return t("map_rotation.events.none");
   const key = event.toLowerCase();
   return t(`map_rotation.events.${key}`, { defaultValue: event });
-};
+}

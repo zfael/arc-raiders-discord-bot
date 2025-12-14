@@ -1,4 +1,4 @@
-import type { NotificationMethod, ServerConfig } from "../types";
+import type { ServerConfig } from "../types";
 import { logger } from "./logger";
 import { isLocaleAvailable } from "./localeLoader";
 import { supabase } from "./supabaseClient";
@@ -13,28 +13,22 @@ interface ServerRow {
   last_updated: string | null;
   mobile_friendly: boolean | null;
   locale: string | null;
+  ping_target: string | null;
+  ping_role_id: string | null;
   notification_method: string | null;
 }
 
 /**
  * Reads all server configurations from Supabase.
- * @param notificationMethods Optional array of notification methods to filter by at SQL level.
  * @returns The server configurations keyed by guildId.
  */
-export async function getServerConfigs(notificationMethods?: string[]): Promise<ServerConfig> {
+export async function getServerConfigs(): Promise<ServerConfig> {
   try {
-    let query = supabase
+    const { data, error } = await supabase
       .from(SERVERS_TABLE)
       .select(
-        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale, notification_method",
+        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale, ping_target, ping_role_id, notification_method",
       );
-
-    // Filter by notification methods at SQL level if specified
-    if (notificationMethods && notificationMethods.length > 0) {
-      query = query.in("notification_method", notificationMethods);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       throw error;
@@ -54,7 +48,11 @@ export async function getServerConfigs(notificationMethods?: string[]): Promise<
         lastUpdated: row.last_updated ?? undefined,
         mobileFriendly: row.mobile_friendly ?? false,
         locale: row.locale ?? "en",
-        notificationMethod: (row.notification_method as NotificationMethod) ?? "pin-edit",
+        pingTarget: (row.ping_target as "none" | "everyone" | "role" | undefined) ?? undefined,
+        pingRoleId: row.ping_role_id ?? undefined,
+        notificationMethod:
+          (row.notification_method as "pin-edit" | "post-delete" | "post-keep" | undefined) ??
+          undefined,
       };
       return acc;
     }, {} as ServerConfig);
@@ -71,6 +69,8 @@ export async function setServerConfig(
   guildId: string,
   channelId: string,
   serverName?: string,
+  pingTarget?: string | null,
+  pingRoleId?: string | null,
 ): Promise<void> {
   try {
     const { data: existingConfig, error: selectError } = await supabase
@@ -89,6 +89,8 @@ export async function setServerConfig(
       guild_id: guildId,
       channel_id: channelId,
       server_name: serverName ?? null,
+      ping_target: pingTarget ?? null,
+      ping_role_id: pingRoleId ?? null,
     };
 
     if (channelChanged) {
@@ -153,23 +155,23 @@ export async function setServerLocale(guildId: string, locale: string): Promise<
 }
 
 /**
- * Updates the notification method for a server.
+ * Updates the notification method setting for a server.
  */
 export async function setNotificationMethod(
   guildId: string,
-  method: NotificationMethod,
+  notificationMethod: "pin-edit" | "post-delete" | "post-keep",
 ): Promise<void> {
   try {
     const { error } = await supabase
       .from(SERVERS_TABLE)
-      .update({ notification_method: method })
+      .update({ notification_method: notificationMethod })
       .eq("guild_id", guildId);
 
     if (error) {
       throw error;
     }
   } catch (error) {
-    logger.error({ err: error }, "Error updating notification method");
+    logger.error({ err: error }, "Error updating notification method setting");
     throw error;
   }
 }

@@ -7,6 +7,8 @@ import type {
 
 export type NotificationMethod = "pin-edit" | "post-delete" | "post-keep";
 
+export type PingTarget = "none" | "everyone" | "role";
+
 export interface ServerConfigEntry {
   channelId: string;
   serverName?: string;
@@ -15,6 +17,8 @@ export interface ServerConfigEntry {
   mobileFriendly?: boolean;
   locale?: string;
   notificationMethod?: NotificationMethod;
+  pingTarget?: PingTarget;
+  pingRoleId?: string;
 }
 
 export interface ServerConfig {

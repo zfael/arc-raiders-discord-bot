@@ -37,6 +37,14 @@
         "channel": {
           "name": "channel",
           "description": "The channel to send updates to"
+        },
+        "ping": {
+          "name": "ping",
+          "description": "Who to mention when posting the initial update (default: none)"
+        },
+        "role": {
+          "name": "role",
+          "description": "Role to mention (only if ping=role)"
         }
       }
     },
@@ -64,7 +72,8 @@
       }
     },
     "set_channel": {
-      "success": "Map rotation updates will now be sent to {{channel}}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use `/settings mobile-friendly: True` to switch to a mobile-optimized layout."
+      "success": "Map rotation updates will now be sent to {{channel}}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use `/settings mobile-friendly: True` to switch to a mobile-optimized layout.",
+      "role_required": "You selected `ping: Role` but did not provide a role. Please provide the `role` option."
     },
     "translations": {
       "title": "🌍 Help Translate Arc Raiders Bot",
