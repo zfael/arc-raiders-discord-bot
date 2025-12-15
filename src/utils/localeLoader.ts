@@ -27,6 +27,7 @@ const LOCALE_CONFIG: Record<string, LocaleConfig> = {
   en: { discordCode: "en-US", aliases: ["en-GB"] },
   es: { discordCode: "es-ES", aliases: ["es-419"] }, // es-419 = Latin American Spanish
   "pt-br": { discordCode: "pt-BR" },
+  "fr": { discordCode: "fr" },
   // Add more locales as needed:
   // fr: { discordCode: "fr" },
   // de: { discordCode: "de" },
