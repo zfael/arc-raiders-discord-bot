@@ -15,11 +15,12 @@ import {
   getNextRotationTimestamp,
   MAP_ROTATIONS,
 } from "../config/mapRotation";
+import type { ServerConfigEntry } from "../types";
 import { getT, translateEvent } from "./i18n";
 import { generateMapImage } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
-import { getServerConfigs, setServerMessageState } from "./serverConfig";
+import { getServerConfig, getServerConfigs, setServerMessageState } from "./serverConfig";
 
 /**
  * Create the map rotation embed
@@ -290,6 +291,7 @@ export async function createMapRotationEmbed(
  * @param channelId The ID of the channel to post in.
  * @param existingMessageId Optional message ID to update instead of creating a new one.
  * @param localeOverride Optional locale to use instead of the config locale.
+ * @param configOverride Optional server config to avoid refetching.
  */
 export async function postOrUpdateInChannel(
   client: Client,
@@ -297,6 +299,7 @@ export async function postOrUpdateInChannel(
   channelId: string,
   existingMessageId?: string,
   localeOverride?: string,
+  configOverride?: ServerConfigEntry,
 ): Promise<void> {
   try {
     // Try to resolve from cache first, then fetch if missing
@@ -310,8 +313,7 @@ export async function postOrUpdateInChannel(
       return;
     }
 
-    const configs = await getServerConfigs();
-    const config = configs[guildId];
+    const config = configOverride ?? (await getServerConfig(guildId));
     const mobileFriendly = config?.mobileFriendly ?? false;
     const notificationMethod = config?.notificationMethod ?? "pin-edit";
     // Use override if provided, otherwise fetch from config
@@ -319,6 +321,11 @@ export async function postOrUpdateInChannel(
 
     const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
     let message: Message;
+    const payload = {
+      embeds: [embed],
+      files,
+      components,
+    };
 
     // Handle different notification methods
     if (notificationMethod === "pin-edit") {
@@ -329,29 +336,16 @@ export async function postOrUpdateInChannel(
         existingMessageId.trim() !== ""
       ) {
         try {
-          message = await channel.messages.fetch(existingMessageId);
-          await message.edit({
-            embeds: [embed],
-            files: files,
-            components: components,
-          });
+          message = await channel.messages.edit(existingMessageId, payload);
           logger.info(`Updated pinned message in ${channelId}`);
         } catch (_error) {
           logger.warn(`Message not found in ${channelId}, creating a new one.`);
-          message = await channel.send({
-            embeds: [embed],
-            files: files,
-            components: components,
-          });
+          message = await channel.send(payload);
           await message.pin().catch(catchPinError);
           logger.info(`Created and pinned a new message in ${channelId}`);
         }
       } else {
-        message = await channel.send({
-          embeds: [embed],
-          files: files,
-          components: components,
-        });
+        message = await channel.send(payload);
         await message.pin().catch(catchPinError);
         logger.info(`Created and pinned a new message in ${channelId}`);
       }
@@ -364,29 +358,18 @@ export async function postOrUpdateInChannel(
         existingMessageId.trim() !== ""
       ) {
         try {
-          const oldMessage = await channel.messages.fetch(existingMessageId);
-          await oldMessage.delete().catch((error) => {
-            logger.warn({ error }, `Failed to delete old message ${existingMessageId}`);
-          });
+          await channel.messages.delete(existingMessageId);
         } catch (_error) {
           logger.warn(`Old message ${existingMessageId} not found, skipping deletion`);
         }
       }
 
-      message = await channel.send({
-        embeds: [embed],
-        files: files,
-        components: components,
-      });
+      message = await channel.send(payload);
       logger.info(`Posted new message in ${channelId} (post-delete mode)`);
       await setServerMessageState(guildId, message.id, new Date().toISOString());
     } else if (notificationMethod === "post-keep") {
       // Option 3: Post new and keep history
-      message = await channel.send({
-        embeds: [embed],
-        files: files,
-        components: components,
-      });
+      message = await channel.send(payload);
       logger.info(`Posted new message in ${channelId} (post-keep mode)`);
       // Don't store message ID for post-keep mode, or set to null
       await setServerMessageState(guildId, message.id, new Date().toISOString());
@@ -455,7 +438,18 @@ export async function postOrUpdateMapMessages(
       const [guildId, config] = entries[currentIndex];
 
       try {
-        await postOrUpdateInChannel(client, guildId, config.channelId, config.messageId);
+        if (!config?.channelId) {
+          logger.warn({ guildId }, "Skipping server without configured channel");
+          continue;
+        }
+        await postOrUpdateInChannel(
+          client,
+          guildId,
+          config.channelId,
+          config.messageId,
+          undefined,
+          config,
+        );
         context.processed++;
 
         if (context.processed % 10 === 0) {
@@ -518,8 +512,7 @@ export function setupLockExpiration(client: Client) {
 
       if (!isHome) {
         // Get config for mobile friendly
-        const configs = await getServerConfigs();
-        const config = configs[guildId];
+        const config = await getServerConfig(guildId);
         const mobileFriendly = config?.mobileFriendly ?? false;
         const locale = config?.locale || channel.guild?.preferredLocale || "en";
 

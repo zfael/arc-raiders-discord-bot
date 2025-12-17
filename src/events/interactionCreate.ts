@@ -17,7 +17,7 @@ import { generateForecast } from "../utils/forecastGenerator";
 import { interactionLockManager } from "../utils/interactionLock";
 import { logger } from "../utils/logger";
 import { createMapRotationEmbed } from "../utils/messageManager";
-import { getServerConfigs } from "../utils/serverConfig";
+import { getServerConfig } from "../utils/serverConfig";
 
 export async function handleInteraction(interaction: Interaction) {
   if (!interaction.isButton()) return;
@@ -27,28 +27,29 @@ export async function handleInteraction(interaction: Interaction) {
     const messageId = message.id;
     const userId = user.id;
 
-    // Check lock status
-    if (!interactionLockManager.canInteract(messageId, userId)) {
-      const remaining = interactionLockManager.getRemainingTime(messageId);
-      // Use interaction locale for ephemeral error
-      const t = getT(interaction.locale);
-      await interaction.reply({
-        content: t("map_rotation.locked", { remaining }),
-        flags: Number(MessageFlags.Ephemeral),
-      });
-      return;
-    }
-
-    // Acquire or refresh lock automatically
+    // Attempt to acquire interaction lock atomically
     if (guildId && message.channelId) {
-      interactionLockManager.acquireLock(messageId, userId, message.channelId, guildId);
+      const acquired = interactionLockManager.acquireLock(
+        messageId,
+        userId,
+        message.channelId,
+        guildId,
+      );
+      if (!acquired) {
+        const remaining = interactionLockManager.getRemainingTime(messageId);
+        const t = getT(interaction.locale);
+        await interaction.reply({
+          content: t("map_rotation.locked", { remaining }),
+          flags: Number(MessageFlags.Ephemeral),
+        });
+        return;
+      }
     }
 
     await interaction.deferUpdate();
 
     // Get Server Config
-    const configs = await getServerConfigs();
-    const config = guildId ? configs[guildId] : null;
+    const config = guildId ? await getServerConfig(guildId) : null;
     const mobileFriendly = config?.mobileFriendly ?? false;
     const locale = config?.locale || interaction.guild?.preferredLocale || "en";
     const t = getT(locale);

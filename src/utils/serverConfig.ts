@@ -1,9 +1,10 @@
-import type { NotificationMethod, ServerConfig } from "../types";
+import type { NotificationMethod, ServerConfig, ServerConfigEntry } from "../types";
 import { logger } from "./logger";
 import { isLocaleAvailable } from "./localeLoader";
 import { supabase } from "./supabaseClient";
 
 const SERVERS_TABLE = "servers";
+const CACHE_TTL_MS = Number(process.env.SERVER_CONFIG_CACHE_TTL_MS ?? 60_000);
 
 interface ServerRow {
   guild_id: string;
@@ -14,6 +15,70 @@ interface ServerRow {
   mobile_friendly: boolean | null;
   locale: string | null;
   notification_method: string | null;
+}
+
+interface CacheEntry {
+  data: ServerConfigEntry;
+  expiresAt: number;
+}
+
+const serverConfigCache = new Map<string, CacheEntry>();
+
+function toEntry(row: ServerRow): ServerConfigEntry {
+  return {
+    channelId: row.channel_id,
+    serverName: row.server_name ?? undefined,
+    messageId: row.message_id ?? undefined,
+    lastUpdated: row.last_updated ?? undefined,
+    mobileFriendly: row.mobile_friendly ?? false,
+    locale: row.locale ?? "en",
+    notificationMethod: (row.notification_method as NotificationMethod) ?? "pin-edit",
+  };
+}
+
+function cacheConfig(guildId: string, entry: ServerConfigEntry): void {
+  serverConfigCache.set(guildId, { data: entry, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+export function invalidateServerConfigCache(guildId?: string): void {
+  if (!guildId) {
+    serverConfigCache.clear();
+    return;
+  }
+  serverConfigCache.delete(guildId);
+}
+
+export async function getServerConfig(guildId: string): Promise<ServerConfigEntry | undefined> {
+  const cached = serverConfigCache.get(guildId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from(SERVERS_TABLE)
+      .select(
+        "guild_id, channel_id, server_name, message_id, last_updated, mobile_friendly, locale, notification_method",
+      )
+      .eq("guild_id", guildId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      serverConfigCache.delete(guildId);
+      return undefined;
+    }
+
+    const entry = toEntry(data as ServerRow);
+    cacheConfig(guildId, entry);
+    return entry;
+  } catch (error) {
+    logger.error({ err: error }, `Error reading server configuration for guild ${guildId}`);
+    return undefined;
+  }
 }
 
 /**
@@ -47,15 +112,9 @@ export async function getServerConfigs(notificationMethods?: string[]): Promise<
     const rows = data as ServerRow[];
 
     return rows.reduce((acc, row) => {
-      acc[row.guild_id] = {
-        channelId: row.channel_id,
-        serverName: row.server_name ?? undefined,
-        messageId: row.message_id ?? undefined,
-        lastUpdated: row.last_updated ?? undefined,
-        mobileFriendly: row.mobile_friendly ?? false,
-        locale: row.locale ?? "en",
-        notificationMethod: (row.notification_method as NotificationMethod) ?? "pin-edit",
-      };
+      const entry = toEntry(row);
+      acc[row.guild_id] = entry;
+      cacheConfig(row.guild_id, entry);
       return acc;
     }, {} as ServerConfig);
   } catch (error) {
@@ -103,6 +162,7 @@ export async function setServerConfig(
     if (error) {
       throw error;
     }
+    invalidateServerConfigCache(guildId);
   } catch (error) {
     logger.error({ err: error }, "Error saving server configuration to Supabase");
   }
@@ -121,6 +181,7 @@ export async function setMobileFriendly(guildId: string, enabled: boolean): Prom
     if (error) {
       throw error;
     }
+    invalidateServerConfigCache(guildId);
   } catch (error) {
     logger.error({ err: error }, "Error updating mobile friendly setting");
     throw error;
@@ -146,6 +207,7 @@ export async function setServerLocale(guildId: string, locale: string): Promise<
     if (error) {
       throw error;
     }
+    invalidateServerConfigCache(guildId);
   } catch (error) {
     logger.error({ err: error }, "Error updating server locale");
     throw error;
@@ -168,6 +230,7 @@ export async function setNotificationMethod(
     if (error) {
       throw error;
     }
+    invalidateServerConfigCache(guildId);
   } catch (error) {
     logger.error({ err: error }, "Error updating notification method");
     throw error;
@@ -184,6 +247,7 @@ export async function removeServerConfig(guildId: string): Promise<void> {
     if (error) {
       throw error;
     }
+    invalidateServerConfigCache(guildId);
   } catch (error) {
     logger.error({ err: error }, "Error removing server configuration from Supabase");
   }
@@ -209,6 +273,7 @@ export async function setServerMessageState(
     if (error) {
       throw error;
     }
+    invalidateServerConfigCache(guildId);
   } catch (error) {
     logger.error({ err: error }, "Error saving server message state to Supabase");
   }
