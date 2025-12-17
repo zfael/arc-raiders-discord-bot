@@ -11,9 +11,9 @@ const event: Event = {
     logger.info(`Bot is ready! Logged in as ${client.user?.tag}`);
     logger.info(`Serving ${client.guilds.cache.size} guild(s)`);
 
-    // Update map status immediately on startup for all servers to avoid stale data
-    logger.info("Updating map rotation status for all servers...");
-    await updateMapStatus(client);
+    // Update map status immediately on startup (only pin-edit method to avoid spam)
+    logger.info("Updating map rotation status (pin-edit only)...");
+    await updateMapStatus(client, ["pin-edit"]);
   },
 };
 
