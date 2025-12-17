@@ -44,6 +44,8 @@ const ICON_MAPPING: { [key: string]: string } = {
   Tower: "spacetower_loot.png",
   Bunker: "bunker.png",
   Matriarch: "matriarch.png",
+  Cold: "cold.png",
+  Gate: "gate.png",
 };
 
 interface RenderData {
