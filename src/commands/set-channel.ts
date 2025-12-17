@@ -15,7 +15,7 @@ import {
   loadAvailableLocales,
 } from "../utils/localeLoader";
 import { postOrUpdateInChannel } from "../utils/messageManager";
-import { getServerConfigs, setServerConfig } from "../utils/serverConfig";
+import { getServerConfig, setServerConfig } from "../utils/serverConfig";
 
 const locales = loadAvailableLocales();
 const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
@@ -42,8 +42,7 @@ const SetChannelCommand: Command = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) as Command["data"],
   async execute(interaction: ChatInputCommandInteraction) {
     // Get Server Config for locale
-    const configs = await getServerConfigs();
-    const config = interaction.guildId ? configs[interaction.guildId] : null;
+    const config = interaction.guildId ? await getServerConfig(interaction.guildId) : null;
     const locale = config?.locale || interaction.guild?.preferredLocale || "en";
     const t = getT(locale);
 

@@ -13,7 +13,7 @@ import {
 } from "../utils/localeLoader";
 import { logger } from "../utils/logger";
 import {
-  getServerConfigs,
+  getServerConfig,
   setMobileFriendly,
   setNotificationMethod,
   setServerLocale,
@@ -89,16 +89,9 @@ const SettingsCommand: Command = {
     }
 
     // Get current config to determine locale for response
-    const configs = await getServerConfigs();
-    const currentConfig = configs[interaction.guildId];
-    const _currentMobileFriendly = currentConfig?.mobileFriendly ?? false;
+    const currentConfig = await getServerConfig(interaction.guildId);
     const currentLocale = currentConfig?.locale || interaction.guild?.preferredLocale || "en";
     const t = getT(currentLocale);
-    // But for settings, we might want to respond in the NEW locale if changed, or the OLD one?
-    // Let's stick to interaction.locale for the ephemeral response to the user running the command.
-    // The previous line `const t = getT(interaction.locale);` is replaced by the above line `const t = getT(currentLocale);`
-    // The user's provided edit block had a duplicate `const t` declaration, which is a syntax error.
-    // Assuming the intent was to use `currentLocale` for `t`, the duplicate declaration is resolved by replacing the old one.
 
     const mobileFriendly = interaction.options.getBoolean("mobile-friendly");
     const locale = interaction.options.getString("locale");
@@ -115,6 +108,8 @@ const SettingsCommand: Command = {
       });
       return;
     }
+
+    await interaction.deferReply({ flags: Number(MessageFlags.Ephemeral) });
 
     try {
       let responseMessage = "";
@@ -142,9 +137,8 @@ const SettingsCommand: Command = {
         responseMessage += `${t("commands.settings.notification_method_updated", { method: methodName })}\n`;
       }
 
-      await interaction.reply({
-        content: responseMessage,
-        flags: Number(MessageFlags.Ephemeral),
+      await interaction.editReply({
+        content: responseMessage.trim(),
       });
 
       logger.info(
@@ -153,8 +147,7 @@ const SettingsCommand: Command = {
 
       // Trigger immediate update of the map message
       const { postOrUpdateInChannel } = require("../utils/messageManager");
-      // We already have the configs from earlier in the function
-      const updatedConfig = configs[interaction.guildId];
+      const updatedConfig = await getServerConfig(interaction.guildId);
       if (updatedConfig?.channelId) {
         await postOrUpdateInChannel(
           interaction.client,
@@ -162,13 +155,13 @@ const SettingsCommand: Command = {
           updatedConfig.channelId,
           updatedConfig.messageId,
           locale || undefined, // Pass the new locale if it was updated
+          updatedConfig,
         );
       }
     } catch (error) {
       logger.error({ err: error }, "Error executing settings command");
-      await interaction.reply({
+      await interaction.editReply({
         content: t("common.error"),
-        flags: Number(MessageFlags.Ephemeral),
       });
     }
   },

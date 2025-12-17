@@ -116,7 +116,8 @@ async function withRetry<T>(
  * This intercepts all REST API calls and wraps them with retry logic
  */
 export function patchDiscordRateLimiting(client: Client): void {
-  const originalRequest = (client.rest as any).request;
+  const restClient = client.rest as any;
+  const originalRequest = restClient.request;
 
   if (!originalRequest) {
     logger.warn("Could not patch Discord REST client - request method not found");
@@ -124,27 +125,24 @@ export function patchDiscordRateLimiting(client: Client): void {
   }
 
   // Track if already patched
-  if ((originalRequest as any).__rateLimitPatched) {
+  if (restClient.__rateLimitPatched) {
     logger.debug("Discord REST client already patched for rate limiting");
     return;
   }
 
   // Replace the request method with our wrapped version
-  (client.rest as any).request = async function (options: any) {
+  restClient.__originalRequest = originalRequest;
+  restClient.request = async function (options: any) {
     const method = options.method || "GET";
     const route = options.path || options.url || "unknown";
     const context = extractContext(method, route, options);
 
     // Wrap the original request with retry logic
-    return withRetry(
-      () => originalRequest.call(this, options),
-      context,
-      3, // max retries
-    );
+    return withRetry(() => originalRequest.call(this, options), context, 3);
   };
 
   // Mark as patched
-  ((client.rest as any).request as any).__rateLimitPatched = true;
+  restClient.__rateLimitPatched = true;
 
   logger.info("Discord REST client patched for automatic rate limit handling");
 }
@@ -153,10 +151,11 @@ export function patchDiscordRateLimiting(client: Client): void {
  * Removes the monkey patch (for testing or cleanup)
  */
 export function unpatchDiscordRateLimiting(client: Client): void {
-  const currentRequest = (client.rest as any).request;
-
-  if (currentRequest && (currentRequest as any).__originalRequest) {
-    (client.rest as any).request = (currentRequest as any).__originalRequest;
+  const restClient = client.rest as any;
+  if (restClient.__originalRequest) {
+    restClient.request = restClient.__originalRequest;
+    delete restClient.__originalRequest;
+    delete restClient.__rateLimitPatched;
     logger.info("Discord REST client rate limit patch removed");
   }
 }
