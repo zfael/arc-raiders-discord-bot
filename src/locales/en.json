@@ -1,5 +1,5 @@
 {
-  "_developer_note_do_not_edit": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys. Text encapsulated in {{example}} are variables - keep them as-is.",
+  "_developer_note_do_not_edit": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys. Text encapsulated in {{example}} are variables - keep them as-is. Descriptions in command_metadata have a max length of 100 characters.",
   "_language_name": "English",
   "common": {
     "error": "An error occurred while executing this command!",
