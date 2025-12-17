@@ -108,6 +108,8 @@
       "blooms": "Blooms",
       "caches": "Caches",
       "probes": "Probes",
+      "cold": "Cold",
+      "gate": "Gate",
       "none": "None",
       "major": "Major",
       "minor": "Minor"

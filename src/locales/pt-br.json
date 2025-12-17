@@ -107,6 +107,8 @@
       "blooms": "Florescer",
       "caches": "Caches",
       "probes": "Sondas",
+      "cold": "Cold Snap",
+      "gate": "Gate",
       "none": "Nenhum",
       "major": "Principal",
       "minor": "Menor"

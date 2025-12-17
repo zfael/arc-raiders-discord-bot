@@ -107,6 +107,8 @@
       "blooms": "Flores",
       "caches": "Cachés",
       "probes": "Sondas",
+      "cold": "Cold Snap",
+      "gate": "Gate",
       "none": "Ninguno",
       "major": "Mayor",
       "minor": "Menor"
