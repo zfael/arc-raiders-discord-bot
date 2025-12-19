@@ -33,19 +33,6 @@ interface RateLimitError {
   code?: number;
 }
 
-function isAbortError(error: unknown): boolean {
-  if (!error) return false;
-  const err = error as any;
-
-  const code = typeof err.code === "string" ? err.code.toUpperCase() : err.code;
-  if (err.name === "AbortError" || code === "ABORT_ERR") {
-    return true;
-  }
-
-  const message = typeof err.message === "string" ? err.message.toLowerCase() : "";
-  return message.includes("aborted");
-}
-
 /**
  * Sleeps for the specified duration
  */
@@ -114,27 +101,6 @@ async function withRetry<T>(
           );
           throw error;
         }
-      }
-
-      if (isAbortError(error)) {
-        const retryDelay = Math.min(2000 * (attempt + 1), 5000);
-        logger.warn(
-          {
-            context,
-            attempt: attempt + 1,
-            maxRetries: maxRetries + 1,
-            retryDelayMs: retryDelay,
-          },
-          "Discord REST request aborted mid-flight. Retrying...",
-        );
-
-        if (attempt < maxRetries) {
-          await sleep(retryDelay);
-          continue;
-        }
-
-        logger.error({ context }, "Max retries exceeded for aborted REST request");
-        throw error;
       }
 
       // If it's not a rate limit error, throw immediately

@@ -3,6 +3,7 @@ import * as http from "node:http";
 import * as path from "node:path";
 import { Client, Collection, GatewayIntentBits, MessageFlags } from "discord.js";
 import { config } from "dotenv";
+import { Agent } from "undici";
 import type { Command, Event } from "./types";
 import { logger } from "./utils/logger";
 import { initScheduler } from "./utils/mapScheduler";
@@ -13,6 +14,13 @@ import { patchDiscordRateLimiting } from "./utils/discordApiPatch";
 // Load environment variables
 config();
 process.env.TZ = "UTC";
+
+const agent = new Agent({
+  keepAliveTimeout: 30000, // Keep connections alive for 30s
+  keepAliveMaxTimeout: 600000, // Max keep-alive time (10min)
+  pipelining: 0, // Disable pipelining for compatibility
+  connections: 50, // Max concurrent connections
+});
 
 // Validate required environment variables
 const requiredEnvVars = ["DISCORD_TOKEN", "CLIENT_ID"];
@@ -26,6 +34,11 @@ for (const envVar of requiredEnvVars) {
 // Create Discord client
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  rest: {
+    timeout: 30000, // 30s timeout for REST requests
+    retries: 3, // Retry failed requests up to 3 times
+    agent, // Use persistent HTTP connections with keep-alive
+  },
 });
 
 // Setup command collection
@@ -118,12 +131,14 @@ client.on("interactionCreate", async (interaction) => {
 // Graceful shutdown
 process.on("SIGINT", () => {
   logger.info("Shutting down gracefully...");
+  agent.close(); // Close all keep-alive connections
   client.destroy();
   process.exit(0);
 });
 
 process.on("SIGTERM", () => {
   logger.info("Shutting down gracefully...");
+  agent.close(); // Close all keep-alive connections
   client.destroy();
   process.exit(0);
 });
