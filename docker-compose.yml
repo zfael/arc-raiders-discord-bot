@@ -1,13 +1,18 @@
-version: '3.8'
-
 services:
   arc-raiders-bot:
     image: ghcr.io/zfael/arc-raiders-discord-bot:latest
     container_name: arc-raiders-discord-bot
     restart: unless-stopped
+    init: true
+    network_mode: host
+    cpus: "2.0"
     env_file:
       - .env
     ports:
       - "6767:6767"
     environment:
       - TZ=UTC
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
