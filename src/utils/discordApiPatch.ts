@@ -3,15 +3,14 @@ import { DiscordAPIError } from "discord.js";
 import { logger } from "./logger";
 
 /**
- * Discord API Rate Limiting & Network Error Handling Monkey Patch
+ * Discord API Rate Limiting Monkey Patch
  *
  * This module patches Discord.js's REST client to automatically handle rate limiting
- * and network errors on ALL API calls. No manual wrapping required!
+ * on ALL API calls. No manual wrapping required - just use Discord.js normally!
  *
  * Features:
  * - Automatically intercepts all Discord API calls
  * - Detects HTTP 429 rate limit responses
- * - Detects network errors (abort, timeout, connection reset)
  * - Retries with exponential backoff (up to 3 times)
  * - Auto-generates context from API route for logging
  * - Works transparently with all Discord.js operations
@@ -21,7 +20,7 @@ import { logger } from "./logger";
  * import { patchDiscordRateLimiting } from './utils/discordApiPatch';
  * patchDiscordRateLimiting(client); // Call once on startup
  *
- * // Then use Discord.js normally - rate limiting & network retries are automatic!
+ * // Then use Discord.js normally - rate limiting is automatic!
  * await channel.send({ content: 'Hello!' });
  * await message.edit({ embeds: [embed] });
  * ```
@@ -32,19 +31,6 @@ interface RateLimitError {
   retry_after: number;
   global: boolean;
   code?: number;
-}
-
-function isAbortError(error: unknown): boolean {
-  if (!error) return false;
-  const err = error as any;
-
-  const code = typeof err.code === "string" ? err.code.toUpperCase() : err.code;
-  if (err.name === "AbortError" || code === "ABORT_ERR") {
-    return true;
-  }
-
-  const message = typeof err.message === "string" ? err.message.toLowerCase() : "";
-  return message.includes("aborted");
 }
 
 /**
@@ -70,29 +56,7 @@ function extractContext(method: string, route: string, _options?: any): string {
 }
 
 /**
- * Check if error is a network/abort error that should be retried
- */
-function isRetriableNetworkError(error: any): boolean {
-  // Abort errors
-  if (error.name === "AbortError") return true;
-  if (error.message?.includes("operation was aborted")) return true;
-  if (error.message?.includes("This operation was aborted")) return true;
-
-  // Network timeout errors
-  if (error.code === "ETIMEDOUT") return true;
-  if (error.code === "ECONNRESET") return true;
-  if (error.code === "ECONNREFUSED") return true;
-  if (error.code === "ENETUNREACH") return true;
-  if (error.code === "EAI_AGAIN") return true;
-
-  // Socket hang up
-  if (error.message?.includes("socket hang up")) return true;
-
-  return false;
-}
-
-/**
- * Wraps an async function with rate limit and network error retry logic
+ * Wraps an async function with rate limit retry logic
  */
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -139,33 +103,12 @@ async function withRetry<T>(
         }
       }
 
-      if (isAbortError(error)) {
-        const retryDelay = Math.min(2000 * (attempt + 1), 5000);
-        logger.warn(
-          {
-            context,
-            attempt: attempt + 1,
-            maxRetries: maxRetries + 1,
-            retryDelayMs: retryDelay,
-          },
-          "Discord REST request aborted mid-flight. Retrying...",
-        );
-
-        if (attempt < maxRetries) {
-          await sleep(retryDelay);
-          continue;
-        }
-
-        logger.error({ context }, "Max retries exceeded for aborted REST request");
-        throw error;
-      }
-
       // If it's not a rate limit error, throw immediately
       throw error;
     }
   }
 
-  throw new Error("Unexpected error in retry logic");
+  throw new Error("Unexpected error in rate limit retry logic");
 }
 
 /**
@@ -173,7 +116,8 @@ async function withRetry<T>(
  * This intercepts all REST API calls and wraps them with retry logic
  */
 export function patchDiscordRateLimiting(client: Client): void {
-  const originalRequest = (client.rest as any).request;
+  const restClient = client.rest as any;
+  const originalRequest = restClient.request;
 
   if (!originalRequest) {
     logger.warn("Could not patch Discord REST client - request method not found");
@@ -181,39 +125,37 @@ export function patchDiscordRateLimiting(client: Client): void {
   }
 
   // Track if already patched
-  if ((originalRequest as any).__rateLimitPatched) {
+  if (restClient.__rateLimitPatched) {
     logger.debug("Discord REST client already patched for rate limiting");
     return;
   }
 
   // Replace the request method with our wrapped version
-  (client.rest as any).request = async function (options: any) {
+  restClient.__originalRequest = originalRequest;
+  restClient.request = async function (options: any) {
     const method = options.method || "GET";
     const route = options.path || options.url || "unknown";
     const context = extractContext(method, route, options);
 
     // Wrap the original request with retry logic
-    return withRetry(
-      () => originalRequest.call(this, options),
-      context,
-      3, // max retries
-    );
+    return withRetry(() => originalRequest.call(this, options), context, 3);
   };
 
   // Mark as patched
-  ((client.rest as any).request as any).__rateLimitPatched = true;
+  restClient.__rateLimitPatched = true;
 
-  logger.info("Discord REST client patched for automatic rate limit & network error handling");
+  logger.info("Discord REST client patched for automatic rate limit handling");
 }
 
 /**
  * Removes the monkey patch (for testing or cleanup)
  */
 export function unpatchDiscordRateLimiting(client: Client): void {
-  const currentRequest = (client.rest as any).request;
-
-  if (currentRequest && (currentRequest as any).__originalRequest) {
-    (client.rest as any).request = (currentRequest as any).__originalRequest;
+  const restClient = client.rest as any;
+  if (restClient.__originalRequest) {
+    restClient.request = restClient.__originalRequest;
+    delete restClient.__originalRequest;
+    delete restClient.__rateLimitPatched;
     logger.info("Discord REST client rate limit patch removed");
   }
 }
