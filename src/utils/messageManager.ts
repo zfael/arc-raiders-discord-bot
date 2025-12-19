@@ -4,6 +4,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   type Client,
+  DiscordAPIError,
   EmbedBuilder,
   type Message,
   type TextChannel,
@@ -15,12 +16,29 @@ import {
   getNextRotationTimestamp,
   MAP_ROTATIONS,
 } from "../config/mapRotation";
-import type { ServerConfigEntry } from "../types";
+import type { MapRotation, ServerConfigEntry } from "../types";
 import { getT, translateEvent } from "./i18n";
-import { generateMapImage } from "./imageGenerator";
+import { generateMapImage, resolveImageLocale } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
 import { getServerConfig, getServerConfigs, setServerMessageState } from "./serverConfig";
+
+const MAP_IMAGE_FILENAME = "map-status.png";
+const imageUrlCache = new Map<string, string>();
+let cachedImageHour: number | null = null;
+const verboseMessageLogging = process.env.VERBOSE_MESSAGE_LOGS === "true";
+
+interface MapImageCacheContext {
+  resolvedLocale: string;
+  rotation: MapRotation;
+  cacheKey: string;
+  cachedUrl?: string;
+}
+
+interface CreateMapRotationEmbedOptions {
+  rotation?: MapRotation;
+  imageUrl?: string;
+}
 
 /**
  * Create the map rotation embed
@@ -28,19 +46,15 @@ import { getServerConfig, getServerConfigs, setServerMessageState } from "./serv
 export async function createMapRotationEmbed(
   mobileFriendly: boolean = false,
   locale: string = "en",
+  options?: CreateMapRotationEmbedOptions,
 ): Promise<{
   embed: EmbedBuilder;
   files: AttachmentBuilder[];
   components: ActionRowBuilder<ButtonBuilder>[];
 }> {
   const t = getT(locale);
-  const current = getCurrentRotation();
+  const current = options?.rotation ?? getCurrentRotation();
   const nextTimestamp = getNextRotationTimestamp();
-
-  const mapBuffer = await generateMapImage(current, locale);
-  const mapAttachment = new AttachmentBuilder(mapBuffer, {
-    name: "map-status.png",
-  });
 
   const primaryColor =
     CONDITION_COLORS[current.damMajor] || CONDITION_COLORS[current.damMinor] || 0x5865f2;
@@ -50,8 +64,24 @@ export async function createMapRotationEmbed(
     .setDescription(
       `**${t("map_rotation.forecast.conditions")}**\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}`,
     )
-    .setColor(primaryColor)
-    .setImage("attachment://map-status.png");
+    .setColor(primaryColor);
+
+  const files: AttachmentBuilder[] = [];
+  if (options?.imageUrl) {
+    embed.setImage(options.imageUrl);
+    logVerbose(
+      { locale, source: "cdn-cache", imageUrl: options.imageUrl },
+      "Reusing cached CDN map image",
+    );
+  } else {
+    const mapBuffer = await generateMapImage(current, locale);
+    const mapAttachment = new AttachmentBuilder(mapBuffer, {
+      name: MAP_IMAGE_FILENAME,
+    });
+    embed.setImage(`attachment://${MAP_IMAGE_FILENAME}`);
+    files.push(mapAttachment);
+    logVerbose({ locale, source: "attachment" }, "Uploading fresh map image");
+  }
 
   // Helper to format location events with translation
   const formatLocationEventsTranslated = (major: string, minor: string) => {
@@ -281,7 +311,7 @@ export async function createMapRotationEmbed(
       .setDisabled(true),
   );
 
-  return { embed, files: [mapAttachment], components: [row1, row2] };
+  return { embed, files, components: [row1, row2] };
 }
 
 /**
@@ -312,19 +342,40 @@ export async function postOrUpdateInChannel(
       logger.warn(`Invalid or non-text channel: ${channelId}`);
       return;
     }
+    logVerbose({ guildId, channelId }, "Resolved text channel for update");
 
     const config = configOverride ?? (await getServerConfig(guildId));
     const mobileFriendly = config?.mobileFriendly ?? false;
     const notificationMethod = config?.notificationMethod ?? "pin-edit";
     // Use override if provided, otherwise fetch from config
     const locale = localeOverride || config?.locale || channel.guild?.preferredLocale || "en";
+    logVerbose(
+      { guildId, channelId, notificationMethod, locale, mobileFriendly },
+      "Loaded server configuration for update",
+    );
 
-    const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
+    const imageContext = prepareImageCacheContext(locale);
+    const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
+      rotation: imageContext.rotation,
+      imageUrl: imageContext.cachedUrl,
+    });
     let message: Message;
     const payload = {
       embeds: [embed],
-      files,
       components,
+      files: files.length > 0 ? files : undefined,
+    };
+    const logOperationResult = (action: string, startedAt: number) => {
+      logger.info(
+        {
+          guildId,
+          channelId,
+          notificationMethod,
+          durationMs: Date.now() - startedAt,
+          cachedImage: Boolean(imageContext.cachedUrl),
+        },
+        action,
+      );
     };
 
     // Handle different notification methods
@@ -336,18 +387,33 @@ export async function postOrUpdateInChannel(
         existingMessageId.trim() !== ""
       ) {
         try {
+          logVerbose(
+            { guildId, channelId, existingMessageId },
+            "Attempting to edit existing pinned message",
+          );
+          const opStart = Date.now();
           message = await channel.messages.edit(existingMessageId, payload);
-          logger.info(`Updated pinned message in ${channelId}`);
-        } catch (_error) {
-          logger.warn(`Message not found in ${channelId}, creating a new one.`);
+          logOperationResult(`Updated pinned message in ${channelId}`, opStart);
+        } catch (error) {
+          logger.warn(
+            {
+              guildId,
+              channelId,
+              existingMessageId,
+              error: formatDiscordError(error),
+            },
+            `Message not found in ${channelId}, creating a new one.`,
+          );
+          const opStart = Date.now();
           message = await channel.send(payload);
           await message.pin().catch(catchPinError);
-          logger.info(`Created and pinned a new message in ${channelId}`);
+          logOperationResult(`Created and pinned a new message in ${channelId}`, opStart);
         }
       } else {
+        const opStart = Date.now();
         message = await channel.send(payload);
         await message.pin().catch(catchPinError);
-        logger.info(`Created and pinned a new message in ${channelId}`);
+        logOperationResult(`Created and pinned a new message in ${channelId}`, opStart);
       }
       await setServerMessageState(guildId, message.id, new Date().toISOString());
     } else if (notificationMethod === "post-delete") {
@@ -358,25 +424,39 @@ export async function postOrUpdateInChannel(
         existingMessageId.trim() !== ""
       ) {
         try {
+          logVerbose(
+            { guildId, channelId, existingMessageId },
+            "Attempting to delete previous message before posting new one",
+          );
           await channel.messages.delete(existingMessageId);
         } catch (_error) {
           logger.warn(`Old message ${existingMessageId} not found, skipping deletion`);
         }
       }
 
+      const opStart = Date.now();
       message = await channel.send(payload);
-      logger.info(`Posted new message in ${channelId} (post-delete mode)`);
+      logOperationResult(`Posted new message in ${channelId} (post-delete mode)`, opStart);
       await setServerMessageState(guildId, message.id, new Date().toISOString());
     } else if (notificationMethod === "post-keep") {
       // Option 3: Post new and keep history
+      const opStart = Date.now();
       message = await channel.send(payload);
-      logger.info(`Posted new message in ${channelId} (post-keep mode)`);
+      logOperationResult(`Posted new message in ${channelId} (post-keep mode)`, opStart);
       // Don't store message ID for post-keep mode, or set to null
       await setServerMessageState(guildId, message.id, new Date().toISOString());
     }
+
+    if (!imageContext.cachedUrl && message) {
+      cacheImageUrlFromMessage(message, imageContext.cacheKey);
+    }
   } catch (error) {
     logger.error(
-      { type: (error as any)?.type, message: (error as any)?.message },
+      {
+        guildId,
+        channelId,
+        error: formatDiscordError(error),
+      },
       `Error processing channel ${channelId}`,
     );
   }
@@ -442,6 +522,15 @@ export async function postOrUpdateMapMessages(
           logger.warn({ guildId }, "Skipping server without configured channel");
           continue;
         }
+        logVerbose(
+          {
+            workerId,
+            guildId,
+            channelId: config.channelId,
+            notificationMethod: config.notificationMethod,
+          },
+          "Worker picked server for processing",
+        );
         await postOrUpdateInChannel(
           client,
           guildId,
@@ -515,16 +604,94 @@ export function setupLockExpiration(client: Client) {
         const config = await getServerConfig(guildId);
         const mobileFriendly = config?.mobileFriendly ?? false;
         const locale = config?.locale || channel.guild?.preferredLocale || "en";
+        logVerbose(
+          { guildId, channelId, messageId },
+          "Lock expired: restoring message to overview state",
+        );
 
-        const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
-        await message.edit({
+        const imageContext = prepareImageCacheContext(locale);
+        const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
+          rotation: imageContext.rotation,
+          imageUrl: imageContext.cachedUrl,
+        });
+        const updatedMessage = await message.edit({
           embeds: [embed],
-          files: files,
+          files: files.length > 0 ? files : undefined,
           components: components,
         });
+        if (!imageContext.cachedUrl) {
+          cacheImageUrlFromMessage(updatedMessage, imageContext.cacheKey);
+        }
       }
-    } catch (_error) {
-      // Silently fail - message may have been deleted
+    } catch (error) {
+      logVerbose(
+        { guildId, channelId, messageId, error: formatDiscordError(error) },
+        "Lock expiration reset skipped (message missing or deleted)",
+      );
     }
   });
+}
+
+function prepareImageCacheContext(locale: string): MapImageCacheContext {
+  const rotation = getCurrentRotation();
+  if (cachedImageHour === null || cachedImageHour !== rotation.hour) {
+    cachedImageHour = rotation.hour;
+    imageUrlCache.clear();
+    logVerbose({ newHour: rotation.hour }, "Cleared image CDN cache due to hour change");
+  }
+
+  const resolvedLocale = resolveImageLocale(locale);
+  const cacheKey = `${resolvedLocale}-${rotation.hour}`;
+
+  return {
+    resolvedLocale,
+    rotation,
+    cacheKey,
+    cachedUrl: imageUrlCache.get(cacheKey),
+  };
+}
+
+function cacheImageUrlFromMessage(message: Message, cacheKey: string): void {
+  if (!cacheKey || !message?.attachments?.size) {
+    logVerbose({ cacheKey }, "Skipping CDN cache update because attachment list is empty");
+    return;
+  }
+
+  const attachment =
+    message.attachments.find((att) => att.name === MAP_IMAGE_FILENAME) ??
+    message.attachments.find((att) => att.contentType?.startsWith("image/"));
+
+  if (attachment?.url) {
+    imageUrlCache.set(cacheKey, attachment.url);
+    logVerbose({ cacheKey, url: attachment.url }, "Cached CDN attachment URL for reuse");
+  }
+}
+
+function logVerbose(metadata: Record<string, unknown>, message: string): void {
+  if (verboseMessageLogging) {
+    logger.debug(metadata, message);
+  }
+}
+
+function formatDiscordError(error: unknown): Record<string, unknown> {
+  if (!error) return {};
+  if (error instanceof DiscordAPIError) {
+    return {
+      name: error.name,
+      code: error.code,
+      status: error.status,
+      method: error.method,
+      url: error.url,
+      message: error.message,
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: verboseMessageLogging ? error.stack : undefined,
+    };
+  }
+
+  return { error };
 }

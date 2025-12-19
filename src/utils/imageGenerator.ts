@@ -23,7 +23,7 @@ function hasImageLocale(locale: string | undefined): boolean {
   return !!locale && AVAILABLE_IMAGE_LOCALES.has(locale);
 }
 
-function resolveImageLocale(locale: string): string {
+export function resolveImageLocale(locale: string): string {
   if (!locale || typeof locale !== "string") {
     return "en";
   }
