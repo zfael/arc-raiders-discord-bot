@@ -33,7 +33,7 @@
     "puppeteer": "^24.31.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.8",
+    "@biomejs/biome": "^2.3.10",
     "@types/node": "^24.10.1",
     "copyfiles": "^2.4.1",
     "ts-node": "^10.9.2",
