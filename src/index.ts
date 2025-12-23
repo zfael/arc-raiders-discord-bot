@@ -15,6 +15,16 @@ import { patchDiscordRateLimiting } from "./utils/discordApiPatch";
 config();
 process.env.TZ = "UTC";
 
+// Global error handlers to prevent silent crashes
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error({ reason, promise }, "Unhandled Promise Rejection");
+});
+
+process.on("uncaughtException", (error) => {
+  logger.fatal({ err: error }, "Uncaught Exception - shutting down");
+  process.exit(1);
+});
+
 const agent = new Agent({
   keepAliveTimeout: 30000, // Keep connections alive for 30s
   keepAliveMaxTimeout: 600000, // Max keep-alive time (10min)
@@ -162,6 +172,14 @@ const server = http.createServer((req, res) => {
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not Found" }));
+  }
+});
+
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    logger.error({ port: PORT }, `Health check port ${PORT} is already in use`);
+  } else {
+    logger.error({ err: error }, "Health check server error");
   }
 });
 

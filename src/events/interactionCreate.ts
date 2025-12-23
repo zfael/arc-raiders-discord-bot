@@ -19,6 +19,23 @@ import { logger } from "../utils/logger";
 import { createMapRotationEmbed } from "../utils/messageManager";
 import { getServerConfig } from "../utils/serverConfig";
 
+/**
+ * Finds and enables the Home button by its customId instead of relying on array index.
+ */
+function enableHomeButton(rows: ActionRowBuilder<ButtonBuilder>[]): void {
+  for (const row of rows) {
+    for (const component of row.components) {
+      // Access the underlying data to check customId
+      // ButtonBuilder data has custom_id for non-link buttons
+      const data = component.data as { custom_id?: string };
+      if (data.custom_id === "view_overview") {
+        component.setDisabled(false);
+        return;
+      }
+    }
+  }
+}
+
 export async function handleInteraction(interaction: Interaction) {
   if (!interaction.isButton()) return;
 
@@ -148,6 +165,16 @@ export async function handleInteraction(interaction: Interaction) {
             .setStyle(ButtonStyle.Secondary)
             .setEmoji(CONDITION_EMOJIS.Matriarch),
           new ButtonBuilder()
+            .setCustomId("view_event_Cold")
+            .setLabel(t("map_rotation.events.cold"))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(CONDITION_EMOJIS.Cold),
+          new ButtonBuilder()
+            .setCustomId("view_event_Gate")
+            .setLabel(t("map_rotation.events.gate"))
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(CONDITION_EMOJIS.Gate),
+          new ButtonBuilder()
             .setCustomId("view_mode_map")
             .setLabel(t("map_rotation.buttons.show_map"))
             .setStyle(ButtonStyle.Primary)
@@ -157,12 +184,16 @@ export async function handleInteraction(interaction: Interaction) {
             .setLabel(t("map_rotation.buttons.show_minor"))
             .setStyle(ButtonStyle.Primary)
             .setEmoji("🔍"),
+        );
+        // Add third row for navigation in major mode
+        const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
           new ButtonBuilder()
             .setCustomId("view_overview")
             .setLabel(t("map_rotation.buttons.home"))
             .setStyle(ButtonStyle.Secondary)
             .setEmoji("🏠"),
         );
+        return [row1, row2, row3];
       } else {
         // minor
         row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -274,7 +305,7 @@ export async function handleInteraction(interaction: Interaction) {
       embed.setFields(fields);
 
       const buttons = getButtons("map");
-      (buttons[1].components[2] as ButtonBuilder).setDisabled(false);
+      enableHomeButton(buttons);
 
       await interaction.editReply({ embeds: [embed], components: buttons });
       return;
@@ -307,11 +338,20 @@ export async function handleInteraction(interaction: Interaction) {
       embed.setImage("attachment://map-status.png");
       embed.setFields(fields);
 
-      const majorEvents = ["Harvester", "Night", "Storm", "Tower", "Bunker", "Matriarch"];
+      const majorEvents = [
+        "Harvester",
+        "Night",
+        "Storm",
+        "Tower",
+        "Bunker",
+        "Matriarch",
+        "Cold",
+        "Gate",
+      ];
       const mode = majorEvents.includes(eventType) ? "major" : "minor";
 
       const buttons = getButtons(mode);
-      (buttons[1].components[3] || (buttons[1].components[2] as ButtonBuilder)).setDisabled(false);
+      enableHomeButton(buttons);
 
       await interaction.editReply({ embeds: [embed], components: buttons });
       return;
@@ -319,6 +359,25 @@ export async function handleInteraction(interaction: Interaction) {
 
     logger.info(`Button clicked: ${customId}`);
   } catch (error) {
-    logger.error({ err: error }, "Error handling interaction");
+    logger.error({ err: error }, "Error handling button interaction");
+
+    // Try to provide user feedback if possible
+    try {
+      const t = getT(interaction.locale);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: t("common.error") || "An error occurred while processing your request.",
+          flags: Number(MessageFlags.Ephemeral),
+        });
+      } else {
+        await interaction.followUp({
+          content: t("common.error") || "An error occurred while processing your request.",
+          flags: Number(MessageFlags.Ephemeral),
+        });
+      }
+    } catch (replyError) {
+      // If we can't send feedback, just log it
+      logger.debug({ err: replyError }, "Could not send error feedback to user");
+    }
   }
 }

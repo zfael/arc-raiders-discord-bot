@@ -12,6 +12,7 @@ import {
   loadAvailableLocales,
 } from "../utils/localeLoader";
 import { logger } from "../utils/logger";
+import { postOrUpdateInChannel } from "../utils/messageManager";
 import {
   getServerConfig,
   setMobileFriendly,
@@ -146,16 +147,17 @@ const SettingsCommand: Command = {
       );
 
       // Trigger immediate update of the map message
-      const { postOrUpdateInChannel } = require("../utils/messageManager");
       const updatedConfig = await getServerConfig(interaction.guildId);
       if (updatedConfig?.channelId) {
         await postOrUpdateInChannel(
           interaction.client,
           interaction.guildId,
           updatedConfig.channelId,
-          updatedConfig.messageId,
-          locale || undefined, // Pass the new locale if it was updated
-          updatedConfig,
+          {
+            existingMessageId: updatedConfig.messageId,
+            localeOverride: locale || undefined, // Pass the new locale if it was updated
+            configOverride: updatedConfig,
+          },
         );
       }
     } catch (error) {

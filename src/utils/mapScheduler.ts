@@ -3,6 +3,9 @@ import cron from "node-cron";
 import { logger } from "./logger";
 import { postOrUpdateMapMessages } from "./messageManager";
 
+/** Lock to prevent overlapping executions */
+let isUpdateRunning = false;
+
 /**
  * Update the map status message
  * @param {Client} client The Discord client.
@@ -12,10 +15,23 @@ export async function updateMapStatus(
   client: Client,
   filterByNotificationMethod?: string[],
 ): Promise<void> {
+  // Prevent overlapping executions
+  if (isUpdateRunning) {
+    logger.warn("Skipping scheduled update - previous execution still running");
+    return;
+  }
+
+  isUpdateRunning = true;
+  const startTime = Date.now();
+
   try {
     await postOrUpdateMapMessages(client, filterByNotificationMethod);
   } catch (error) {
     logger.error({ err: error }, "Error updating map status");
+  } finally {
+    const duration = Date.now() - startTime;
+    isUpdateRunning = false;
+    logger.info({ durationMs: duration }, "Scheduled update execution completed");
   }
 }
 
@@ -28,9 +44,13 @@ export function initScheduler(client: Client): void {
   // This means: "at minute 0, every hour, every day, every month, every day of week"
   cron.schedule(
     "0 * * * *",
-    async () => {
+    () => {
+      // Don't await - let cron continue while we process
+      // The isUpdateRunning lock handles overlap prevention
       logger.info(`Hourly map rotation update triggered (cron) at ${new Date().toISOString()}`);
-      await updateMapStatus(client);
+      updateMapStatus(client).catch((error) => {
+        logger.error({ err: error }, "Unhandled error in scheduled update");
+      });
     },
     {
       timezone: "UTC",

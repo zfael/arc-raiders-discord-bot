@@ -8,8 +8,15 @@ const GuildDeleteEvent: Event = {
   once: false,
   async execute(guild: Guild) {
     logger.info(`Bot removed from server: ${guild.name} (${guild.id})`);
-    await removeServerConfig(guild.id);
-    logger.info(`Removed server entry from Supabase for guildId: ${guild.id}`);
+    try {
+      await removeServerConfig(guild.id);
+      logger.info(`Removed server entry from Supabase for guildId: ${guild.id}`);
+    } catch (error) {
+      logger.error(
+        { err: error, guildId: guild.id },
+        "Failed to remove server configuration on guild delete",
+      );
+    }
   },
 };
 

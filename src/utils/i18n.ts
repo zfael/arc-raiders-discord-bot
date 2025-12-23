@@ -10,6 +10,9 @@ const i18n = i18next.createInstance();
 
 const availableLocales = Array.from(loadAvailableLocales().keys());
 
+// Track initialization state
+let isInitialized = false;
+
 export const i18nPromise = i18n
   .use(Backend)
   .init({
@@ -64,10 +67,16 @@ export const i18nPromise = i18n
       }
     }
     logger.info(`i18next initialized. Loaded languages: ${i18n.languages.join(", ")}`);
+    isInitialized = true;
     return i18n;
   });
 
 export default i18n;
+
+/**
+ * Returns true if i18n has been fully initialized.
+ */
+export const isI18nReady = (): boolean => isInitialized;
 
 /**
  * Helper to get a fixed T function for a specific locale.
@@ -75,6 +84,13 @@ export default i18n;
  * @returns A translation function.
  */
 export const getT = (locale: string) => {
+  if (!isInitialized) {
+    logger.warn(
+      { locale },
+      "getT called before i18n initialization complete - translations may be missing",
+    );
+  }
+
   if (!locale || typeof locale !== "string") {
     return i18n.getFixedT("en", "translation");
   }

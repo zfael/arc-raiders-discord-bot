@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 interface Lock {
   userId: string;
   expiresAt: number;
@@ -6,12 +8,50 @@ interface Lock {
   timeout: NodeJS.Timeout;
 }
 
-type ExpirationCallback = (messageId: string, channelId: string, guildId: string) => void;
+type ExpirationCallback = (
+  messageId: string,
+  channelId: string,
+  guildId: string,
+) => void | Promise<void>;
 
 class InteractionLockManager {
   private locks: Map<string, Lock> = new Map();
   private readonly LOCK_DURATION_MS = 15000; // 15 seconds
+  private readonly CLEANUP_INTERVAL_MS = 60000; // 1 minute
   private expirationCallback: ExpirationCallback | null = null;
+  private cleanupInterval: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // Start periodic cleanup to remove any orphaned locks
+    this.startCleanup();
+  }
+
+  private startCleanup(): void {
+    if (this.cleanupInterval) return;
+
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      let cleaned = 0;
+
+      for (const [messageId, lock] of this.locks.entries()) {
+        if (lock.expiresAt <= now) {
+          clearTimeout(lock.timeout);
+          this.locks.delete(messageId);
+          cleaned++;
+        }
+      }
+
+      if (cleaned > 0) {
+        logger.debug(
+          { cleaned, remaining: this.locks.size },
+          "Cleaned up expired interaction locks",
+        );
+      }
+    }, this.CLEANUP_INTERVAL_MS);
+
+    // Don't prevent process from exiting
+    this.cleanupInterval.unref();
+  }
 
   setExpirationCallback(callback: ExpirationCallback) {
     this.expirationCallback = callback;
@@ -39,10 +79,17 @@ class InteractionLockManager {
     }
 
     // Set new lock
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       this.locks.delete(messageId);
       if (this.expirationCallback) {
-        this.expirationCallback(messageId, channelId, guildId);
+        try {
+          await this.expirationCallback(messageId, channelId, guildId);
+        } catch (error) {
+          logger.error(
+            { err: error, messageId, channelId, guildId },
+            "Error in lock expiration callback",
+          );
+        }
       }
     }, this.LOCK_DURATION_MS);
 

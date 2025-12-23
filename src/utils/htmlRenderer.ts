@@ -1,5 +1,4 @@
-// @ts-nocheck
-
+/// <reference lib="dom" />
 import * as fs from "node:fs";
 import * as path from "node:path";
 import puppeteer, { type Browser, type Page } from "puppeteer";
@@ -127,9 +126,10 @@ export class HtmlRenderer {
       const mapImagePath = path.join(__dirname, "../assets/map.png");
       const mapImageBuffer = fs.readFileSync(mapImagePath);
       const mapImageBase64 = `data:image/png;base64,${mapImageBuffer.toString("base64")}`;
+      // This function runs in browser context (Puppeteer), so document is available
       await page.evaluate(
         (data, locations, emojis, icons, mapImage, translations) => {
-          const mapImg = document.getElementById("map-bg");
+          const mapImg = document.getElementById("map-bg") as HTMLImageElement | null;
           if (mapImg) mapImg.src = mapImage;
 
           // Update forecast header with translation
@@ -138,7 +138,7 @@ export class HtmlRenderer {
             forecastText.textContent = translations.forecast_header;
           }
 
-          const getIconHtml = (condition) => {
+          const getIconHtml = (condition: string): string => {
             if (icons[condition]) {
               return `<img src="${icons[condition]}" class="condition-icon" alt="${condition}">`;
             }
@@ -147,12 +147,13 @@ export class HtmlRenderer {
 
           const overlaysContainer = document.getElementById("map-overlays");
           if (overlaysContainer) {
-            Object.entries(locations).forEach(([key, loc]: [string, any]) => {
-              const major = data.current[`${key}Major` as keyof typeof data.current];
-              const minor = data.current[`${key}Minor` as keyof typeof data.current];
+            Object.entries(locations).forEach(([key, loc]) => {
+              const locData = loc as { x: number; y: number; label: string };
+              const major = String(data.current[`${key}Major` as keyof typeof data.current]);
+              const minor = String(data.current[`${key}Minor` as keyof typeof data.current]);
 
               // Translate location label if available
-              const locLabel = translations[`location_${key}`] || loc.label;
+              const locLabel = translations[`location_${key}`] || locData.label;
 
               let statusHtml = "";
               if (major !== "None") {
@@ -166,8 +167,8 @@ export class HtmlRenderer {
               if (major === "None" && minor === "None") {
                 const marker = document.createElement("div");
                 marker.className = "location-marker";
-                marker.style.left = `${loc.x}%`;
-                marker.style.top = `${loc.y}%`;
+                marker.style.left = `${locData.x}%`;
+                marker.style.top = `${locData.y}%`;
                 marker.innerHTML = `
                 <div class="location-name">${locLabel}</div>
                 <div class="location-pin"></div>
@@ -178,8 +179,8 @@ export class HtmlRenderer {
 
               const marker = document.createElement("div");
               marker.className = "location-marker";
-              marker.style.left = `${loc.x}%`;
-              marker.style.top = `${loc.y}%`;
+              marker.style.left = `${locData.x}%`;
+              marker.style.top = `${locData.y}%`;
               marker.innerHTML = `
               <div class="location-name">${locLabel}</div>
               <div class="location-pin"></div>
@@ -191,7 +192,7 @@ export class HtmlRenderer {
 
           const forecastGrid = document.getElementById("forecast-grid");
           if (forecastGrid) {
-            data.forecast.forEach((rotation: any) => {
+            data.forecast.forEach((rotation) => {
               const card = document.createElement("div");
               card.className = "forecast-card";
 
