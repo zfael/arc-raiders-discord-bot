@@ -17,12 +17,20 @@ export async function updateMapStatus(
 ): Promise<void> {
   // Prevent overlapping executions
   if (isUpdateRunning) {
-    logger.warn("Skipping scheduled update - previous execution still running");
+    logger.warn(
+      { filterByNotificationMethod },
+      "Skipping scheduled update - previous execution still running",
+    );
     return;
   }
 
   isUpdateRunning = true;
   const startTime = Date.now();
+
+  logger.info(
+    { filterByNotificationMethod },
+    "Map rotation update started",
+  );
 
   try {
     await postOrUpdateMapMessages(client, filterByNotificationMethod);
@@ -31,7 +39,10 @@ export async function updateMapStatus(
   } finally {
     const duration = Date.now() - startTime;
     isUpdateRunning = false;
-    logger.info({ durationMs: duration }, "Scheduled update execution completed");
+    logger.info(
+      { durationMs: duration, filterByNotificationMethod },
+      "Map rotation update completed",
+    );
   }
 }
 
@@ -40,15 +51,19 @@ export async function updateMapStatus(
  * Runs at the top of every hour (UTC) using cron
  */
 export function initScheduler(client: Client): void {
+  const cronExpression = "0 * * * *";
   // Schedule updates at minute 0 of every hour (0 * * * *)
   // This means: "at minute 0, every hour, every day, every month, every day of week"
-  cron.schedule(
-    "0 * * * *",
+  const task = cron.schedule(
+    cronExpression,
     () => {
       // Don't await - let cron continue while we process
       // The isUpdateRunning lock handles overlap prevention
-      logger.info(`Hourly map rotation update triggered (cron) at ${new Date().toISOString()}`);
-      updateMapStatus(client).catch((error) => {
+      logger.info(
+        { triggeredAt: new Date().toISOString() },
+        "Hourly map rotation cron fired",
+      );
+      updateMapStatus(client, undefined).catch((error) => {
         logger.error({ err: error }, "Unhandled error in scheduled update");
       });
     },
@@ -57,5 +72,20 @@ export function initScheduler(client: Client): void {
     },
   );
 
-  logger.info("Map rotation cron scheduler initialized (runs at :00 of every hour UTC)");
+  let nextRun: string | null = null;
+  if (typeof task.getNextRun === "function") {
+    try {
+      const next = task.getNextRun();
+      if (next instanceof Date && !Number.isNaN(next.getTime())) {
+        nextRun = next.toISOString();
+      }
+    } catch (error) {
+      logger.debug({ err: error }, "Could not determine next cron run time");
+    }
+  }
+
+  logger.info(
+    { cronExpression, nextRun },
+    "Map rotation cron scheduler initialized (runs at :00 of every hour UTC)",
+  );
 }
