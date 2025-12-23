@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/ARC%20Sentinel-Discord%20Bot-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="ARCSentinel Discord Bot">
 </p>
 
-<h1 align="center">🎮 ARCSentinel Discord Bot</h1>
+<h1 align="center">ARCSentinel Discord Bot</h1>
 
 <p align="center">
   <a href="https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml"><img src="https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml/badge.svg?branch=main" alt="Build & Lint"></a>
@@ -15,20 +15,35 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#%EF%B8%8F-database-setup">Database Setup</a> •
-  <a href="#-commands">Commands</a>
+  <a href="#preview">Preview</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#database-setup">Database Setup</a> •
+  <a href="#commands">Commands</a>
 </p>
 
 ---
 
-## 🚀 Quick Start
+## Preview
+
+<p align="center">
+  <img src="docs/images/preview-discord.png" alt="ARCSentinel Discord Embed Preview" width="400">
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/images/preview-map.png" alt="ARCSentinel Map Generator Preview" width="500">
+</p>
+
+<p align="center">
+  <em>Live map rotation status with interactive controls • Generated map images with 6-hour forecast</em>
+</p>
+
+---
+
+## Quick Start
 
 ### Add the Bot to Your Server
 
-You can invite Arc Raiders Discord Bot to any Discord server using this link:
+You can invite ARCSentinel Discord Bot to any Discord server using this link:
 
 <p align="center">
   <a href="https://discord.com/oauth2/authorize?client_id=1442592163983528056">
@@ -44,9 +59,9 @@ You can invite Arc Raiders Discord Bot to any Discord server using this link:
 
 ---
 
-## ✨ Features
+## Features
 
-### 🗺️ Map Rotation Tracking
+### Map Rotation Tracking
 
 | Map | Description |
 |-----|-------------|
@@ -56,7 +71,7 @@ You can invite Arc Raiders Discord Bot to any Discord server using this link:
 | **Blue Gate** | Mountainous region with unique events |
 | **Stella Montis** | High-altitude snowy terrain |
 
-### 🎯 Events & Conditions
+### Events & Conditions
 
 The bot tracks all event types across every map, updating in real-time with the official UTC rotation schedule.
 
@@ -64,7 +79,7 @@ The bot tracks all event types across every map, updating in real-time with the 
 <tr>
 <td width="50%" valign="top">
 
-#### ⚔️ Major Events (2x Multiplier)
+#### Major Events (2x Multiplier)
 
 | Event | Description |
 |-------|-------------|
@@ -79,7 +94,7 @@ The bot tracks all event types across every map, updating in real-time with the 
 </td>
 <td width="50%" valign="top">
 
-#### 📦 Minor Events
+#### Minor Events
 
 | Event | Description |
 |-------|-------------|
@@ -93,7 +108,7 @@ The bot tracks all event types across every map, updating in real-time with the 
 </tr>
 </table>
 
-### 🔔 Notification Methods
+### Notification Methods
 
 Choose how the bot updates your server:
 
@@ -103,7 +118,7 @@ Choose how the bot updates your server:
 | **🔄 Post & Delete** | New message each hour, old one deleted |
 | **📝 Post & Keep** | New message each hour, history preserved |
 
-### 🌍 Multi-Language Support
+### Multi-Language Support
 
 The bot is fully localized and supports:
 
@@ -114,7 +129,7 @@ The bot is fully localized and supports:
 
 Use `/settings locale:` to change your server's language!
 
-### 🖼️ Visual Map Generation
+### Visual Map Generation
 
 Beautiful generated map images showing:
 - Current active events at each location
@@ -122,11 +137,11 @@ Beautiful generated map images showing:
 - 6-hour forecast panel
 - Localized location and event names
 
-### 📱 Mobile-Friendly Mode
+### Mobile-Friendly Mode
 
 Toggle a single-column optimized layout for mobile users with `/settings mobile-friendly: True`
 
-### 🔘 Interactive Controls
+### Interactive Controls
 
 Navigate through maps and events using button controls:
 - **🏠 Home** — Return to overview of all maps
@@ -138,7 +153,7 @@ Navigate through maps and events using button controls:
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
@@ -283,7 +298,7 @@ npm start
 
 ---
 
-## 🗄️ Database Setup
+## Database Setup
 
 This bot uses **Supabase** for persistent storage of server configurations.
 
@@ -361,7 +376,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ---
 
-## 🤖 Discord Bot Setup
+## Discord Bot Setup
 
 ### 1. Create a Discord Application
 
@@ -420,7 +435,7 @@ The bot requires these permissions (permission integer: **274877925376**):
 
 ---
 
-## 💬 Commands
+## Commands
 
 | Command | Description | Permissions |
 |---------|-------------|-------------|
@@ -439,7 +454,7 @@ The bot requires these permissions (permission integer: **274877925376**):
 
 ---
 
-## 🛠️ Development
+## Development
 
 ### Code Quality
 
@@ -468,7 +483,7 @@ npm run generate-maps    # Generate all map images
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 <details>
 <summary><strong>Bot doesn't respond to commands</strong></summary>
@@ -518,7 +533,7 @@ npm run generate-maps    # Generate all map images
 
 ---
 
-## 📜 How It Works
+## How It Works
 
 ### Startup & Scheduling
 
@@ -539,7 +554,7 @@ All configuration and message metadata lives in Supabase, so the bot resumes sea
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -552,13 +567,13 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 5. Test your changes thoroughly
 6. Submit a pull request
 
-### 🌍 Help Translate
+### Help Translate
 
 Want to see this bot in your language? Check out the `/translations` command in Discord or add a new locale file to `src/locales/`!
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
