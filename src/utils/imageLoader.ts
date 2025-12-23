@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { MapRotation } from "../types";
-import { DISCORD_TO_FILE_LOCALE, getLocalesWithMapAssets } from "./localeLoader";
+import { DISCORD_TO_FILE_LOCALE, getLocalesWithMapAssets } from "./i18n/localeLoader";
 import { logger } from "./logger";
 
 // Simple in-memory cache to avoid repeated disk reads during mass updates
@@ -63,10 +63,10 @@ export function resolveImageLocale(locale: string): string {
 }
 
 /**
- * Serves a pre-generated map image for the given rotation and locale.
+ * Loads a pre-generated map image for the given rotation and locale.
  * Images are generated via `npm run generate-maps` and stored in `src/assets/generatedMaps`.
  */
-export async function generateMapImage(
+export async function loadMapImage(
   currentRotation: MapRotation,
   locale: string = "en",
 ): Promise<Buffer> {

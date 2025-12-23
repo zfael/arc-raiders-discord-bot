@@ -7,9 +7,8 @@ import { Agent } from "undici";
 import type { Command, Event } from "./types";
 import { logger } from "./utils/logger";
 import { initScheduler } from "./utils/mapScheduler";
-import { setupLockExpiration } from "./utils/messageManager";
-import { setupRateLimitMonitoring } from "./utils/rateLimitMonitor";
-import { patchDiscordRateLimiting } from "./utils/discordApiPatch";
+import { setupLockExpiration } from "./utils/discord/messageManager";
+import { setupRateLimitMonitoring, enableRateLimitRetry } from "./utils/discord/rateLimitRetry";
 
 // Load environment variables
 config();
@@ -100,7 +99,7 @@ initScheduler(client);
 setupLockExpiration(client);
 
 // Patch Discord REST client for automatic rate limit handling
-patchDiscordRateLimiting(client);
+enableRateLimitRetry(client);
 
 // Setup rate limit monitoring
 setupRateLimitMonitoring(client);

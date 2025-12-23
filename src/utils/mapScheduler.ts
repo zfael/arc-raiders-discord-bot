@@ -1,10 +1,43 @@
 import type { Client } from "discord.js";
 import cron from "node-cron";
 import { logger } from "./logger";
-import { postOrUpdateMapMessages } from "./messageManager";
+import { postOrUpdateMapMessages } from "./discord/messageManager";
 
 /** Lock to prevent overlapping executions */
 let isUpdateRunning = false;
+
+/**
+ * Determines whether a server should receive another hourly update.
+ * Returns true when the last update timestamp is missing, invalid or falls in a different UTC hour/day.
+ */
+export function shouldUpdateHourlyServer(
+  lastUpdated: string | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!lastUpdated) return true; // Never updated, should update
+
+  const lastUpdateTime = new Date(lastUpdated);
+  if (Number.isNaN(lastUpdateTime.getTime())) {
+    return true; // Corrupt timestamp - force refresh
+  }
+
+  const lastHour = lastUpdateTime.getUTCHours();
+  const currentHour = now.getUTCHours();
+
+  const lastYear = lastUpdateTime.getUTCFullYear();
+  const currentYear = now.getUTCFullYear();
+  const lastMonth = lastUpdateTime.getUTCMonth();
+  const currentMonth = now.getUTCMonth();
+  const lastDay = lastUpdateTime.getUTCDate();
+  const currentDay = now.getUTCDate();
+
+  return (
+    lastHour !== currentHour ||
+    lastDay !== currentDay ||
+    lastMonth !== currentMonth ||
+    lastYear !== currentYear
+  );
+}
 
 /**
  * Update the map status message
@@ -27,10 +60,7 @@ export async function updateMapStatus(
   isUpdateRunning = true;
   const startTime = Date.now();
 
-  logger.info(
-    { filterByNotificationMethod },
-    "Map rotation update started",
-  );
+  logger.info({ filterByNotificationMethod }, "Map rotation update started");
 
   try {
     await postOrUpdateMapMessages(client, filterByNotificationMethod);
@@ -59,10 +89,7 @@ export function initScheduler(client: Client): void {
     () => {
       // Don't await - let cron continue while we process
       // The isUpdateRunning lock handles overlap prevention
-      logger.info(
-        { triggeredAt: new Date().toISOString() },
-        "Hourly map rotation cron fired",
-      );
+      logger.info({ triggeredAt: new Date().toISOString() }, "Hourly map rotation cron fired");
       updateMapStatus(client, undefined).catch((error) => {
         logger.error({ err: error }, "Unhandled error in scheduled update");
       });

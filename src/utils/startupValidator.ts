@@ -1,9 +1,9 @@
 import { type Client, type TextChannel, DiscordAPIError, PermissionFlagsBits } from "discord.js";
 import type { ValidatedServerEntry, ValidationResult, ValidationStatus } from "../types";
 import { logger } from "./logger";
-import { getServerConfigs, removeServerConfigs, clearMessageIds } from "./serverConfig";
-import { postOrUpdateInChannel } from "./messageManager";
-import { shouldUpdateHourlyServer } from "./hourlyUpdateGuard";
+import { getServerConfigs, removeServerConfigs, clearMessageIds } from "./database/serverConfig";
+import { postOrUpdateInChannel } from "./discord/messageManager";
+import { shouldUpdateHourlyServer } from "./mapScheduler";
 
 /**
  * Discord API error codes for validation
@@ -376,5 +376,4 @@ export async function processValidatedServers(
     },
     "Startup server processing complete",
   );
-
 }

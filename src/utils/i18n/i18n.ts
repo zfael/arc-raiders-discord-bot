@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { DISCORD_TO_FILE_LOCALE, loadAvailableLocales } from "./localeLoader";
-import { logger } from "./logger";
+import { logger } from "../logger";
 
 const i18n = i18next.createInstance();
 
@@ -25,7 +25,7 @@ export const i18nPromise = i18n
     ns: ["translation"],
     defaultNS: "translation",
     backend: {
-      loadPath: path.join(__dirname, "../locales/{{lng}}.json"),
+      loadPath: path.join(__dirname, "../../locales/{{lng}}.json"),
       // Add parse function to handle JSON files correctly
       parse: (data: string, path: string) => {
         try {
@@ -45,7 +45,7 @@ export const i18nPromise = i18n
   .then(async () => {
     // Explicitly load all locale resources after initialization
     // This ensures files with hyphens (like pt-br) are properly loaded
-    const localesPath = path.join(__dirname, "../locales");
+    const localesPath = path.join(__dirname, "../../locales");
     for (const locale of availableLocales) {
       if (!i18n.hasResourceBundle(locale, "translation")) {
         logger.warn(

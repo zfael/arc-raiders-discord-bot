@@ -5,9 +5,9 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { Command } from "../types";
-import { getT } from "../utils/i18n";
-import { buildCommandLocalizations, loadAvailableLocales } from "../utils/localeLoader";
-import { getServerConfig } from "../utils/serverConfig";
+import { getT } from "../utils/i18n/i18n";
+import { buildCommandLocalizations, loadAvailableLocales } from "../utils/i18n/localeLoader";
+import { getServerConfig } from "../utils/database/serverConfig";
 
 const locales = loadAvailableLocales();
 const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(

@@ -1,9 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { logger } from "./logger";
+import { logger } from "../logger";
 
-const LOCALES_DIR = path.join(__dirname, "../locales");
-const MAP_ASSETS_DIR = path.join(__dirname, "../assets/generatedMaps");
+const LOCALES_DIR = path.join(__dirname, "../../locales");
+const MAP_ASSETS_DIR = path.join(__dirname, "../../assets/generatedMaps");
 
 /**
  * Locale configuration - single source of truth for all locale mappings.

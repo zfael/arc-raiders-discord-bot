@@ -15,14 +15,14 @@ import {
   getCurrentRotation,
   getNextRotationTimestamp,
   MAP_ROTATIONS,
-} from "../config/mapRotation";
-import type { MapRotation, ServerConfigEntry } from "../types";
-import { getT, translateEvent } from "./i18n";
-import { generateMapImage, resolveImageLocale } from "./imageGenerator";
+} from "../../config/mapRotation";
+import type { MapRotation, ServerConfigEntry } from "../../types";
+import { getT, translateEvent } from "../i18n/i18n";
+import { loadMapImage, resolveImageLocale } from "../imageLoader";
 import { interactionLockManager } from "./interactionLock";
-import { logger } from "./logger";
-import { getServerConfig, getServerConfigs, setServerMessageState } from "./serverConfig";
-import { shouldUpdateHourlyServer } from "./hourlyUpdateGuard";
+import { logger } from "../logger";
+import { getServerConfig, getServerConfigs, setServerMessageState } from "../database/serverConfig";
+import { shouldUpdateHourlyServer } from "../mapScheduler";
 
 const MAP_IMAGE_FILENAME = "map-status.png";
 // CDN URLs expire after some time, so we cache with TTL (30 minutes is safe for Discord CDN)
@@ -44,7 +44,7 @@ interface MapImageCacheContext {
   cachedUrl?: string;
 }
 
-interface CreateMapRotationEmbedOptions {
+interface BuildMapMessageOptions {
   rotation?: MapRotation;
   imageUrl?: string;
 }
@@ -74,10 +74,10 @@ function safeAddFields(
 /**
  * Create the map rotation embed
  */
-export async function createMapRotationEmbed(
+export async function buildMapRotationMessage(
   mobileFriendly: boolean = false,
   locale: string = "en",
-  options?: CreateMapRotationEmbedOptions,
+  options?: BuildMapMessageOptions,
 ): Promise<{
   embed: EmbedBuilder;
   files: AttachmentBuilder[];
@@ -105,7 +105,7 @@ export async function createMapRotationEmbed(
       "Reusing cached CDN map image",
     );
   } else {
-    const mapBuffer = await generateMapImage(current, locale);
+    const mapBuffer = await loadMapImage(current, locale);
     const mapAttachment = new AttachmentBuilder(mapBuffer, {
       name: MAP_IMAGE_FILENAME,
     });
@@ -396,7 +396,7 @@ export async function postOrUpdateInChannel(
     );
 
     const imageContext = prepareImageCacheContext(locale);
-    const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
+    const { embed, files, components } = await buildMapRotationMessage(mobileFriendly, locale, {
       rotation: imageContext.rotation,
       imageUrl: imageContext.cachedUrl,
     });
@@ -666,7 +666,7 @@ export function setupLockExpiration(client: Client) {
         );
 
         const imageContext = prepareImageCacheContext(locale);
-        const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
+        const { embed, files, components } = await buildMapRotationMessage(mobileFriendly, locale, {
           rotation: imageContext.rotation,
           imageUrl: imageContext.cachedUrl,
         });

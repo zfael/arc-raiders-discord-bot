@@ -2,12 +2,11 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import puppeteer from "puppeteer";
-import { CONDITION_EMOJIS } from "../config/mapRotation";
-import { i18nPromise, getT } from "../utils/i18n";
-import { loadAvailableLocales } from "../utils/localeLoader";
-import { logger } from "../utils/logger";
-import { MAP_ROTATIONS } from "../config/mapRotation";
-import type { MapRotation } from "../types";
+import { CONDITION_EMOJIS, MAP_ROTATIONS } from "../../src/config/mapRotation";
+import { i18nPromise, getT } from "../../src/utils/i18n/i18n";
+import { loadAvailableLocales } from "../../src/utils/i18n/localeLoader";
+import { logger } from "../../src/utils/logger";
+import type { MapRotation } from "../../src/types";
 
 // --- Constants & Config ---
 
@@ -50,13 +49,21 @@ const ICON_MAPPING: { [key: string]: string } = {
   Gate: "gate.png",
 };
 
+// --- Path Configuration ---
+// Assets are in the main bot's src/assets directory
+const BOT_ASSETS_DIR = path.join(__dirname, "../../src/assets");
+// Templates are in the map-generator's templates directory
+const TEMPLATES_DIR = path.join(__dirname, "../templates");
+// Output goes to the bot's generatedMaps directory
+const OUTPUT_DIR = path.join(BOT_ASSETS_DIR, "generatedMaps");
+
 // --- Helper Functions ---
 
 function loadIcons(): { [key: string]: string } {
   const icons: { [key: string]: string } = {};
   for (const [condition, filename] of Object.entries(ICON_MAPPING)) {
     try {
-      const filePath = path.join(__dirname, "../assets", filename);
+      const filePath = path.join(BOT_ASSETS_DIR, filename);
       if (fs.existsSync(filePath)) {
         const buffer = fs.readFileSync(filePath);
         icons[condition] = `data:image/png;base64,${buffer.toString("base64")}`;
@@ -78,16 +85,15 @@ async function generateAllMaps() {
   logger.info("i18n initialized.");
 
   const locales = Array.from(loadAvailableLocales().keys());
-  const outputDir = path.join(__dirname, "../assets/generatedMaps");
 
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
   // 2. Prepare Assets
   const icons = loadIcons();
-  const templatePath = path.join(__dirname, "../templates/map-status.html");
-  const stylesPath = path.join(__dirname, "../templates/styles.css");
+  const templatePath = path.join(TEMPLATES_DIR, "map-status.html");
+  const stylesPath = path.join(TEMPLATES_DIR, "styles.css");
   const htmlContent = fs.readFileSync(templatePath, "utf-8");
   const cssContent = fs.readFileSync(stylesPath, "utf-8");
   const fullHtml = htmlContent.replace(
@@ -95,7 +101,7 @@ async function generateAllMaps() {
     `<style>${cssContent}</style>`,
   );
 
-  const mapImagePath = path.join(__dirname, "../assets/map.png");
+  const mapImagePath = path.join(BOT_ASSETS_DIR, "map.png");
   const mapImageBuffer = fs.readFileSync(mapImagePath);
   const mapImageBase64 = `data:image/png;base64,${mapImageBuffer.toString("base64")}`;
 
@@ -136,7 +142,7 @@ async function generateAllMaps() {
   const startTime = Date.now();
 
   for (const locale of locales) {
-    const localeDir = path.join(outputDir, locale);
+    const localeDir = path.join(OUTPUT_DIR, locale);
     if (!fs.existsSync(localeDir)) {
       fs.mkdirSync(localeDir, { recursive: true });
     }

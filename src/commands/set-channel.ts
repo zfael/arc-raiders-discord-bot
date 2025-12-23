@@ -7,15 +7,15 @@ import {
   type TextChannel,
 } from "discord.js";
 import type { Command } from "../types";
-import { getT } from "../utils/i18n";
+import { getT } from "../utils/i18n/i18n";
 import { logger } from "../utils/logger";
 import {
   buildCommandLocalizations,
   buildOptionLocalizations,
   loadAvailableLocales,
-} from "../utils/localeLoader";
-import { postOrUpdateInChannel } from "../utils/messageManager";
-import { getServerConfig, setServerConfig } from "../utils/serverConfig";
+} from "../utils/i18n/localeLoader";
+import { postOrUpdateInChannel } from "../utils/discord/messageManager";
+import { getServerConfig, setServerConfig } from "../utils/database/serverConfig";
 
 const locales = loadAvailableLocales();
 const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(

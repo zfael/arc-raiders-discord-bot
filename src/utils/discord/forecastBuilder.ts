@@ -1,6 +1,6 @@
 import type { APIEmbedField } from "discord.js";
-import { CONDITION_EMOJIS, MAP_ROTATIONS } from "../config/mapRotation";
-import { translateEvent } from "./i18n";
+import { CONDITION_EMOJIS, MAP_ROTATIONS } from "../../config/mapRotation";
+import { translateEvent } from "../i18n/i18n";
 
 interface ForecastOptions {
   t: (key: string, options?: any) => string;
@@ -19,7 +19,7 @@ const LOCATION_KEY_MAP: Record<string, string> = {
   stellaMontis: "stella_montis",
 };
 
-export function generateForecast(options: ForecastOptions): {
+export function buildForecast(options: ForecastOptions): {
   descriptionSuffix: string;
   fields: APIEmbedField[];
 } {

@@ -1,6 +1,6 @@
 import type { Client } from "discord.js";
 import type { Event } from "../types";
-import { i18nPromise } from "../utils/i18n";
+import { i18nPromise } from "../utils/i18n/i18n";
 import { logger } from "../utils/logger";
 import { runStartupValidation, processValidatedServers } from "../utils/startupValidator";
 

@@ -1,6 +1,6 @@
-import type { NotificationMethod, ServerConfig, ServerConfigEntry } from "../types";
-import { logger } from "./logger";
-import { isLocaleAvailable } from "./localeLoader";
+import type { NotificationMethod, ServerConfig, ServerConfigEntry } from "../../types";
+import { logger } from "../logger";
+import { isLocaleAvailable } from "../i18n/localeLoader";
 import { supabase } from "./supabaseClient";
 
 const SERVERS_TABLE = "servers";

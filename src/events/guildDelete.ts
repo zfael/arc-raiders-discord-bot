@@ -1,7 +1,7 @@
 import type { Guild } from "discord.js";
 import type { Event } from "../types";
 import { logger } from "../utils/logger";
-import { removeServerConfig } from "../utils/serverConfig";
+import { removeServerConfig } from "../utils/database/serverConfig";
 
 const GuildDeleteEvent: Event = {
   name: "guildDelete",

@@ -12,12 +12,12 @@ import {
   getCurrentRotation,
   getNextRotationTimestamp,
 } from "../config/mapRotation";
-import { getT, translateEvent } from "../utils/i18n";
-import { generateForecast } from "../utils/forecastGenerator";
-import { interactionLockManager } from "../utils/interactionLock";
+import { getT, translateEvent } from "../utils/i18n/i18n";
+import { buildForecast } from "../utils/discord/forecastBuilder";
+import { interactionLockManager } from "../utils/discord/interactionLock";
 import { logger } from "../utils/logger";
-import { createMapRotationEmbed } from "../utils/messageManager";
-import { getServerConfig } from "../utils/serverConfig";
+import { buildMapRotationMessage } from "../utils/discord/messageManager";
+import { getServerConfig } from "../utils/database/serverConfig";
 
 /**
  * Finds and enables the Home button by its customId instead of relying on array index.
@@ -255,12 +255,12 @@ export async function handleInteraction(interaction: Interaction) {
 
     // handle home / overview
     if (customId === "view_overview") {
-      const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale);
+      const { embed, files, components } = await buildMapRotationMessage(mobileFriendly, locale);
 
-      // We need to preserve the buttons state if possible, but createMapRotationEmbed returns fresh components.
-      // The requirement is to match the original formatting, which createMapRotationEmbed does.
+      // We need to preserve the buttons state if possible, but buildMapRotationMessage returns fresh components.
+      // The requirement is to match the original formatting, which buildMapRotationMessage does.
       // However, we might want to ensure the buttons are in the correct state (Home disabled).
-      // createMapRotationEmbed returns Home disabled by default in row 2.
+      // buildMapRotationMessage returns Home disabled by default in row 2.
 
       await interaction.editReply({
         embeds: [embed],
@@ -286,7 +286,7 @@ export async function handleInteraction(interaction: Interaction) {
       const currentHour = current.hour;
       const nextRotationTs = getNextRotationTimestamp();
 
-      const { descriptionSuffix, fields } = generateForecast({
+      const { descriptionSuffix, fields } = buildForecast({
         t,
         currentHour,
         nextRotationTs,
@@ -320,7 +320,7 @@ export async function handleInteraction(interaction: Interaction) {
       const currentHour = current.hour;
       const nextRotationTs = getNextRotationTimestamp();
 
-      const { descriptionSuffix, fields } = generateForecast({
+      const { descriptionSuffix, fields } = buildForecast({
         t,
         currentHour,
         nextRotationTs,
