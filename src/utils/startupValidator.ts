@@ -3,6 +3,7 @@ import type { ValidatedServerEntry, ValidationResult, ValidationStatus } from ".
 import { logger } from "./logger";
 import { getServerConfigs, removeServerConfigs, clearMessageIds } from "./serverConfig";
 import { postOrUpdateInChannel } from "./messageManager";
+import { shouldUpdateHourlyServer } from "./hourlyUpdateGuard";
 
 /**
  * Discord API error codes for validation
@@ -23,27 +24,6 @@ const REQUIRED_PERMISSIONS = [
   PermissionFlagsBits.EmbedLinks,
   PermissionFlagsBits.AttachFiles,
 ];
-
-/**
- * Checks if the bot should update an hourly server based on the last update timestamp.
- * Returns true if the hour has changed since the last update.
- */
-export function shouldUpdateHourlyServer(lastUpdated: string | undefined): boolean {
-  if (!lastUpdated) return true; // Never updated, should update
-
-  const lastUpdateTime = new Date(lastUpdated);
-  const now = new Date();
-
-  // Get hours in UTC
-  const lastHour = lastUpdateTime.getUTCHours();
-  const currentHour = now.getUTCHours();
-
-  // Also check if it's a different day (handles midnight edge case)
-  const lastDate = lastUpdateTime.toISOString().split("T")[0];
-  const currentDate = now.toISOString().split("T")[0];
-
-  return lastHour !== currentHour || lastDate !== currentDate;
-}
 
 /**
  * Validates if the bot is still a member of the guild
@@ -302,17 +282,35 @@ export async function processValidatedServers(
   }
 
   // Process hourly servers - only if hour has changed
+  const pinEditToUpdate = pinEditServers.filter((entry) =>
+    shouldUpdateHourlyServer(entry.config.lastUpdated),
+  );
   const hourlyToUpdate = hourlyServers.filter((entry) =>
     shouldUpdateHourlyServer(entry.config.lastUpdated),
   );
 
+  const skippedPinEdit = pinEditServers.length - pinEditToUpdate.length;
+  const skippedHourly = hourlyServers.length - hourlyToUpdate.length;
+  const totalSkipped = skippedPinEdit + skippedHourly;
+
+  if (totalSkipped > 0) {
+    const parts: string[] = [];
+    if (skippedPinEdit > 0) {
+      parts.push(`${skippedPinEdit} pin-edit`);
+    }
+    if (skippedHourly > 0) {
+      parts.push(`${skippedHourly} hourly`);
+    }
+    logger.info(
+      `Skipping ${totalSkipped} server(s) - already updated this hour (${parts.join(", ")})`,
+    );
+  }
+
   // Combine all servers to update
-  const allToUpdate = [...pinEditServers, ...hourlyToUpdate];
+  const allToUpdate = [...pinEditToUpdate, ...hourlyToUpdate];
 
   if (allToUpdate.length === 0) {
-    if (hourlyServers.length > 0) {
-      logger.info(`Skipping ${hourlyServers.length} hourly server(s) - still within same hour`);
-    }
+    logger.info("Startup refresh skipped - all servers already updated this hour");
     return;
   }
 
@@ -323,7 +321,7 @@ export async function processValidatedServers(
   const CONCURRENT_WORKERS = Number(process.env.MESSAGE_PROCESSING_WORKERS) || 10;
 
   logger.info(
-    `Processing ${allToUpdate.length} server(s) on startup (${pinEditServers.length} pin-edit, ${hourlyToUpdate.length} hourly) with ${CONCURRENT_WORKERS} workers...`,
+    `Processing ${allToUpdate.length} server(s) on startup (${pinEditToUpdate.length} pin-edit, ${hourlyToUpdate.length} hourly) with ${CONCURRENT_WORKERS} workers...`,
   );
 
   // Context to track processing state
@@ -379,9 +377,4 @@ export async function processValidatedServers(
     "Startup server processing complete",
   );
 
-  if (hourlyServers.length > hourlyToUpdate.length) {
-    logger.info(
-      `Skipped ${hourlyServers.length - hourlyToUpdate.length} hourly server(s) - still within same hour`,
-    );
-  }
 }

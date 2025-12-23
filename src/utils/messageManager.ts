@@ -22,6 +22,7 @@ import { generateMapImage, resolveImageLocale } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
 import { getServerConfig, getServerConfigs, setServerMessageState } from "./serverConfig";
+import { shouldUpdateHourlyServer } from "./hourlyUpdateGuard";
 
 const MAP_IMAGE_FILENAME = "map-status.png";
 // CDN URLs expire after some time, so we cache with TTL (30 minutes is safe for Discord CDN)
@@ -517,7 +518,7 @@ export async function postOrUpdateMapMessages(
 
   // Filter by TEST_GUILD_ID if configured (for local testing)
   const testGuildId = process.env.TEST_GUILD_ID;
-  const entries = testGuildId
+  const rawEntries = testGuildId
     ? Object.entries(serverConfigs).filter(([guildId]) => guildId === testGuildId)
     : Object.entries(serverConfigs);
 
@@ -525,13 +526,32 @@ export async function postOrUpdateMapMessages(
     logger.info(`TEST_GUILD_ID detected: filtering to guild ${testGuildId} only`);
   }
 
-  if (entries.length === 0) {
+  if (rawEntries.length === 0) {
     logger.info(
       testGuildId
         ? `No configuration found for test guild ${testGuildId}.`
         : "No servers configured for updates.",
     );
     return;
+  }
+
+  const entries = rawEntries.filter(([, config]) => shouldUpdateHourlyServer(config.lastUpdated));
+  const skipped = rawEntries.length - entries.length;
+
+  if (entries.length === 0) {
+    logger.info(
+      skipped > 0
+        ? `Skipping ${skipped} server(s) - already updated this hour`
+        : "Skipping scheduled update - all servers already refreshed this hour",
+    );
+    return;
+  }
+
+  if (skipped > 0) {
+    logger.info(
+      { skipped, total: rawEntries.length },
+      "Skipping server(s) - already updated this hour",
+    );
   }
 
   // Queue-based processing with configurable concurrency
