@@ -70,11 +70,9 @@ const SetChannelCommand: Command = {
     });
 
     // Trigger map status update in the background (don't await)
-    postOrUpdateInChannel(interaction.client, interaction.guildId, channel.id, {}).catch(
-      (error) => {
-        logger.error({ err: error }, `Failed to post initial update to ${channel.id}`);
-      },
-    );
+    postOrUpdateInChannel(interaction.client, interaction.guildId, channel.id).catch((error) => {
+      logger.error({ err: error }, `Failed to post initial update to ${channel.id}`);
+    });
   },
 };
 
