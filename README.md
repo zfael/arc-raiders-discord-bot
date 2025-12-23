@@ -27,15 +27,10 @@
 
 ## Preview
 
-<p align="center">
-  <img src="docs/images/preview-discord.png" alt="ARCSentinel Discord Embed Preview" width="400">
-  &nbsp;&nbsp;&nbsp;
-  <img src="docs/images/preview-map.png" alt="ARCSentinel Map Generator Preview" width="500">
-</p>
-
-<p align="center">
-  <em>Live map rotation status with interactive controls • Generated map images with 6-hour forecast</em>
-</p>
+Discord Embed View | Generated Map Image
+:-------------------------:|:-------------------------:
+![Discord Embed](docs/images/preview-discord.png) | ![Map Generator](docs/images/preview-map.png)
+*Live rotation status with interactive controls* | *Visual map with 6-hour forecast*
 
 ---
 
