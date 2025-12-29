@@ -7,13 +7,22 @@ import { Agent } from "undici";
 import type { Command, Event } from "./types";
 import { logger } from "./utils/logger";
 import { initScheduler } from "./utils/mapScheduler";
-import { setupLockExpiration } from "./utils/messageManager";
-import { setupRateLimitMonitoring } from "./utils/rateLimitMonitor";
-import { patchDiscordRateLimiting } from "./utils/discordApiPatch";
+import { setupLockExpiration } from "./utils/discord/messageManager";
+import { setupRateLimitMonitoring, enableRateLimitRetry } from "./utils/discord/rateLimitRetry";
 
 // Load environment variables
 config();
 process.env.TZ = "UTC";
+
+// Global error handlers to prevent silent crashes
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error({ reason, promise }, "Unhandled Promise Rejection");
+});
+
+process.on("uncaughtException", (error) => {
+  logger.fatal({ err: error }, "Uncaught Exception - shutting down");
+  process.exit(1);
+});
 
 const agent = new Agent({
   keepAliveTimeout: 30000, // Keep connections alive for 30s
@@ -90,7 +99,7 @@ initScheduler(client);
 setupLockExpiration(client);
 
 // Patch Discord REST client for automatic rate limit handling
-patchDiscordRateLimiting(client);
+enableRateLimitRetry(client);
 
 // Setup rate limit monitoring
 setupRateLimitMonitoring(client);
@@ -162,6 +171,14 @@ const server = http.createServer((req, res) => {
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not Found" }));
+  }
+});
+
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    logger.error({ port: PORT }, `Health check port ${PORT} is already in use`);
+  } else {
+    logger.error({ err: error }, "Health check server error");
   }
 });
 

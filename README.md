@@ -1,134 +1,219 @@
-# Arc Raiders Discord Bot
+<p align="center">
+  <img src="https://img.shields.io/badge/ARC%20Sentinel-Discord%20Bot-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="ARCSentinel Discord Bot">
+</p>
 
-[![Build & Lint](https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml)
+<h1 align="center">ARCSentinel Discord Bot</h1>
 
-A feature-rich Discord bot that tracks and displays Arc Raiders map rotation conditions across all five maps (Dam, Buried City, Spaceport, Blue Gate, and Stella Montis) with automatic hourly updates, interactive navigation, and visual map generation.
+<p align="center">
+  <a href="https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml"><img src="https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml/badge.svg?branch=main" alt="Build & Lint"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-24.x-brightgreen?style=flat-square" alt="Node.js"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
+</p>
 
-## Add the Bot to Your Server
+<p align="center">
+  <strong>A feature-rich Discord bot that tracks and displays Arc Raiders map rotation conditions across all five maps with automatic hourly updates, interactive navigation, visual map generation, and multi-language support.</strong>
+</p>
 
-You can invite Arc Raiders Discord Bot to any Discord server using this link:
+<p align="center">
+  <a href="#preview">Preview</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#database-setup">Database Setup</a> •
+  <a href="#commands">Commands</a>
+</p>
 
-[Add Arc Raiders Bot to your server](https://discord.com/oauth2/authorize?client_id=1442592163983528056)
+---
 
-**How to use after inviting:**
+## Preview
 
-1. **Invite the bot** using the link above and authorize it for your server.
-2. **Set the update channel** by using the `/set-channel` slash command in the channel where you want map rotation updates to appear. Only server admins can use this command.
-3. The bot will automatically post and update the Arc Raiders map rotation status every hour in the designated channel.
-4. **(Optional)** Use `/settings mobile-friendly: True` to enable mobile-optimized display mode.
+Discord Embed View | Generated Map Image
+:-------------------------:|:-------------------------:
+![Discord Embed](docs/images/preview-discord.png) | ![Map Generator](docs/images/preview-map.png)
+*Live rotation status with interactive controls* | *Visual map with 6-hour forecast*
 
-If you need to change the update channel, simply run `/set-channel` again in a different channel.
+---
+
+## Quick Start
+
+### Add the Bot to Your Server
+
+You can invite ARCSentinel Discord Bot to any Discord server using this link:
+
+<p align="center">
+  <a href="https://discord.com/oauth2/authorize?client_id=1442592163983528056">
+    <img src="https://img.shields.io/badge/Add%20to%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Add to Discord">
+  </a>
+</p>
+
+**After inviting:**
+
+1. **Set the update channel** using the `/set-channel` slash command in the channel where you want map rotation updates to appear *(Admin only)*
+2. The bot will automatically post and update the Arc Raiders map rotation status every hour
+3. **(Optional)** Use `/settings` to customize language, mobile mode, or notification style
+
+---
 
 ## Features
 
-### Core Features
-- **Automatic Map Rotation Tracking**: Updates every hour with current and next map conditions
-- **Pinned Status Message**: Creates and maintains a pinned message with rich embed formatting
-- **UTC Schedule**: Follows the official Arc Raiders 24-hour UTC rotation schedule
-- **Visual Map Generation**: Generates beautiful map images with event overlays using Puppeteer
-- **Persistent State**: Remembers message IDs and settings across bot restarts
+### Map Rotation Tracking
 
-### Interactive Features
-- **Interactive Navigation**: Navigate through maps and events using button controls
-- **Event Filtering**: View all maps, filter by major events, or filter by minor events
-- **Interaction Priority System**: 15-second exclusive interaction locks to prevent conflicts
-- **Mobile-Friendly Mode**: Optimized single-column layout for mobile devices
-- **Live Countdown**: Real-time countdown to next rotation
+| Map | Description |
+|-----|-------------|
+| **Dam Battlegrounds** | Industrial zone with varied terrain |
+| **Buried City** | Urban ruins with vertical gameplay |
+| **Spaceport** | Open areas with crashed spacecraft |
+| **Blue Gate** | Mountainous region with unique events |
+| **Stella Montis** | High-altitude snowy terrain |
 
-### Map Coverage
-Tracks conditions across all **5 maps**:
-- Dam
-- Buried City
-- Spaceport
-- Blue Gate
-- Stella Montis
+### Events & Conditions
 
-## Map Conditions & Events
+The bot tracks all event types across every map, updating in real-time with the official UTC rotation schedule.
 
-The bot tracks these condition types across all maps:
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### Major Events (2x Multiplier)
-- **Harvester** - High-value target
-- **Night** - Darkness conditions
-- **Husks** - Enemy encounters
-- **Blooms** - Lush vegetation
-- **Storm** - Electrical hazards
-- **Tower** - Space tower loot
-- **Bunker** - Bunker access
-- **Matriarch** - Boss encounter
+#### Major Events (2x Multiplier)
 
-### Minor Events
-- **Caches** - Loot caches
-- **Probes** - Probe spawns
+| Event | Description |
+|-------|-------------|
+| 🌙 **Night** | Darkness conditions with reduced visibility |
+| ⚡ **Storm** | Electrical hazards across the map |
+| ❄️ **Cold** | Freezing temperatures and environmental danger |
+| 🚪 **Gate** | Special gate access event |
+| 👑 **Matriarch** | Boss encounter opportunity |
+| 🏗️ **Tower** | Space tower loot availability |
+| 🏚️ **Bunker** | Bunker access unlocked |
 
-### Status
-- **None** - No active events
+</td>
+<td width="50%" valign="top">
 
-## Prerequisites
+#### Minor Events
 
-- Docker and Docker Compose (for Docker installation)
-- OR Node.js 24.x or higher (for manual installation)
-- A Discord Bot Token from [Discord Developer Portal](https://discord.com/developers/applications)
-- Supabase project URL and Service Role key (used for persisting server/message metadata)
+| Event | Description |
+|-------|-------------|
+| 🤖 **Harvester** | High-value target roaming the map |
+| 💀 **Husks** | Enemy husk encounters |
+| 🌸 **Blooms** | Lush vegetation spawns |
+| 📦 **Caches** | Additional loot caches |
+| 🛸 **Probes** | Probe spawn opportunities |
+
+</td>
+</tr>
+</table>
+
+### Notification Methods
+
+Choose how the bot updates your server:
+
+| Method | Description |
+|--------|-------------|
+| **📌 Pin & Edit** | Single pinned message that updates (default) |
+| **🔄 Post & Delete** | New message each hour, old one deleted |
+| **📝 Post & Keep** | New message each hour, history preserved |
+
+### Multi-Language Support
+
+The bot is fully localized and supports:
+
+- 🇺🇸 **English** (default)
+- 🇪🇸 **Español** (Spanish)
+- 🇫🇷 **Français** (French)
+- 🇧🇷 **Português Brasileiro** (Brazilian Portuguese)
+
+Use `/settings locale:` to change your server's language!
+
+### Visual Map Generation
+
+Beautiful generated map images showing:
+- Current active events at each location
+- Visual markers with event icons
+- 6-hour forecast panel
+- Localized location and event names
+
+### Mobile-Friendly Mode
+
+Toggle a single-column optimized layout for mobile users with `/settings mobile-friendly: True`
+
+### Interactive Controls
+
+Navigate through maps and events using button controls:
+- **🏠 Home** — Return to overview of all maps
+- **🗺️ View Map** — See visual map with event overlays
+- **⚔️ Major Events** — Filter to show only major events
+- **📦 Minor Events** — Filter to show only minor events
+
+**Interaction Priority System:** When you click a button, you gain exclusive control for 15 seconds to prevent conflicts. After inactivity, the message returns to home screen.
+
+---
 
 ## Installation
 
+### Prerequisites
+
+- **Docker** and Docker Compose *(recommended)* **OR** Node.js 24.x
+- Discord Bot Token from [Discord Developer Portal](https://discord.com/developers/applications)
+- Supabase project with URL and Service Role key
+
 ### Option 1: Docker (Recommended)
 
-The easiest way to run the bot is using Docker. Pre-built multi-architecture images are available on GitHub Container Registry.
+Pre-built multi-architecture images are available on GitHub Container Registry.
 
 #### Using Docker Compose
 
-1. **Create a `.env` file** with your configuration:
+**1. Create a `.env` file:**
 
-   ```env
-   DISCORD_TOKEN=your_bot_token_here
-   CLIENT_ID=your_client_id_here
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   LOG_LEVEL=info
-   PORT=6767
-   ```
+```env
+# Discord Bot Configuration
+DISCORD_TOKEN=your_bot_token_here
+CLIENT_ID=your_client_id_here
 
-2. **Create a `docker-compose.yml` file**:
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-   ```yaml
-   version: '3.8'
+# Optional Settings
+LOG_LEVEL=info
+PORT=6767
+```
 
-   services:
-     arc-raiders-bot:
-       image: ghcr.io/zfael/arc-raiders-discord-bot:latest
-       container_name: arc-raiders-discord-bot
-       restart: unless-stopped
-       env_file:
-         - .env
-       ports:
-         - "6767:6767"
-       environment:
-         - TZ=UTC
-   ```
+**2. Create a `docker-compose.yml` file:**
 
-3. **Start the bot**:
+```yaml
+services:
+  arc-raiders-bot:
+    image: ghcr.io/zfael/arc-raiders-discord-bot:latest
+    container_name: arc-raiders-discord-bot
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    ports:
+      - "6767:6767"
+    environment:
+      - TZ=UTC
+```
 
-   ```bash
-   docker-compose up -d
-   ```
+**3. Start the bot:**
 
-4. **View logs**:
+```bash
+docker-compose up -d
+```
 
-   ```bash
-   docker-compose logs -f
-   ```
+**4. View logs:**
 
-5. **Stop the bot**:
+```bash
+docker-compose logs -f
+```
 
-   ```bash
-   docker-compose down
-   ```
+**5. Stop the bot:**
+
+```bash
+docker-compose down
+```
 
 #### Using Docker Run
-
-Alternatively, run directly with Docker:
 
 ```bash
 docker run -d \
@@ -141,82 +226,191 @@ docker run -d \
 
 #### Available Image Tags
 
-- `latest` - Latest stable release from main branch
-- `v1.0.0` - Specific version tags
-- `main` - Latest commit on main branch (may be unstable)
+| Tag | Description |
+|-----|-------------|
+| `latest` | Latest stable release from main branch |
+| `v1.0.0` | Specific version tags |
+| `main` | Latest commit on main branch (may be unstable) |
 
 #### Multi-Architecture Support
 
-Images are built for both:
+Images are built for:
 - `linux/amd64` (x86_64 / Intel/AMD)
 - `linux/arm64` (ARM64 / Apple Silicon / Raspberry Pi)
 
 Docker will automatically pull the correct architecture for your system.
 
+---
+
 ### Option 2: Manual Installation
 
-If you prefer to run without Docker:
+**1. Clone the repository:**
 
-1. **Clone the repository**
+```bash
+git clone https://github.com/zfael/arc-raiders-discord-bot.git
+cd arc-raiders-discord-bot
+```
 
-   ```bash
-   git clone <repository-url>
-   cd arc-raiders-discord-bot
-   ```
+**2. Install dependencies:**
 
-2. **Install dependencies**
+```bash
+npm install
+```
 
-   ```bash
-   npm install
-   ```
+**3. Configure environment variables:**
 
-3. **Configure environment variables**
+```bash
+cp .env.example .env
+```
 
-   Copy `.env.example` to `.env`:
+Edit `.env` and fill in your values:
 
-   ```bash
-   cp .env.example .env
-   ```
+```env
+DISCORD_TOKEN=your_bot_token_here
+CLIENT_ID=your_client_id_here
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
 
-   Edit `.env` and fill in your values:
+**4. Deploy slash commands:**
 
-   ```env
-   DISCORD_TOKEN=your_bot_token_here
-   CLIENT_ID=your_client_id_here
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   ```
+```bash
+npm run deploy-commands
+```
+
+> ⚠️ Global commands can take up to an hour to propagate to all servers.
+
+**5. Start the bot:**
+
+```bash
+# Development (with hot reloading)
+npm run dev
+
+# Production
+npm run build
+npm start
+```
+
+---
+
+## Database Setup
+
+This bot uses **Supabase** for persistent storage of server configurations.
+
+### 1. Create a Supabase Project
+
+1. Go to [supabase.com](https://supabase.com) and create a new project
+2. Note your **Project URL** and **Service Role Key** from Settings > API
+
+### 2. Create the Database Table
+
+Run this SQL in the Supabase SQL Editor:
+
+```sql
+-- Create servers table for storing bot configuration per guild
+CREATE TABLE IF NOT EXISTS public.servers (
+  guild_id TEXT PRIMARY KEY,
+  channel_id TEXT NOT NULL,
+  server_name TEXT,
+  message_id TEXT,
+  last_updated TEXT,
+  mobile_friendly BOOLEAN DEFAULT FALSE,
+  locale TEXT DEFAULT 'en',
+  notification_method TEXT DEFAULT 'pin-edit',
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_servers_notification_method 
+  ON public.servers(notification_method);
+
+-- Enable Row Level Security (optional but recommended)
+ALTER TABLE public.servers ENABLE ROW LEVEL SECURITY;
+
+-- Create update trigger for updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = TIMEZONE('utc', NOW());
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_servers_updated_at
+  BEFORE UPDATE ON public.servers
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+```
+
+### 3. Table Schema Reference
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `guild_id` | TEXT (PK) | Discord server ID |
+| `channel_id` | TEXT | Channel for map updates |
+| `server_name` | TEXT | Server name for logging |
+| `message_id` | TEXT | ID of current/pinned message |
+| `last_updated` | TEXT | Last update timestamp |
+| `mobile_friendly` | BOOLEAN | Mobile-friendly mode setting |
+| `locale` | TEXT | Server language preference |
+| `notification_method` | TEXT | How updates are posted |
+| `created_at` | TIMESTAMPTZ | Row creation time |
+| `updated_at` | TIMESTAMPTZ | Last modification time |
+
+### 4. Environment Configuration
+
+Add these to your `.env` file:
+
+```env
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> 💡 The bot uses the **Service Role Key** which bypasses Row Level Security. Keep this key secure!
+
+---
 
 ## Discord Bot Setup
 
 ### 1. Create a Discord Application
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Click "New Application" and give it a name
-3. Go to the "Bot" section and click "Add Bot"
-4. Copy the bot token (this is your `DISCORD_TOKEN`)
-5. Enable these Privileged Gateway Intents:
-   - Presence Intent
-   - Server Members Intent
-   - Message Content Intent
+2. Click **"New Application"** and give it a name
+3. Go to the **"Bot"** section and click **"Add Bot"**
+4. Copy the bot token — this is your `DISCORD_TOKEN`
+5. Enable these **Privileged Gateway Intents**:
+   - ✅ Presence Intent
+   - ✅ Server Members Intent
+   - ✅ Message Content Intent
 
-### 2. Upload Custom Emojis
+### 2. Get Your Client ID
 
-1. Go to your application's "Emojis" section in the Developer Portal
+Found in the **"General Information"** section of your application. This is your `CLIENT_ID`.
+
+### 3. Upload Custom Emojis
+
+1. Go to your application's **"Emojis"** section in the Developer Portal
 2. Upload the emoji images from `src/assets/` directory:
-   - `harvester.png`
-   - `nightraid.png`
-   - `husks.png`
-   - `lush.png` (for Blooms)
-   - `electro.png` (for Storm)
-   - `cache.png`
-   - `probe.png`
-   - `spacetower_loot.png` (for Tower)
-   - `bunker.png`
-   - `matriarch.png`
+
+| File | Event |
+|------|-------|
+| `harvester.png` | Harvester |
+| `nightraid.png` | Night |
+| `husks.png` | Husks |
+| `lush.png` | Blooms |
+| `electro.png` | Storm |
+| `cache.png` | Caches |
+| `probe.png` | Probes |
+| `spacetower_loot.png` | Tower |
+| `bunker.png` | Bunker |
+| `matriarch.png` | Matriarch |
+| `cold.png` | Cold |
+| `gate.png` | Gate |
+
 3. Copy each emoji ID and update `CONDITION_EMOJIS` in `src/config/mapRotation.ts`
 
-### 3. Bot Permissions
+### 4. Bot Permissions
 
 The bot requires these permissions (permission integer: **274877925376**):
 
@@ -226,185 +420,34 @@ The bot requires these permissions (permission integer: **274877925376**):
 - ✅ Read Message History
 - ✅ Attach Files (for map images)
 
-### 4. Invite the Bot
+### 5. Invite the Bot
 
-1. Go to OAuth2 > URL Generator in the Developer Portal
+1. Go to **OAuth2 > URL Generator** in the Developer Portal
 2. Select scopes: `bot` and `applications.commands`
 3. Select the permissions listed above
 4. Copy the generated URL and open it in your browser
 5. Select your server and authorize the bot
 
-### 5. Client ID
-
-- **Client ID**: Found in the "General Information" section of your application.
-
-## Usage
-
-### Development Mode
-
-Run the bot with hot reloading using ts-node:
-
-```bash
-npm run dev
-```
-
-### Deploy Slash Commands
-
-Before first run or after adding new commands, deploy them:
-
-```bash
-npm run deploy-commands
-```
-
-This registers commands globally, which can take up to an hour to propagate to all servers.
-
-### Production Mode
-
-1. Build the TypeScript code:
-
-   ```bash
-   npm run build
-   ```
-
-2. Start the bot:
-   ```bash
-   npm start
-   ```
+---
 
 ## Commands
 
-- `/ping` - Check bot latency and responsiveness
-- `/set-channel` - (Admin-only) Sets the channel where map rotation updates are posted
-- `/settings mobile-friendly: <True/False>` - (Admin-only) Toggle mobile-friendly display mode
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `/ping` | Check bot latency and responsiveness | Everyone |
+| `/set-channel` | Set the channel for map rotation updates | Administrator |
+| `/settings` | Configure bot settings (language, mobile mode, notifications) | Administrator |
+| `/translations` | Learn how to contribute translations | Everyone |
 
-## Interactive Controls
+### Settings Options
 
-The bot's map rotation message includes interactive buttons:
+```
+/settings mobile-friendly: <True/False>
+/settings locale: <English/Español/Français/Português>
+/settings notification-method: <pin-edit/post-delete/post-keep>
+```
 
-### Navigation Buttons
-- **🏠 Home** - Return to overview of all maps
-- **🗺️ View Map** - See visual map with event overlays
-- **⚔️ Major Events** - Filter to show only major events
-- **📦 Minor Events** - Filter to show only minor events
-
-### Interaction Priority System
-- When you click a button, you gain **exclusive control** for **15 seconds**
-- Other users will see an ephemeral message if they try to interact during this time
-- After 15 seconds of inactivity, the message automatically returns to the home screen
-- The message becomes available for anyone to interact with again
-
-## Data Storage
-
-All persistent state is stored in Supabase:
-
-### `servers` Table Schema
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `guild_id` | text (PK) | Discord server ID |
-| `channel_id` | text | Channel for map updates |
-| `server_name` | text | Server name for logging |
-| `message_id` | text | ID of pinned message |
-| `last_updated` | text | Last update timestamp |
-| `mobile_friendly` | boolean | Mobile-friendly mode setting |
-| `created_at` | timestamptz | Row creation time |
-| `updated_at` | timestamptz | Last modification time |
-
-The bot automatically manages this table. You can back up or inspect it directly in the Supabase dashboard. Deleting rows is safe; the bot will recreate them as needed.
-
-## Supabase Setup
-
-1. Create the required table (run once in the Supabase SQL editor):
-
-   ```sql
-   create table if not exists public.servers (
-     guild_id text primary key,
-     channel_id text not null,
-     server_name text,
-     message_id text,
-     last_updated text,
-     mobile_friendly boolean default false,
-     locale text default 'en',
-     created_at timestamptz default timezone('utc', now()),
-     updated_at timestamptz default timezone('utc', now())
-   );
-   ```
-
-2. (Optional) Enable Row Level Security and add permissive policies if you plan to use the anon key. The bot uses the `SUPABASE_SERVICE_ROLE_KEY`, so it can bypass policies by default.
-
-3. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to your `.env`, matching the values in the Supabase dashboard.
-
-## How It Works
-
-### Startup & Scheduling
-1. **Startup**: Bot logs in and immediately posts/updates the map rotation status
-2. **Scheduling**: A cron job runs at the top of every hour (UTC) to update all server messages
-3. **Updates**: The bot fetches current and next rotation from the 24-hour schedule
-
-### Message Management
-- Reads the stored `message_id` for each channel from Supabase
-- Edits the existing pinned message or creates/pins a new one when needed
-- Writes the latest `message_id`/`last_updated` back to Supabase
-- Generates visual map images on-demand using Puppeteer
-
-### Interactive System
-- Button interactions are handled in `interactionCreate.ts`
-- Interaction locks prevent multiple users from conflicting
-- Locks expire after 15 seconds, reverting to home screen
-- Ephemeral messages notify blocked users
-
-### Persistence
-Because configuration and message metadata live in Supabase, the bot resumes seamlessly after restarts.
-
-## Visual Map Generation
-
-The bot generates beautiful map images using:
-- **Puppeteer**: Headless browser for HTML rendering
-- **HTML Templates**: Custom templates with CSS styling
-- **Base Map**: High-resolution map image (2690x1515px)
-- **Event Overlays**: Dynamic markers showing active events at each location
-- **Forecast Cards**: Upcoming rotation preview
-
-Map coordinates are percentage-based for responsive scaling.
-
-## Troubleshooting
-
-### Bot doesn't respond to commands
-
-- Make sure you ran `npm run deploy-commands`
-- Check that the bot has proper permissions in the server
-- Global commands can take up to an hour to update after being deployed
-
-### Map rotation message not appearing
-
-- Use the `/set-channel` command to designate a channel for updates
-- Check the bot has "Send Messages", "Embed Links", "Attach Files", and "Manage Messages" permissions in the designated channel
-- Look at the bot's console logs for any error messages
-
-### Map images not generating
-
-- Ensure Puppeteer dependencies are installed (may require additional system packages on Linux)
-- Check that `src/assets/map.png` exists and is readable
-- Verify sufficient disk space and memory for image generation
-
-### Interactive buttons not working
-
-- Ensure the bot has "Read Message History" permission
-- Check console logs for interaction errors
-- Verify the message hasn't been deleted or unpinned
-
-### TypeScript errors
-
-- Run `npm install` to ensure all dependencies are installed
-- Check that Node.js version is 18.x or higher
-- Run `npm run lint` to check for code issues
-
-### Bot crashes on startup
-
-- Verify all required environment variables are set in `.env`
-- Check that the Discord token is valid
-- Ensure the bot is invited to the server
-- Verify Supabase credentials are correct
+---
 
 ## Development
 
@@ -421,15 +464,90 @@ npm run lint:fix    # Auto-fix issues
 
 ```bash
 npm run build       # Compile TypeScript and copy assets
+npm run clean       # Remove dist/ directory
 ```
 
-The build process:
-1. Compiles TypeScript to JavaScript in `dist/`
-2. Copies `templates/` and `assets/` to `dist/`
+### Map Image Generation
 
-## License
+Pre-generate map images for all hours and locales:
 
-MIT
+```bash
+npm run setup:generator  # Install generator dependencies
+npm run generate-maps    # Generate all map images
+```
+
+---
+
+## Troubleshooting
+
+<details>
+<summary><strong>Bot doesn't respond to commands</strong></summary>
+
+- Run `npm run deploy-commands` to register slash commands
+- Global commands can take up to an hour to propagate
+- Check that the bot has proper permissions in the server
+
+</details>
+
+<details>
+<summary><strong>Map rotation message not appearing</strong></summary>
+
+- Use `/set-channel` to designate a channel for updates
+- Check the bot has Send Messages, Embed Links, Attach Files, and Manage Messages permissions
+- Check the bot's console logs for error messages
+
+</details>
+
+<details>
+<summary><strong>Interactive buttons not working</strong></summary>
+
+- Ensure the bot has Read Message History permission
+- Verify the message hasn't been deleted or unpinned
+- Check console logs for interaction errors
+
+</details>
+
+<details>
+<summary><strong>Bot crashes on startup</strong></summary>
+
+- Verify all required environment variables are set
+- Check that the Discord token is valid
+- Ensure the bot is invited to the server
+- Verify Supabase credentials are correct
+
+</details>
+
+<details>
+<summary><strong>TypeScript errors</strong></summary>
+
+- Run `npm install` to ensure all dependencies are installed
+- Check that Node.js version is 24.x or higher
+- Run `npm run lint` to check for code issues
+
+</details>
+
+---
+
+## How It Works
+
+### Startup & Scheduling
+
+1. **Startup** — Bot logs in and immediately posts/updates the map rotation status
+2. **Scheduling** — A cron job runs at the top of every hour (UTC) to update all server messages
+3. **Updates** — The bot fetches current and next rotation from the 24-hour schedule
+
+### Message Management
+
+- Reads the stored `message_id` for each channel from Supabase
+- Edits the existing pinned message or creates/pins a new one when needed
+- Writes the latest `message_id`/`last_updated` back to Supabase
+- Generates visual map images based on current rotation
+
+### Persistence
+
+All configuration and message metadata lives in Supabase, so the bot resumes seamlessly after restarts.
+
+---
 
 ## Contributing
 
@@ -444,6 +562,23 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 5. Test your changes thoroughly
 6. Submit a pull request
 
+### Help Translate
+
+Want to see this bot in your language? Check out the `/translations` command in Discord or add a new locale file to `src/locales/`!
+
 ---
 
-**Questions or Issues?** Open an issue on GitHub or join the discussion!
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  <strong>Questions or Issues?</strong><br>
+  <a href="https://github.com/zfael/arc-raiders-discord-bot/issues">Open an issue on GitHub</a>
+</p>
+
+<p align="center">
+  Made with ❤️ for the Arc Raiders community
+</p>

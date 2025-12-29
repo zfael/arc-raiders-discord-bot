@@ -1,0 +1,25 @@
+{
+  "name": "arc-raiders-map-generator",
+  "version": "1.0.0",
+  "description": "Map image generator for Arc Raiders Discord Bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "generate": "ts-node src/index.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "arc-raiders",
+    "map-generator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^24.31.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

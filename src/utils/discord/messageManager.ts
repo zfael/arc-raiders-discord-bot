@@ -15,16 +15,25 @@ import {
   getCurrentRotation,
   getNextRotationTimestamp,
   MAP_ROTATIONS,
-} from "../config/mapRotation";
-import type { MapRotation, ServerConfigEntry } from "../types";
-import { getT, translateEvent } from "./i18n";
-import { generateMapImage, resolveImageLocale } from "./imageGenerator";
+} from "../../config/mapRotation";
+import type { MapRotation, ServerConfigEntry } from "../../types";
+import { getT, translateEvent } from "../i18n/i18n";
+import { loadMapImage, resolveImageLocale } from "../imageLoader";
 import { interactionLockManager } from "./interactionLock";
-import { logger } from "./logger";
-import { getServerConfig, getServerConfigs, setServerMessageState } from "./serverConfig";
+import { logger } from "../logger";
+import { getServerConfig, getServerConfigs, setServerMessageState } from "../database/serverConfig";
+import { shouldUpdateHourlyServer } from "../mapScheduler";
 
 const MAP_IMAGE_FILENAME = "map-status.png";
-const imageUrlCache = new Map<string, string>();
+// CDN URLs expire after some time, so we cache with TTL (30 minutes is safe for Discord CDN)
+const CDN_CACHE_TTL_MS = 30 * 60 * 1000;
+// Discord embed limits
+const MAX_EMBED_FIELDS = 25;
+interface CachedImageUrl {
+  url: string;
+  cachedAt: number;
+}
+const imageUrlCache = new Map<string, CachedImageUrl>();
 let cachedImageHour: number | null = null;
 const verboseMessageLogging = process.env.VERBOSE_MESSAGE_LOGS === "true";
 
@@ -35,18 +44,40 @@ interface MapImageCacheContext {
   cachedUrl?: string;
 }
 
-interface CreateMapRotationEmbedOptions {
+interface BuildMapMessageOptions {
   rotation?: MapRotation;
   imageUrl?: string;
 }
 
 /**
+ * Safely adds fields to an embed, respecting the Discord limit of 25 fields.
+ * Logs a warning if fields are truncated.
+ */
+function safeAddFields(
+  embed: EmbedBuilder,
+  fields: Array<{ name: string; value: string; inline?: boolean }>,
+): void {
+  const currentFieldCount = embed.data.fields?.length ?? 0;
+  const availableSlots = MAX_EMBED_FIELDS - currentFieldCount;
+
+  if (fields.length > availableSlots) {
+    logger.warn(
+      { requested: fields.length, available: availableSlots, current: currentFieldCount },
+      "Embed field limit reached - truncating fields",
+    );
+    embed.addFields(...fields.slice(0, availableSlots));
+  } else {
+    embed.addFields(...fields);
+  }
+}
+
+/**
  * Create the map rotation embed
  */
-export async function createMapRotationEmbed(
+export async function buildMapRotationMessage(
   mobileFriendly: boolean = false,
   locale: string = "en",
-  options?: CreateMapRotationEmbedOptions,
+  options?: BuildMapMessageOptions,
 ): Promise<{
   embed: EmbedBuilder;
   files: AttachmentBuilder[];
@@ -74,7 +105,7 @@ export async function createMapRotationEmbed(
       "Reusing cached CDN map image",
     );
   } else {
-    const mapBuffer = await generateMapImage(current, locale);
+    const mapBuffer = await loadMapImage(current, locale);
     const mapAttachment = new AttachmentBuilder(mapBuffer, {
       name: MAP_IMAGE_FILENAME,
     });
@@ -98,7 +129,7 @@ export async function createMapRotationEmbed(
   // Location Layout
   if (mobileFriendly) {
     // Mobile: Vertical list (non-inline fields)
-    embed.addFields(
+    safeAddFields(embed, [
       {
         name: `🏔️ ${t("map_rotation.locations_short.dam")}`,
         value: formatLocationEventsTranslated(current.damMajor, current.damMinor),
@@ -124,10 +155,10 @@ export async function createMapRotationEmbed(
         value: formatLocationEventsTranslated(current.stellaMontisMajor, current.stellaMontisMinor),
         inline: false,
       },
-    );
+    ]);
   } else {
     // Desktop: Grid (inline fields)
-    embed.addFields(
+    safeAddFields(embed, [
       {
         name: `🏔️ ${t("map_rotation.locations_short.dam")}`,
         value: formatLocationEventsTranslated(current.damMajor, current.damMinor),
@@ -154,7 +185,7 @@ export async function createMapRotationEmbed(
         value: formatLocationEventsTranslated(current.stellaMontisMajor, current.stellaMontisMinor),
         inline: true,
       },
-    );
+    ]);
   }
 
   // Forecast Layout
@@ -198,18 +229,22 @@ export async function createMapRotationEmbed(
       }
     }
 
-    embed.addFields({
-      name: t("map_rotation.forecast.header"),
-      value: forecastText || t("map_rotation.forecast.no_events"),
-      inline: false,
-    });
+    safeAddFields(embed, [
+      {
+        name: t("map_rotation.forecast.header"),
+        value: forecastText || t("map_rotation.forecast.no_events"),
+        inline: false,
+      },
+    ]);
   } else {
     // Desktop: Inline Fields
-    embed.addFields({
-      name: t("map_rotation.forecast.header"),
-      value: "\u200b",
-      inline: false,
-    });
+    safeAddFields(embed, [
+      {
+        name: t("map_rotation.forecast.header"),
+        value: "\u200b",
+        inline: false,
+      },
+    ]);
 
     let timeCol = "";
     let conditionCol = "";
@@ -255,11 +290,11 @@ export async function createMapRotationEmbed(
       conditionCol += `${eventText}\n`;
     }
 
-    embed.addFields(
+    safeAddFields(embed, [
       { name: t("map_rotation.forecast.time_until"), value: timeCol, inline: true },
       { name: t("map_rotation.forecast.conditions"), value: conditionCol, inline: true },
       { name: "\u200b", value: "\u200b", inline: true },
-    );
+    ]);
   }
 
   embed.setTimestamp().setFooter({ text: t("map_rotation.footer") });
@@ -315,22 +350,28 @@ export async function createMapRotationEmbed(
 }
 
 /**
+ * Options for posting or updating a map rotation message
+ */
+export interface PostOrUpdateOptions {
+  existingMessageId?: string;
+  localeOverride?: string;
+  configOverride?: ServerConfigEntry;
+}
+
+/**
  * Post or update the map rotation message in a specific channel.
  * @param {Client} client The Discord client.
  * @param guildId The guild that owns the channel.
  * @param channelId The ID of the channel to post in.
- * @param existingMessageId Optional message ID to update instead of creating a new one.
- * @param localeOverride Optional locale to use instead of the config locale.
- * @param configOverride Optional server config to avoid refetching.
+ * @param options Optional configuration for the update.
  */
 export async function postOrUpdateInChannel(
   client: Client,
   guildId: string,
   channelId: string,
-  existingMessageId?: string,
-  localeOverride?: string,
-  configOverride?: ServerConfigEntry,
+  options: PostOrUpdateOptions = {},
 ): Promise<void> {
+  const { existingMessageId, localeOverride, configOverride } = options;
   try {
     // Try to resolve from cache first, then fetch if missing
     let channel = client.channels.resolve(channelId) as TextChannel;
@@ -355,7 +396,7 @@ export async function postOrUpdateInChannel(
     );
 
     const imageContext = prepareImageCacheContext(locale);
-    const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
+    const { embed, files, components } = await buildMapRotationMessage(mobileFriendly, locale, {
       rotation: imageContext.rotation,
       imageUrl: imageContext.cachedUrl,
     });
@@ -477,7 +518,7 @@ export async function postOrUpdateMapMessages(
 
   // Filter by TEST_GUILD_ID if configured (for local testing)
   const testGuildId = process.env.TEST_GUILD_ID;
-  const entries = testGuildId
+  const rawEntries = testGuildId
     ? Object.entries(serverConfigs).filter(([guildId]) => guildId === testGuildId)
     : Object.entries(serverConfigs);
 
@@ -485,13 +526,32 @@ export async function postOrUpdateMapMessages(
     logger.info(`TEST_GUILD_ID detected: filtering to guild ${testGuildId} only`);
   }
 
-  if (entries.length === 0) {
+  if (rawEntries.length === 0) {
     logger.info(
       testGuildId
         ? `No configuration found for test guild ${testGuildId}.`
         : "No servers configured for updates.",
     );
     return;
+  }
+
+  const entries = rawEntries.filter(([, config]) => shouldUpdateHourlyServer(config.lastUpdated));
+  const skipped = rawEntries.length - entries.length;
+
+  if (entries.length === 0) {
+    logger.info(
+      skipped > 0
+        ? `Skipping ${skipped} server(s) - already updated this hour`
+        : "Skipping scheduled update - all servers already refreshed this hour",
+    );
+    return;
+  }
+
+  if (skipped > 0) {
+    logger.info(
+      { skipped, total: rawEntries.length },
+      "Skipping server(s) - already updated this hour",
+    );
   }
 
   // Queue-based processing with configurable concurrency
@@ -531,14 +591,10 @@ export async function postOrUpdateMapMessages(
           },
           "Worker picked server for processing",
         );
-        await postOrUpdateInChannel(
-          client,
-          guildId,
-          config.channelId,
-          config.messageId,
-          undefined,
-          config,
-        );
+        await postOrUpdateInChannel(client, guildId, config.channelId, {
+          existingMessageId: config.messageId,
+          configOverride: config,
+        });
         context.processed++;
 
         if (context.processed % 10 === 0) {
@@ -610,7 +666,7 @@ export function setupLockExpiration(client: Client) {
         );
 
         const imageContext = prepareImageCacheContext(locale);
-        const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
+        const { embed, files, components } = await buildMapRotationMessage(mobileFriendly, locale, {
           rotation: imageContext.rotation,
           imageUrl: imageContext.cachedUrl,
         });
@@ -634,6 +690,8 @@ export function setupLockExpiration(client: Client) {
 
 function prepareImageCacheContext(locale: string): MapImageCacheContext {
   const rotation = getCurrentRotation();
+  const now = Date.now();
+
   if (cachedImageHour === null || cachedImageHour !== rotation.hour) {
     cachedImageHour = rotation.hour;
     imageUrlCache.clear();
@@ -643,11 +701,22 @@ function prepareImageCacheContext(locale: string): MapImageCacheContext {
   const resolvedLocale = resolveImageLocale(locale);
   const cacheKey = `${resolvedLocale}-${rotation.hour}`;
 
+  // Check if cached URL exists and hasn't expired
+  const cached = imageUrlCache.get(cacheKey);
+  let cachedUrl: string | undefined;
+  if (cached && now - cached.cachedAt < CDN_CACHE_TTL_MS) {
+    cachedUrl = cached.url;
+  } else if (cached) {
+    // URL expired, remove from cache
+    imageUrlCache.delete(cacheKey);
+    logVerbose({ cacheKey }, "Removed expired CDN URL from cache");
+  }
+
   return {
     resolvedLocale,
     rotation,
     cacheKey,
-    cachedUrl: imageUrlCache.get(cacheKey),
+    cachedUrl,
   };
 }
 
@@ -662,7 +731,7 @@ function cacheImageUrlFromMessage(message: Message, cacheKey: string): void {
     message.attachments.find((att) => att.contentType?.startsWith("image/"));
 
   if (attachment?.url) {
-    imageUrlCache.set(cacheKey, attachment.url);
+    imageUrlCache.set(cacheKey, { url: attachment.url, cachedAt: Date.now() });
     logVerbose({ cacheKey, url: attachment.url }, "Cached CDN attachment URL for reuse");
   }
 }

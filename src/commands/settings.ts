@@ -5,19 +5,20 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { Command } from "../types";
-import { getT } from "../utils/i18n";
+import { getT } from "../utils/i18n/i18n";
 import {
   buildCommandLocalizations,
   buildOptionLocalizations,
   loadAvailableLocales,
-} from "../utils/localeLoader";
+} from "../utils/i18n/localeLoader";
 import { logger } from "../utils/logger";
+import { postOrUpdateInChannel } from "../utils/discord/messageManager";
 import {
   getServerConfig,
   setMobileFriendly,
   setNotificationMethod,
   setServerLocale,
-} from "../utils/serverConfig";
+} from "../utils/database/serverConfig";
 
 const locales = loadAvailableLocales();
 const { nameLocalizations, descriptionLocalizations } = buildCommandLocalizations(
@@ -146,16 +147,17 @@ const SettingsCommand: Command = {
       );
 
       // Trigger immediate update of the map message
-      const { postOrUpdateInChannel } = require("../utils/messageManager");
       const updatedConfig = await getServerConfig(interaction.guildId);
       if (updatedConfig?.channelId) {
         await postOrUpdateInChannel(
           interaction.client,
           interaction.guildId,
           updatedConfig.channelId,
-          updatedConfig.messageId,
-          locale || undefined, // Pass the new locale if it was updated
-          updatedConfig,
+          {
+            existingMessageId: updatedConfig.messageId,
+            localeOverride: locale || undefined, // Pass the new locale if it was updated
+            configOverride: updatedConfig,
+          },
         );
       }
     } catch (error) {
