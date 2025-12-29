@@ -1,0 +1,145 @@
+{
+  "_developer_note_do_not_edit": "Please refer to ./docs/ADDING_LANGUAGES.md for full instructions on adding new languages. Do not remove keys. Text encapsulated in {{example}} are variables - keep them as-is. Descriptions in command_metadata have a max length of 100 characters.",
+  "_language_name": "Deutsch",
+  "common": {
+    "error": "Bei der Ausführung dieses Befehls ist ein Fehler aufgetreten!",
+    "error_saving": "Beim Speichern Ihrer Einstellungen ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+    "only_in_guild": "Dieser Befehl kann nur auf einem Server verwendet werden."
+  },
+  "command_metadata": {
+    "_developer_note_do_not_edit": "Beschreibungen haben eine maximale Länge von 100 Zeichen.",
+    "ping": {
+      "name": "ping",
+      "description": "Antwortet mit „Pong!“ und zeigt die Latenz des Bots an."
+    },
+    "settings": {
+      "name": "settings",
+      "description": "Konfigurieren Sie die Bot-Einstellungen für diesen Server.",
+      "options": {
+        "mobile-friendly": {
+          "name": "mobile-friendly",
+          "description": "Aktivieren Sie die mobilfreundliche Ansicht für Kartenaktualisierungen (Standard: false)"
+        },
+        "locale": {
+          "name": "locale",
+          "description": "Legen Sie die Sprache für den Bot auf diesem Server fest."
+        },
+        "notification-method": {
+          "name": "notification-method",
+          "description": "Wie Kartenaktualisierungen im Kanal veröffentlicht werden"
+        }
+      }
+    },
+    "set-channel": {
+      "name": "set-channel",
+      "description": "Legt den Kanal für Aktualisierungen der Kartenrotation fest.",
+      "options": {
+        "channel": {
+          "name": "channel",
+          "description": "Der Kanal, über den Updates gesendet werden sollen"
+        }
+      }
+    },
+    "translations": {
+      "name": "translations",
+      "description": "Erfahren Sie, wie Sie dabei helfen können, diesen Bot in Ihre Sprache zu übersetzen."
+    }
+  },
+  "commands": {
+    "ping": {
+      "pinging": "Pinging...",
+      "response": "🏓 Pong!\n📡 Latency: {{latency}}ms\n💓 API Latency: {{apiLatency}}ms"
+    },
+    "settings": {
+      "mobile_friendly_updated": "Mobile-friendly mode is now **{{status}}**.",
+      "locale_updated": "Sprache geändert zu **{{locale}}**.",
+      "notification_method_updated": "Benachrichtigungsmethode aktualisiert auf: **{{method}}**",
+      "no_changes": "Es wurde keine Änderungen vorgenommen.",
+      "enabled": "AKTIVIERT",
+      "disabled": "DEAKTIVIERT",
+      "notification_methods": {
+        "pin-edit": "Anpinnen & Editieren",
+        "post-delete": "Stündlich posten & alte Beiträge löschen",
+        "post-keep": "Stündliche Veröffentlichung und Speicherung des Verlaufs"
+      }
+    },
+    "set_channel": {
+      "success": "Aktualisierungen der Kartenrotation werden nun an diesen Channel gesendet: {{channel}}.\n\n**Hinweis:** Die Standardansicht ist optimiert für **Desktop**. Wenn Ihre Nutzer hauptsächlich mobile Geräte verwenden, verwenden Sie `/settings mobile-friendly: True` um zu einem für Mobilgeräte optimierten Layout wechseln."
+    },
+    "translations": {
+      "title": "🌍 Hilfe beim Übersetzen von Arc Raiders Bot",
+      "description": "Möchten Sie diesen Bot in Ihrer Sprache sehen? Wir würden uns über Ihre Hilfe freuen! Eine Übersetzung beizusteuern ist ganz einfach und erfordert keine Programmierkenntnisse.",
+      "available_languages": "📚 Derzeit verfügbare Sprachen",
+      "how_to_help": "✨ Wie Sie einen Beitrag leisten können",
+      "steps": "1. Besuchen Sie unser GitHub-Repository\n2. Laden Sie die englische Vorlagendatei herunter ([`en.json`](https://raw.githubusercontent.com/zfael/arc-raiders-discord-bot/refs/heads/feature/translation-support/src/locales/en.json))\n3. Übersetzen Sie den gesamten Text in Ihre Sprache.\n4. Reichen Sie Ihre Übersetzung über GitHub oder Discord ein.\n\n🔗 **GitHub:** https://github.com/zfael/arc-raiders-discord-bot/issues/new",
+      "what_to_translate": "📝 Was Sie übersetzen werden",
+      "sections": "• **Befehlsbeschreibungen** — Was Benutzer sehen, wenn sie Befehle eingeben\n• **Bot-Antworten** — Nachrichten, die der Bot sendet\n• **Karteninformationen** — Ortsnamen, Veranstaltungsnamen, Schaltflächen\n• **Fehlermeldungen** — Wenn etwas schief geht",
+      "important_rules": "⚠️ Wichtige Richtlinien",
+      "rules": "• Text behalten zwischen `{{brackets}}` genau so, wie es ist — diese sind Platzhalter\n• Ändern Sie keine der Schlüsselnamen, sondern nur die Textwerte.\n• Behalten Sie die gleiche Dateistruktur wie in der englischen Version bei.\n• Befehlsbeschreibungen müssen weniger als 100 Zeichen umfassen.",
+      "footer": "Vielen Dank, dass Sie dazu beigetragen haben, diesen Bot für mehr Spieler zugänglich zu machen.! 💙"
+    }
+  },
+  "image_renderer": {
+    "forecast_header": "Vorhersage (nächste 6 Stunden)"
+  },
+  "map_rotation": {
+    "title": "Arc Raiders – Status der Kartenrotation",
+    "footer": "Arc Raiders Bot • Stündliche Aktualisierungen",
+    "locked": "🚫 Dieses Menü wird derzeit von einem anderen Benutzer verwendet. Bitte warten Sie {{remaining}} Sekunden..",
+    "buttons": {
+      "dam": "Damm Schlachtfeldder",
+      "buried_city": "Begrabene Stadt",
+      "spaceport": "Raumhafen",
+      "blue_gate": "Blaues Tor",
+      "stella_montis": "Stella Montis",
+      "show_major": "Wichtige Ereignisse anzeigen",
+      "show_minor": "Nebenereignisse anzeigen",
+      "show_map": "Karte abzeigen",
+      "home": "Home"
+    },
+    "events": {
+      "harvester": "Ernter Event",
+      "night": "Nacht",
+      "storm": "Sturm",
+      "tower": "Tower",
+      "bunker": "Bunker",
+      "matriarch": "Matriarch",
+      "husks": "Hüllen",
+      "blooms": "Blütezeit",
+      "caches": "Raider Caches",
+      "probes": "ARC-Proben",
+      "cold": "Kälteeinbruch",
+      "gate": "Tor",
+      "none": "Keine",
+      "major": "Hautpevent",
+      "minor": "Nebenevent"
+    },
+    "forecast": {
+      "header": "━━━━━━ 🔮 VORHERSAGE (nächste 6 Stunden) ━━━━━━",
+      "title_location": "**Vorhersage für {{location}}**",
+      "title_event": "**Vorhersage für {{emoji}} {{event}}**",
+      "next_rotation": "Nächste Rotation: <t:{{timestamp}}:R>",
+      "no_events": "In den nächsten 24 Stunden finden keine Events statt.",
+      "no_major_events": "Keine größeren Ereignisse",
+      "time_until": "Zeit bis",
+      "conditions": "Bedingungen",
+      "locations": "Standorte",
+      "upcoming": "Bevorstehend",
+      "in_hours": "in {{hours}}h"
+    },
+    "locations_short": {
+      "dam": "Damm",
+      "buried_city": "Stadt",
+      "spaceport": "Space",
+      "blue_gate": "Blue",
+      "stella_montis": "Stella"
+    },
+    "locations": {
+      "dam": "Damm Schlachtfelder",
+      "buried_city": "Begrabene Stadt",
+      "spaceport": "Raumhafen",
+      "blue_gate": "Blaues Tor",
+      "stella_montis": "Stella Montis"
+    }
+  }
+}
