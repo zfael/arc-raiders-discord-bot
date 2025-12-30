@@ -21,6 +21,7 @@ import { getT, translateEvent } from "./i18n";
 import { generateMapImage, resolveImageLocale } from "./imageGenerator";
 import { interactionLockManager } from "./interactionLock";
 import { logger } from "./logger";
+import { withRetry } from "./retry";
 import { getServerConfig, getServerConfigs, setServerMessageState } from "./serverConfig";
 
 const MAP_IMAGE_FILENAME = "map-status.png";
@@ -392,7 +393,22 @@ export async function postOrUpdateInChannel(
             "Attempting to edit existing pinned message",
           );
           const opStart = Date.now();
-          message = await channel.messages.edit(existingMessageId, payload);
+          message = await withRetry(() => channel.messages.edit(existingMessageId, payload), {
+            shouldAbort: (error) => error instanceof DiscordAPIError && error.code === 10008,
+            onRetry: (attempt, error, delayMs) => {
+              logger.warn(
+                {
+                  guildId,
+                  channelId,
+                  existingMessageId,
+                  attempt,
+                  nextRetryMs: delayMs,
+                  error: formatDiscordError(error),
+                },
+                `Edit failed, retrying in ${delayMs}ms`,
+              );
+            },
+          });
           logOperationResult(`Updated pinned message in ${channelId}`, opStart);
         } catch (error) {
           logger.warn(
@@ -402,7 +418,7 @@ export async function postOrUpdateInChannel(
               existingMessageId,
               error: formatDiscordError(error),
             },
-            `Message not found in ${channelId}, creating a new one.`,
+            `Message edit failed in ${channelId}, creating a new one.`,
           );
           const opStart = Date.now();
           message = await channel.send(payload);
