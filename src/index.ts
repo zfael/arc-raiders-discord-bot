@@ -115,10 +115,15 @@ client.on("interactionCreate", async (interaction) => {
         flags: Number(MessageFlags.Ephemeral),
       };
 
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(errorMessage);
-      } else {
-        await interaction.reply(errorMessage);
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(errorMessage);
+        } else {
+          await interaction.reply(errorMessage);
+        }
+      } catch (replyError) {
+        // Interaction may have expired or already been handled - ignore reply errors
+        logger.debug({ err: replyError }, "Could not send error response to interaction");
       }
     }
     return;
