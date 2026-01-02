@@ -55,6 +55,15 @@ function extractContext(method: string, route: string, _options?: any): string {
   return `${method} ${cleanRoute}`;
 }
 
+// Discord API error codes that should NOT be retried
+const NON_RETRYABLE_CODES = new Set([
+  10062, // Unknown interaction (interaction expired)
+  40060, // Interaction has already been acknowledged
+  10008, // Unknown message
+  50001, // Missing access
+  50013, // Missing permissions
+]);
+
 /**
  * Wraps an async function with rate limit retry logic
  */
@@ -67,6 +76,11 @@ async function withRetry<T>(
     try {
       return await fn();
     } catch (error) {
+      // Don't retry non-retryable Discord API errors
+      if (error instanceof DiscordAPIError && NON_RETRYABLE_CODES.has(error.code as number)) {
+        throw error;
+      }
+
       // Check if it's a Discord API rate limit error (HTTP 429)
       if (error instanceof DiscordAPIError && error.status === 429) {
         const rateLimitData = error.rawError as RateLimitError;
