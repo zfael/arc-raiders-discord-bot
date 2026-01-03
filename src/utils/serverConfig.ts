@@ -15,6 +15,7 @@ interface ServerRow {
   mobile_friendly: boolean | null;
   locale: string | null;
   notification_method: string | null;
+  created_at: string | null;
 }
 
 interface CacheEntry {
@@ -238,18 +239,25 @@ export async function setNotificationMethod(
 }
 
 /**
- * Removes a server's configuration.
+ * Removes a server's configuration and returns the created_at timestamp.
  */
-export async function removeServerConfig(guildId: string): Promise<void> {
+export async function removeServerConfig(guildId: string): Promise<Date | null> {
   try {
-    const { error } = await supabase.from(SERVERS_TABLE).delete().eq("guild_id", guildId);
+    const { data, error } = await supabase
+      .from(SERVERS_TABLE)
+      .delete()
+      .eq("guild_id", guildId)
+      .select("created_at")
+      .maybeSingle();
 
     if (error) {
       throw error;
     }
     invalidateServerConfigCache(guildId);
+    return data?.created_at ? new Date(data.created_at) : null;
   } catch (error) {
     logger.error({ err: error }, "Error removing server configuration from Supabase");
+    return null;
   }
 }
 
