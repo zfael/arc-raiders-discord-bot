@@ -13,13 +13,8 @@ const GuildDeleteEvent: Event = {
     const createdAt = await removeServerConfig(guild.id);
     logger.info({ createdAt }, `Removed server entry from Supabase for guildId: ${guild.id}`);
 
-    let daysInServer: number | null = null;
-    if (createdAt) {
-      daysInServer = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-    }
-
     const totalServers = guild.client.guilds.cache.size;
-    await notifyBotRemoved(guild.name, guild.id, daysInServer, totalServers);
+    await notifyBotRemoved(guild.name, guild.id, totalServers);
   },
 };
 
