@@ -8,6 +8,6 @@ module.exports = {
     logger.info(`Bot added to server: ${guild.name} (ID: ${guild.id})`);
 
     const totalServers = guild.client.guilds.cache.size;
-    await notifyBotJoined(guild.name, guild.id, totalServers);
+    await notifyBotJoined(guild.name, guild.id, totalServers, guild.memberCount);
   },
 };

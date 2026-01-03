@@ -41,6 +41,7 @@ export async function notifyBotJoined(
   serverName: string,
   serverId: string,
   totalServers: number,
+  memberCount: number,
 ): Promise<void> {
   const embed: WebhookEmbed = {
     title: "✅ Bot Added to Server",
@@ -48,6 +49,7 @@ export async function notifyBotJoined(
     fields: [
       { name: "Server", value: serverName, inline: true },
       { name: "ID", value: serverId, inline: true },
+      { name: "Members", value: String(memberCount), inline: true },
       { name: "Total Servers", value: String(totalServers), inline: true },
     ],
     timestamp: new Date().toISOString(),
