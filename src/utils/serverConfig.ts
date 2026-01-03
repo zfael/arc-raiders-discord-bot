@@ -239,25 +239,18 @@ export async function setNotificationMethod(
 }
 
 /**
- * Removes a server's configuration and returns the created_at timestamp.
+ * Removes a server's configuration.
  */
-export async function removeServerConfig(guildId: string): Promise<Date | null> {
+export async function removeServerConfig(guildId: string): Promise<void> {
   try {
-    const { data, error } = await supabase
-      .from(SERVERS_TABLE)
-      .delete()
-      .eq("guild_id", guildId)
-      .select("created_at")
-      .maybeSingle();
+    const { error } = await supabase.from(SERVERS_TABLE).delete().eq("guild_id", guildId);
 
     if (error) {
       throw error;
     }
     invalidateServerConfigCache(guildId);
-    return data?.created_at ? new Date(data.created_at) : null;
   } catch (error) {
     logger.error({ err: error }, "Error removing server configuration from Supabase");
-    return null;
   }
 }
 

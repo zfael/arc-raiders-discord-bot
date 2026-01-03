@@ -62,7 +62,6 @@ export async function notifyBotJoined(
 export async function notifyBotRemoved(
   serverName: string,
   serverId: string,
-  daysInServer: number | null,
   totalServers: number,
 ): Promise<void> {
   const fields = [
@@ -70,10 +69,6 @@ export async function notifyBotRemoved(
     { name: "ID", value: serverId, inline: true },
     { name: "Total Servers", value: String(totalServers), inline: true },
   ];
-
-  if (daysInServer !== null) {
-    fields.push({ name: "Days in Server", value: String(daysInServer), inline: true });
-  }
 
   const embed: WebhookEmbed = {
     title: "❌ Bot Removed from Server",
