@@ -43,6 +43,10 @@
     "translations": {
       "name": "translations",
       "description": "Learn how to help translate this bot into your language"
+    },
+    "setup": {
+      "name": "setup",
+      "description": "Guided setup wizard to configure the bot for your server"
     }
   },
   "commands": {
@@ -65,6 +69,50 @@
     },
     "set_channel": {
       "success": "Map rotation updates will now be sent to {{channel}}.\n\n**Note:** The default view is optimized for **Desktop**. If your users are primarily on mobile, use `/settings mobile-friendly: True` to switch to a mobile-optimized layout."
+    },
+    "setup": {
+      "step_language_title": "🌍 Step 1 of 5: Select Your Language",
+      "step_language_description": "Choose your preferred language for bot messages.",
+      "language_placeholder": "Select a language...",
+      "language_page_info": "Page {{current}} of {{total}}",
+      "step_channel_title": "📍 Step 2 of 5: Select Update Channel",
+      "step_channel_description": "Choose the channel where map rotation updates will be posted.",
+      "channel_placeholder": "Select a channel...",
+      "step_notification_title": "🔔 Step 3 of 5: Notification Method",
+      "step_notification_description": "How should map updates be posted to the channel?",
+      "notification_placeholder": "Select notification method...",
+      "notification_option_pin_edit": "📌 Post, Pin & Edit",
+      "notification_option_pin_edit_desc": "Keeps 1 message updated at top",
+      "notification_option_post_delete": "🔄 Hourly Post & Delete Old",
+      "notification_option_post_delete_desc": "Fresh pings, auto-cleanup",
+      "notification_option_post_keep": "📝 Hourly Post & Keep Old",
+      "notification_option_post_keep_desc": "Full history log, no deletion",
+      "checking_permissions": "⏳ Checking permissions...",
+      "permissions_ok": "✅ All permissions are configured correctly.",
+      "permission_error_title": "❌ Insufficient Permissions",
+      "permission_error_description": "The bot needs these permissions in {{channel}}:\n{{permissions}}\n\nPlease update the bot's permissions and click the button below.",
+      "permission_missing_send": "Send Messages",
+      "permission_missing_embed": "Embed Links",
+      "permission_missing_attach": "Attach Files",
+      "permission_missing_manage": "Manage Messages (for pinning/deleting)",
+      "recheck_button": "Re-check Permissions",
+      "step_mobile_title": "📱 Step 4 of 5: Display Format (Optional)",
+      "step_mobile_description": "Choose the display format for map updates.",
+      "step_mobile_disclaimer": "⚠️ Some languages may look incorrect on Desktop if Mobile Mode is OFF.",
+      "mobile_placeholder": "Select display mode...",
+      "mobile_option_desktop": "🖥️ Desktop (Default)",
+      "mobile_option_mobile": "📱 Mobile-Optimized",
+      "skip_desktop": "Skip (Use Desktop)",
+      "complete_title": "✅ Setup Complete!",
+      "complete_description": "Your bot is now fully configured:",
+      "complete_channel": "**Channel:** {{channel}}",
+      "complete_language": "**Language:** {{language}}",
+      "complete_notification": "**Notification Method:** {{method}}",
+      "complete_mobile": "**Mobile Mode:** {{mode}}",
+      "complete_footer": "The bot will post map updates every hour in your selected channel.",
+      "timeout": "⏱️ Setup wizard timed out. Please run `/setup` again to restart.",
+      "timeout_partial": "⏱️ Setup timed out. Partial config saved for {{channel}}. Use `/settings` to adjust.",
+      "save_error": "❌ An error occurred while saving. Please try again."
     },
     "translations": {
       "title": "🌍 Help Translate Arc Raiders Bot",
