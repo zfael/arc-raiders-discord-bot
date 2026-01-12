@@ -2,15 +2,22 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  type ButtonInteraction,
+  type ChannelSelectMenuInteraction,
   ChannelSelectMenuBuilder,
   ChannelType,
   type ChatInputCommandInteraction,
+  type Client,
   EmbedBuilder,
+  type Guild,
   type GuildTextBasedChannel,
-  type Interaction,
+  type InteractionCollector,
+  type MappedInteractionTypes,
+  type MessageComponentType,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  type StringSelectMenuInteraction,
   StringSelectMenuBuilder,
 } from "discord.js";
 import type { Command, NotificationMethod } from "../types";
@@ -39,6 +46,17 @@ interface SetupWizardState {
   mobileFriendly?: boolean;
   currentStep: "language" | "channel" | "notification" | "permissions" | "mobile" | "complete";
   languagePage: number;
+}
+
+interface WizardContext {
+  state: SetupWizardState;
+  t: (key: string, options?: Record<string, unknown>) => string;
+  guild: Guild;
+  guildId: string;
+  guildName: string;
+  client: Client;
+  collector: InteractionCollector<MappedInteractionTypes[MessageComponentType]>;
+  updateT: (locale: string) => void;
 }
 
 const REQUIRED_PERMISSIONS_BASE = [
@@ -320,6 +338,132 @@ async function savePartialConfig(
   }
 }
 
+async function handleLanguagePagination(
+  i: ButtonInteraction,
+  ctx: WizardContext,
+  direction: "prev" | "next",
+): Promise<void> {
+  if (direction === "prev") {
+    ctx.state.languagePage = Math.max(0, ctx.state.languagePage - 1);
+  } else {
+    const totalPages = Math.ceil(locales.size / LOCALES_PER_PAGE);
+    ctx.state.languagePage = Math.min(totalPages - 1, ctx.state.languagePage + 1);
+  }
+  const step = buildLanguageStep(ctx.t, ctx.state);
+  await i.update({ embeds: [step.embed], components: step.components });
+}
+
+async function handleLanguageSelection(
+  i: StringSelectMenuInteraction,
+  ctx: WizardContext,
+): Promise<void> {
+  ctx.state.locale = i.values[0];
+  ctx.state.currentStep = "channel";
+  ctx.updateT(ctx.state.locale);
+
+  const step = buildChannelStep(ctx.t);
+  await i.update({ embeds: [step.embed], components: step.components });
+}
+
+async function handleChannelSelection(
+  i: ChannelSelectMenuInteraction,
+  ctx: WizardContext,
+): Promise<void> {
+  ctx.state.channelId = i.values[0];
+  ctx.state.currentStep = "notification";
+
+  const step = buildNotificationStep(ctx.t);
+  await i.update({ embeds: [step.embed], components: step.components });
+}
+
+async function handlePermissionCheck(
+  i: StringSelectMenuInteraction | ButtonInteraction,
+  ctx: WizardContext,
+): Promise<void> {
+  const channel = await ctx.guild.channels.fetch(ctx.state.channelId!);
+  if (!channel || !channel.isTextBased()) {
+    await i.update({
+      content: ctx.t("commands.setup.save_error"),
+      embeds: [],
+      components: [],
+    });
+    ctx.collector.stop();
+    return;
+  }
+
+  const missingPerms = getMissingPermissions(
+    channel as GuildTextBasedChannel,
+    ctx.state.notificationMethod!,
+  );
+
+  if (missingPerms.length > 0) {
+    const step = buildPermissionErrorStep(ctx.t, `<#${ctx.state.channelId}>`, missingPerms);
+    await i.update({ embeds: [step.embed], components: step.components });
+  } else {
+    ctx.state.currentStep = "mobile";
+    const step = buildMobileStep(ctx.t);
+    await i.update({ embeds: [step.embed], components: step.components });
+  }
+}
+
+async function handleNotificationSelection(
+  i: StringSelectMenuInteraction,
+  ctx: WizardContext,
+): Promise<void> {
+  ctx.state.notificationMethod = i.values[0] as NotificationMethod;
+  ctx.state.currentStep = "permissions";
+  await handlePermissionCheck(i, ctx);
+}
+
+async function saveAndComplete(
+  i: StringSelectMenuInteraction | ButtonInteraction,
+  ctx: WizardContext,
+): Promise<void> {
+  try {
+    await setServerConfig(ctx.guildId, ctx.state.channelId!, ctx.guildName);
+    await setServerLocale(ctx.guildId, ctx.state.locale);
+    await setNotificationMethod(ctx.guildId, ctx.state.notificationMethod!);
+    if (ctx.state.mobileFriendly) {
+      await setMobileFriendly(ctx.guildId, ctx.state.mobileFriendly);
+    }
+
+    const channel = await ctx.guild.channels.fetch(ctx.state.channelId!);
+    const channelName = channel && "name" in channel ? channel.name : ctx.state.channelId!;
+
+    const step = buildCompleteStep(ctx.t, ctx.state, channelName);
+    await i.update({ embeds: [step.embed], components: [] });
+
+    postOrUpdateInChannel(ctx.client, ctx.guildId, ctx.state.channelId!).catch((error) => {
+      logger.error({ err: error }, "Failed to post initial update after setup");
+    });
+
+    ctx.collector.stop("complete");
+  } catch (error) {
+    logger.error({ err: error }, "Setup save failed");
+    await i.update({
+      content: ctx.t("commands.setup.save_error"),
+      embeds: [],
+      components: [],
+    });
+    ctx.collector.stop();
+  }
+}
+
+async function handleMobileSelection(
+  i: StringSelectMenuInteraction,
+  ctx: WizardContext,
+): Promise<void> {
+  ctx.state.mobileFriendly = i.values[0] === "true";
+  ctx.state.currentStep = "complete";
+  await saveAndComplete(i, ctx);
+}
+
+async function handleMobileSkip(i: ButtonInteraction, ctx: WizardContext): Promise<void> {
+  ctx.state.mobileFriendly = false;
+  ctx.state.currentStep = "complete";
+  await saveAndComplete(i, ctx);
+}
+
 const SetupCommand: Command = {
   data: new SlashCommandBuilder()
     .setName("setup")
@@ -358,7 +502,7 @@ const SetupCommand: Command = {
     const message = await interaction.editReply({ embeds: [embed], components });
 
     const collector = message.createMessageComponentCollector({
-      filter: (i: Interaction) => i.user.id === interaction.user.id,
+      filter: (i) => i.user.id === interaction.user.id,
       time: STEP_TIMEOUT,
     });
 
@@ -376,181 +520,41 @@ const SetupCommand: Command = {
 
     resetTimeout();
 
+    // Create context for handlers
+    const ctx: WizardContext = {
+      state,
+      t,
+      guild: interaction.guild,
+      guildId,
+      guildName,
+      client: interaction.client,
+      collector,
+      updateT: (locale: string) => {
+        t = getT(locale);
+        ctx.t = t;
+      },
+    };
+
     collector.on("collect", async (i) => {
       try {
         resetTimeout();
 
-        // Handle language pagination
         if (i.customId === "setup_lang_prev" && i.isButton()) {
-          state.languagePage = Math.max(0, state.languagePage - 1);
-          const step = buildLanguageStep(t, state);
-          await i.update({ embeds: [step.embed], components: step.components });
-          return;
-        }
-
-        if (i.customId === "setup_lang_next" && i.isButton()) {
-          const totalPages = Math.ceil(locales.size / LOCALES_PER_PAGE);
-          state.languagePage = Math.min(totalPages - 1, state.languagePage + 1);
-          const step = buildLanguageStep(t, state);
-          await i.update({ embeds: [step.embed], components: step.components });
-          return;
-        }
-
-        // Language selection
-        if (i.customId === "setup_language" && i.isStringSelectMenu()) {
-          state.locale = i.values[0];
-          state.currentStep = "channel";
-          t = getT(state.locale); // Update translator for subsequent steps
-
-          const step = buildChannelStep(t);
-          await i.update({ embeds: [step.embed], components: step.components });
-          return;
-        }
-
-        // Channel selection
-        if (i.customId === "setup_channel" && i.isChannelSelectMenu()) {
-          state.channelId = i.values[0];
-          state.currentStep = "notification";
-
-          const step = buildNotificationStep(t);
-          await i.update({ embeds: [step.embed], components: step.components });
-          return;
-        }
-
-        // Notification method selection
-        if (i.customId === "setup_notification" && i.isStringSelectMenu()) {
-          state.notificationMethod = i.values[0] as NotificationMethod;
-          state.currentStep = "permissions";
-
-          // Check permissions
-          const channel = await interaction.guild!.channels.fetch(state.channelId!);
-          if (!channel || !channel.isTextBased()) {
-            await i.update({
-              content: t("commands.setup.save_error"),
-              embeds: [],
-              components: [],
-            });
-            collector.stop();
-            return;
-          }
-
-          const missingPerms = getMissingPermissions(
-            channel as GuildTextBasedChannel,
-            state.notificationMethod,
-          );
-
-          if (missingPerms.length > 0) {
-            const step = buildPermissionErrorStep(t, `<#${state.channelId}>`, missingPerms);
-            await i.update({ embeds: [step.embed], components: step.components });
-          } else {
-            // Permissions OK, proceed to mobile step
-            state.currentStep = "mobile";
-            const step = buildMobileStep(t);
-            await i.update({ embeds: [step.embed], components: step.components });
-          }
-          return;
-        }
-
-        // Re-check permissions
-        if (i.customId === "setup_recheck_perms" && i.isButton()) {
-          const channel = await interaction.guild!.channels.fetch(state.channelId!);
-          if (!channel || !channel.isTextBased()) {
-            await i.update({
-              content: t("commands.setup.save_error"),
-              embeds: [],
-              components: [],
-            });
-            collector.stop();
-            return;
-          }
-
-          const missingPerms = getMissingPermissions(
-            channel as GuildTextBasedChannel,
-            state.notificationMethod!,
-          );
-
-          if (missingPerms.length > 0) {
-            const step = buildPermissionErrorStep(t, `<#${state.channelId}>`, missingPerms);
-            await i.update({ embeds: [step.embed], components: step.components });
-          } else {
-            // Permissions OK, proceed to mobile step
-            state.currentStep = "mobile";
-            const step = buildMobileStep(t);
-            await i.update({ embeds: [step.embed], components: step.components });
-          }
-          return;
-        }
-
-        // Mobile selection
-        if (i.customId === "setup_mobile" && i.isStringSelectMenu()) {
-          state.mobileFriendly = i.values[0] === "true";
-          state.currentStep = "complete";
-
-          // Save config
-          try {
-            await setServerConfig(guildId, state.channelId!, guildName);
-            await setServerLocale(guildId, state.locale);
-            await setNotificationMethod(guildId, state.notificationMethod!);
-            await setMobileFriendly(guildId, state.mobileFriendly);
-
-            const channel = await interaction.guild!.channels.fetch(state.channelId!);
-            const channelName = channel && "name" in channel ? channel.name : state.channelId!;
-
-            const step = buildCompleteStep(t, state, channelName);
-            await i.update({ embeds: [step.embed], components: [] });
-
-            // Trigger initial map post in background
-            postOrUpdateInChannel(interaction.client, guildId, state.channelId!).catch((error) => {
-              logger.error({ err: error }, `Failed to post initial update after setup`);
-            });
-
-            collector.stop("complete");
-          } catch (error) {
-            logger.error({ err: error }, "Setup save failed");
-            await i.update({
-              content: t("commands.setup.save_error"),
-              embeds: [],
-              components: [],
-            });
-            collector.stop();
-          }
-          return;
-        }
-
-        // Mobile skip (use desktop default)
-        if (i.customId === "setup_mobile_skip" && i.isButton()) {
-          state.mobileFriendly = false;
-          state.currentStep = "complete";
-
-          // Save config
-          try {
-            await setServerConfig(guildId, state.channelId!, guildName);
-            await setServerLocale(guildId, state.locale);
-            await setNotificationMethod(guildId, state.notificationMethod!);
-            // mobileFriendly defaults to false, no need to set explicitly
-
-            const channel = await interaction.guild!.channels.fetch(state.channelId!);
-            const channelName = channel && "name" in channel ? channel.name : state.channelId!;
-
-            const step = buildCompleteStep(t, state, channelName);
-            await i.update({ embeds: [step.embed], components: [] });
-
-            // Trigger initial map post in background
-            postOrUpdateInChannel(interaction.client, guildId, state.channelId!).catch((error) => {
-              logger.error({ err: error }, `Failed to post initial update after setup`);
-            });
-
-            collector.stop("complete");
-          } catch (error) {
-            logger.error({ err: error }, "Setup save failed");
-            await i.update({
-              content: t("commands.setup.save_error"),
-              embeds: [],
-              components: [],
-            });
-            collector.stop();
-          }
-          return;
+          await handleLanguagePagination(i, ctx, "prev");
+        } else if (i.customId === "setup_lang_next" && i.isButton()) {
+          await handleLanguagePagination(i, ctx, "next");
+        } else if (i.customId === "setup_language" && i.isStringSelectMenu()) {
+          await handleLanguageSelection(i, ctx);
+        } else if (i.customId === "setup_channel" && i.isChannelSelectMenu()) {
+          await handleChannelSelection(i, ctx);
+        } else if (i.customId === "setup_notification" && i.isStringSelectMenu()) {
+          await handleNotificationSelection(i, ctx);
+        } else if (i.customId === "setup_recheck_perms" && i.isButton()) {
+          await handlePermissionCheck(i, ctx);
+        } else if (i.customId === "setup_mobile" && i.isStringSelectMenu()) {
+          await handleMobileSelection(i, ctx);
+        } else if (i.customId === "setup_mobile_skip" && i.isButton()) {
+          await handleMobileSkip(i, ctx);
         }
       } catch (error) {
         logger.error({ err: error }, "Error in setup wizard collector");
