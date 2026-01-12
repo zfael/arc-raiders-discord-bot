@@ -312,6 +312,8 @@ function buildCompleteStep(
     t("commands.setup.complete_mobile", { mode: mobileLabel }),
     "",
     t("commands.setup.complete_footer"),
+    "",
+    t("commands.setup.complete_tip"),
   ].join("\n");
 
   const embed = new EmbedBuilder()

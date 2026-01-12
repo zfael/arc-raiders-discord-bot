@@ -109,6 +109,7 @@
       "complete_notification": "**Método de Notificación:** {{method}}",
       "complete_mobile": "**Modo Móvil:** {{mode}}",
       "complete_footer": "El bot publicará actualizaciones cada hora en tu canal seleccionado.",
+      "complete_tip": "💡 **Consejo:** Puedes cambiar esta configuración en cualquier momento usando `/set-channel` o `/settings`.",
       "timeout": "⏱️ El asistente expiró. Por favor ejecuta `/setup` de nuevo.",
       "timeout_partial": "⏱️ Expiró. Configuración parcial guardada para {{channel}}. Usa `/settings` para ajustar.",
       "save_error": "❌ Ocurrió un error al guardar. Por favor intenta de nuevo."

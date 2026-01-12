@@ -110,6 +110,7 @@
       "complete_notification": "**Benachrichtigungsmethode:** {{method}}",
       "complete_mobile": "**Mobile-Modus:** {{mode}}",
       "complete_footer": "Der Bot postet stündlich Aktualisierungen in Ihrem ausgewählten Kanal.",
+      "complete_tip": "💡 **Tipp:** Sie können diese Einstellungen jederzeit mit `/set-channel` oder `/settings` ändern.",
       "timeout": "⏱️ Der Assistent ist abgelaufen. Bitte führen Sie `/setup` erneut aus.",
       "timeout_partial": "⏱️ Abgelaufen. Teilkonfiguration für {{channel}} gespeichert. Verwenden Sie `/settings` zum Anpassen.",
       "save_error": "❌ Beim Speichern ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."

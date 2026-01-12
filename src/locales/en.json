@@ -110,6 +110,7 @@
       "complete_notification": "**Notification Method:** {{method}}",
       "complete_mobile": "**Mobile Mode:** {{mode}}",
       "complete_footer": "The bot will post map updates every hour in your selected channel.",
+      "complete_tip": "💡 **Tip:** You can change these settings anytime using `/set-channel` or `/settings`.",
       "timeout": "⏱️ Setup wizard timed out. Please run `/setup` again to restart.",
       "timeout_partial": "⏱️ Setup timed out. Partial config saved for {{channel}}. Use `/settings` to adjust.",
       "save_error": "❌ An error occurred while saving. Please try again."
