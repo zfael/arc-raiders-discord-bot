@@ -13,11 +13,16 @@ You can invite Arc Raiders Discord Bot to any Discord server using this link:
 **How to use after inviting:**
 
 1. **Invite the bot** using the link above and authorize it for your server.
-2. **Set the update channel** by using the `/set-channel` slash command in the channel where you want map rotation updates to appear. Only server admins can use this command.
+2. **Run the setup wizard** by using the `/setup` slash command. This guided wizard will help you configure:
+   - Your preferred language
+   - The channel for map rotation updates
+   - Notification method (pin & edit, hourly post, etc.)
+   - Display format (desktop or mobile-optimized)
 3. The bot will automatically post and update the Arc Raiders map rotation status every hour in the designated channel.
-4. **(Optional)** Use `/settings mobile-friendly: True` to enable mobile-optimized display mode.
 
-If you need to change the update channel, simply run `/set-channel` again in a different channel.
+**Alternative setup:** You can also use individual commands:
+- `/set-channel` - Set the update channel
+- `/settings` - Configure locale, mobile-friendly mode, and notification method
 
 ## Features
 
@@ -274,8 +279,9 @@ This registers commands globally, which can take up to an hour to propagate to a
 ## Commands
 
 - `/ping` - Check bot latency and responsiveness
+- `/setup` - (Admin-only) Guided setup wizard to configure the bot for your server
 - `/set-channel` - (Admin-only) Sets the channel where map rotation updates are posted
-- `/settings mobile-friendly: <True/False>` - (Admin-only) Toggle mobile-friendly display mode
+- `/settings` - (Admin-only) Configure locale, mobile-friendly mode, and notification method
 
 ## Interactive Controls
 

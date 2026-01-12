@@ -43,6 +43,10 @@
     "translations": {
       "name": "translations",
       "description": "Apprenez à aider à traduire ce bot"
+    },
+    "setup": {
+      "name": "setup",
+      "description": "Assistant guidé pour configurer le bot sur votre serveur"
     }
   },
   "commands": {
@@ -65,6 +69,51 @@
     },
     "set_channel": {
       "success": "Les mises à jour de rotation de la carte seront désormais envoyées à {{channel}}.\n\n**Remarque :** La vue par défaut est optimisée pour **Desktop**. Si vos utilisateurs sont principalement sur mobile, utilisez `/settings mobile-friendly: True` pour passer à une disposition optimisée pour mobile."
+    },
+    "setup": {
+      "step_language_title": "🌍 Étape 1 sur 5 : Sélectionnez Votre Langue",
+      "step_language_description": "Choisissez votre langue préférée pour les messages du bot.",
+      "language_placeholder": "Sélectionnez une langue...",
+      "language_page_info": "Page {{current}} sur {{total}}",
+      "step_channel_title": "📍 Étape 2 sur 5 : Sélectionnez le Canal",
+      "step_channel_description": "Choisissez le canal où les mises à jour seront publiées.",
+      "channel_placeholder": "Sélectionnez un canal...",
+      "step_notification_title": "🔔 Étape 3 sur 5 : Méthode de Notification",
+      "step_notification_description": "Comment les mises à jour doivent-elles être publiées ?",
+      "notification_placeholder": "Sélectionnez la méthode...",
+      "notification_option_pin_edit": "📌 Publier, Épingler et Modifier",
+      "notification_option_pin_edit_desc": "Garde 1 message mis à jour en haut",
+      "notification_option_post_delete": "🔄 Publication Horaire et Supprimer",
+      "notification_option_post_delete_desc": "Mentions fraîches, nettoyage auto",
+      "notification_option_post_keep": "📝 Publication Horaire et Conserver",
+      "notification_option_post_keep_desc": "Historique complet, pas de suppression",
+      "checking_permissions": "⏳ Vérification des permissions...",
+      "permissions_ok": "✅ Toutes les permissions sont correctement configurées.",
+      "permission_error_title": "❌ Permissions Insuffisantes",
+      "permission_error_description": "Le bot a besoin de ces permissions dans {{channel}} :\n{{permissions}}\n\nVeuillez mettre à jour les permissions et cliquer sur le bouton.",
+      "permission_missing_send": "Envoyer des Messages",
+      "permission_missing_embed": "Intégrer des Liens",
+      "permission_missing_attach": "Joindre des Fichiers",
+      "permission_missing_manage": "Gérer les Messages (pour épingler/supprimer)",
+      "recheck_button": "Revérifier les Permissions",
+      "step_mobile_title": "📱 Étape 4 sur 5 : Format d'Affichage (Optionnel)",
+      "step_mobile_description": "Choisissez le format d'affichage pour les mises à jour.",
+      "step_mobile_disclaimer": "⚠️ Certaines langues peuvent s'afficher incorrectement sur Desktop si le Mode Mobile est DÉSACTIVÉ.",
+      "mobile_placeholder": "Sélectionnez le mode d'affichage...",
+      "mobile_option_desktop": "🖥️ Desktop (Par défaut)",
+      "mobile_option_mobile": "📱 Optimisé Mobile",
+      "skip_desktop": "Passer (Utiliser Desktop)",
+      "complete_title": "✅ Configuration Terminée !",
+      "complete_description": "Votre bot est maintenant entièrement configuré :",
+      "complete_channel": "**Canal :** {{channel}}",
+      "complete_language": "**Langue :** {{language}}",
+      "complete_notification": "**Méthode de Notification :** {{method}}",
+      "complete_mobile": "**Mode Mobile :** {{mode}}",
+      "complete_footer": "Le bot publiera des mises à jour toutes les heures dans votre canal.",
+      "complete_tip": "💡 **Astuce :** Vous pouvez modifier ces paramètres à tout moment avec `/set-channel` ou `/settings`.",
+      "timeout": "⏱️ L'assistant a expiré. Veuillez exécuter `/setup` à nouveau.",
+      "timeout_partial": "⏱️ Expiré. Config partielle sauvegardée pour {{channel}}. Utilisez `/settings` pour ajuster.",
+      "save_error": "❌ Une erreur est survenue lors de la sauvegarde. Veuillez réessayer."
     },
     "translations": {
       "title": "🌍 Aidez à traduire le bot Arc Raiders",

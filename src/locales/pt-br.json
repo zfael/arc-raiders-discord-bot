@@ -42,6 +42,10 @@
     "translations": {
       "name": "translations",
       "description": "Learn how to help translate this bot into your language"
+    },
+    "setup": {
+      "name": "setup",
+      "description": "Assistente guiado para configurar o bot no seu servidor"
     }
   },
   "commands": {
@@ -64,6 +68,51 @@
     },
     "set_channel": {
       "success": "As atualizações de eventos do mapa agora serão enviadas para o canal {{channel}}.\n\n**Nota:** A visualização padrão está otimizada para **Desktop**. Se seus usuários acessam a internet principalmente por dispositivos móveis, use `/settings mobile-friendly: True` Para mudar para um layout otimizado para dispositivos móveis."
+    },
+    "setup": {
+      "step_language_title": "🌍 Passo 1 de 5: Selecione Seu Idioma",
+      "step_language_description": "Escolha seu idioma preferido para mensagens do bot.",
+      "language_placeholder": "Selecione um idioma...",
+      "language_page_info": "Página {{current}} de {{total}}",
+      "step_channel_title": "📍 Passo 2 de 5: Selecionar Canal",
+      "step_channel_description": "Escolha o canal onde as atualizações serão publicadas.",
+      "channel_placeholder": "Selecione um canal...",
+      "step_notification_title": "🔔 Passo 3 de 5: Método de Notificação",
+      "step_notification_description": "Como as atualizações devem ser publicadas?",
+      "notification_placeholder": "Selecione o método...",
+      "notification_option_pin_edit": "📌 Publicar, Fixar e Editar",
+      "notification_option_pin_edit_desc": "Mantém 1 mensagem atualizada no topo",
+      "notification_option_post_delete": "🔄 Publicação Horária e Deletar",
+      "notification_option_post_delete_desc": "Menções novas, limpeza automática",
+      "notification_option_post_keep": "📝 Publicação Horária e Manter",
+      "notification_option_post_keep_desc": "Histórico completo, sem exclusão",
+      "checking_permissions": "⏳ Verificando permissões...",
+      "permissions_ok": "✅ Todas as permissões estão configuradas corretamente.",
+      "permission_error_title": "❌ Permissões Insuficientes",
+      "permission_error_description": "O bot precisa destas permissões em {{channel}}:\n{{permissions}}\n\nPor favor, atualize as permissões do bot e clique no botão.",
+      "permission_missing_send": "Enviar Mensagens",
+      "permission_missing_embed": "Inserir Links",
+      "permission_missing_attach": "Anexar Arquivos",
+      "permission_missing_manage": "Gerenciar Mensagens (para fixar/deletar)",
+      "recheck_button": "Verificar Permissões",
+      "step_mobile_title": "📱 Passo 4 de 5: Formato de Exibição (Opcional)",
+      "step_mobile_description": "Escolha o formato de exibição para as atualizações.",
+      "step_mobile_disclaimer": "⚠️ Alguns idiomas podem aparecer incorretamente no Desktop se o Modo Mobile estiver DESATIVADO.",
+      "mobile_placeholder": "Selecione o modo de exibição...",
+      "mobile_option_desktop": "🖥️ Desktop (Padrão)",
+      "mobile_option_mobile": "📱 Otimizado para Mobile",
+      "skip_desktop": "Pular (Usar Desktop)",
+      "complete_title": "✅ Configuração Concluída!",
+      "complete_description": "Seu bot está totalmente configurado:",
+      "complete_channel": "**Canal:** {{channel}}",
+      "complete_language": "**Idioma:** {{language}}",
+      "complete_notification": "**Método de Notificação:** {{method}}",
+      "complete_mobile": "**Modo Mobile:** {{mode}}",
+      "complete_footer": "O bot publicará atualizações a cada hora no seu canal selecionado.",
+      "complete_tip": "💡 **Dica:** Você pode alterar essas configurações a qualquer momento usando `/set-channel` ou `/settings`.",
+      "timeout": "⏱️ O assistente expirou. Por favor execute `/setup` novamente.",
+      "timeout_partial": "⏱️ Expirou. Config parcial salva para {{channel}}. Use `/settings` para ajustar.",
+      "save_error": "❌ Ocorreu um erro ao salvar. Por favor tente novamente."
     },
     "translations": {
       "title": "🌍 Help Translate Arc Raiders Bot",

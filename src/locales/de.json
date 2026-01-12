@@ -43,6 +43,10 @@
     "translations": {
       "name": "translations",
       "description": "Erfahren Sie, wie Sie dabei helfen können, diesen Bot in Ihre Sprache zu übersetzen."
+    },
+    "setup": {
+      "name": "setup",
+      "description": "Geführter Assistent zur Konfiguration des Bots für Ihren Server"
     }
   },
   "commands": {
@@ -65,6 +69,51 @@
     },
     "set_channel": {
       "success": "Aktualisierungen der Kartenrotation werden nun an diesen Channel gesendet: {{channel}}.\n\n**Hinweis:** Die Standardansicht ist optimiert für **Desktop**. Wenn Ihre Nutzer hauptsächlich mobile Geräte verwenden, verwenden Sie `/settings mobile-friendly: True` um zu einem für Mobilgeräte optimierten Layout wechseln."
+    },
+    "setup": {
+      "step_language_title": "🌍 Schritt 1 von 5: Sprache Auswählen",
+      "step_language_description": "Wählen Sie Ihre bevorzugte Sprache für Bot-Nachrichten.",
+      "language_placeholder": "Sprache auswählen...",
+      "language_page_info": "Seite {{current}} von {{total}}",
+      "step_channel_title": "📍 Schritt 2 von 5: Kanal Auswählen",
+      "step_channel_description": "Wählen Sie den Kanal für Kartenaktualisierungen.",
+      "channel_placeholder": "Kanal auswählen...",
+      "step_notification_title": "🔔 Schritt 3 von 5: Benachrichtigungsmethode",
+      "step_notification_description": "Wie sollen Aktualisierungen gepostet werden?",
+      "notification_placeholder": "Methode auswählen...",
+      "notification_option_pin_edit": "📌 Posten, Anpinnen & Bearbeiten",
+      "notification_option_pin_edit_desc": "Hält 1 Nachricht oben aktualisiert",
+      "notification_option_post_delete": "🔄 Stündlich Posten & Löschen",
+      "notification_option_post_delete_desc": "Frische Pings, automatische Bereinigung",
+      "notification_option_post_keep": "📝 Stündlich Posten & Behalten",
+      "notification_option_post_keep_desc": "Vollständiger Verlauf, keine Löschung",
+      "checking_permissions": "⏳ Berechtigungen werden überprüft...",
+      "permissions_ok": "✅ Alle Berechtigungen sind korrekt konfiguriert.",
+      "permission_error_title": "❌ Unzureichende Berechtigungen",
+      "permission_error_description": "Der Bot benötigt diese Berechtigungen in {{channel}}:\n{{permissions}}\n\nBitte aktualisieren Sie die Berechtigungen und klicken Sie auf die Schaltfläche.",
+      "permission_missing_send": "Nachrichten senden",
+      "permission_missing_embed": "Links einbetten",
+      "permission_missing_attach": "Dateien anhängen",
+      "permission_missing_manage": "Nachrichten verwalten (zum Anpinnen/Löschen)",
+      "recheck_button": "Berechtigungen erneut prüfen",
+      "step_mobile_title": "📱 Schritt 4 von 5: Anzeigeformat (Optional)",
+      "step_mobile_description": "Wählen Sie das Anzeigeformat für Aktualisierungen.",
+      "step_mobile_disclaimer": "⚠️ Einige Sprachen werden auf Desktop möglicherweise falsch angezeigt, wenn der Mobile-Modus AUS ist.",
+      "mobile_placeholder": "Anzeigemodus auswählen...",
+      "mobile_option_desktop": "🖥️ Desktop (Standard)",
+      "mobile_option_mobile": "📱 Mobil-Optimiert",
+      "skip_desktop": "Überspringen (Desktop verwenden)",
+      "complete_title": "✅ Einrichtung Abgeschlossen!",
+      "complete_description": "Ihr Bot ist jetzt vollständig konfiguriert:",
+      "complete_channel": "**Kanal:** {{channel}}",
+      "complete_language": "**Sprache:** {{language}}",
+      "complete_notification": "**Benachrichtigungsmethode:** {{method}}",
+      "complete_mobile": "**Mobile-Modus:** {{mode}}",
+      "complete_footer": "Der Bot postet stündlich Aktualisierungen in Ihrem ausgewählten Kanal.",
+      "complete_tip": "💡 **Tipp:** Sie können diese Einstellungen jederzeit mit `/set-channel` oder `/settings` ändern.",
+      "timeout": "⏱️ Der Assistent ist abgelaufen. Bitte führen Sie `/setup` erneut aus.",
+      "timeout_partial": "⏱️ Abgelaufen. Teilkonfiguration für {{channel}} gespeichert. Verwenden Sie `/settings` zum Anpassen.",
+      "save_error": "❌ Beim Speichern ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
     },
     "translations": {
       "title": "🌍 Hilfe beim Übersetzen von Arc Raiders Bot",

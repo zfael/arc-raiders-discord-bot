@@ -42,6 +42,10 @@
     "translations": {
       "name": "traducciones",
       "description": "Aprende cómo ayudar a traducir este bot a tu idioma"
+    },
+    "setup": {
+      "name": "configurar",
+      "description": "Asistente guiado para configurar el bot en tu servidor"
     }
   },
   "commands": {
@@ -64,6 +68,51 @@
     },
     "set_channel": {
       "success": "Las actualizaciones de rotación de mapas ahora se enviarán a {{channel}}.\n\n**Nota:** La vista predeterminada está optimizada para **Escritorio**. Si tus usuarios usan principalmente móviles, usa `/settings mobile-friendly: True` para cambiar a un diseño optimizado para móviles."
+    },
+    "setup": {
+      "step_language_title": "🌍 Paso 1 de 5: Selecciona Tu Idioma",
+      "step_language_description": "Elige tu idioma preferido para los mensajes del bot.",
+      "language_placeholder": "Selecciona un idioma...",
+      "language_page_info": "Página {{current}} de {{total}}",
+      "step_channel_title": "📍 Paso 2 de 5: Seleccionar Canal",
+      "step_channel_description": "Elige el canal donde se publicarán las actualizaciones del mapa.",
+      "channel_placeholder": "Selecciona un canal...",
+      "step_notification_title": "🔔 Paso 3 de 5: Método de Notificación",
+      "step_notification_description": "¿Cómo se deben publicar las actualizaciones?",
+      "notification_placeholder": "Selecciona método de notificación...",
+      "notification_option_pin_edit": "📌 Publicar, Fijar y Editar",
+      "notification_option_pin_edit_desc": "Mantiene 1 mensaje actualizado arriba",
+      "notification_option_post_delete": "🔄 Publicación Horaria y Eliminar",
+      "notification_option_post_delete_desc": "Menciones frescas, limpieza automática",
+      "notification_option_post_keep": "📝 Publicación Horaria y Mantener",
+      "notification_option_post_keep_desc": "Historial completo, sin eliminación",
+      "checking_permissions": "⏳ Verificando permisos...",
+      "permissions_ok": "✅ Todos los permisos están configurados correctamente.",
+      "permission_error_title": "❌ Permisos Insuficientes",
+      "permission_error_description": "El bot necesita estos permisos en {{channel}}:\n{{permissions}}\n\nPor favor, actualiza los permisos del bot y haz clic en el botón.",
+      "permission_missing_send": "Enviar Mensajes",
+      "permission_missing_embed": "Insertar Enlaces",
+      "permission_missing_attach": "Adjuntar Archivos",
+      "permission_missing_manage": "Gestionar Mensajes (para fijar/eliminar)",
+      "recheck_button": "Verificar Permisos",
+      "step_mobile_title": "📱 Paso 4 de 5: Formato de Visualización (Opcional)",
+      "step_mobile_description": "Elige el formato de visualización para las actualizaciones.",
+      "step_mobile_disclaimer": "⚠️ Algunos idiomas pueden verse incorrectamente en Escritorio si el Modo Móvil está DESACTIVADO.",
+      "mobile_placeholder": "Selecciona modo de visualización...",
+      "mobile_option_desktop": "🖥️ Escritorio (Por defecto)",
+      "mobile_option_mobile": "📱 Optimizado para Móvil",
+      "skip_desktop": "Omitir (Usar Escritorio)",
+      "complete_title": "✅ ¡Configuración Completa!",
+      "complete_description": "Tu bot está completamente configurado:",
+      "complete_channel": "**Canal:** {{channel}}",
+      "complete_language": "**Idioma:** {{language}}",
+      "complete_notification": "**Método de Notificación:** {{method}}",
+      "complete_mobile": "**Modo Móvil:** {{mode}}",
+      "complete_footer": "El bot publicará actualizaciones cada hora en tu canal seleccionado.",
+      "complete_tip": "💡 **Consejo:** Puedes cambiar esta configuración en cualquier momento usando `/set-channel` o `/settings`.",
+      "timeout": "⏱️ El asistente expiró. Por favor ejecuta `/setup` de nuevo.",
+      "timeout_partial": "⏱️ Expiró. Configuración parcial guardada para {{channel}}. Usa `/settings` para ajustar.",
+      "save_error": "❌ Ocurrió un error al guardar. Por favor intenta de nuevo."
     },
     "translations": {
       "title": "🌍 Ayuda a Traducir Arc Raiders Bot",
