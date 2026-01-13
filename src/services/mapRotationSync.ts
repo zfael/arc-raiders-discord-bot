@@ -1,7 +1,8 @@
 import type { Client, TextChannel } from "discord.js";
 import type { MapRotation } from "../types";
 import { logger } from "../utils/logger";
-import { updateCacheIfChanged, type RotationChange } from "../utils/mapRotationCache";
+import { updateCacheIfChanged } from "../utils/mapRotationCache";
+import { notifyMapRotationUpdated } from "../utils/observabilityWebhook";
 import * as mapRotationRepo from "../repositories/mapRotationRepository";
 
 const SHEET_CSV_URL =
@@ -140,9 +141,16 @@ export async function syncMapRotations(client?: Client): Promise<{
         : "Map rotations synced, no changes detected",
     );
 
-    // Send Discord notification if there are changes and client is available
-    if (updated && changes.length > 0 && client) {
-      await sendSyncUpdateNotification(client, changes);
+    // Send observability webhook notification if there are changes
+    if (updated && changes.length > 0) {
+      await notifyMapRotationUpdated(
+        changes.map((c) => ({
+          hour: c.hour,
+          field: formatFieldName(c.field),
+          oldValue: c.oldValue,
+          newValue: c.newValue,
+        })),
+      );
     }
 
     return { success: true, updated };
@@ -199,60 +207,4 @@ function formatFieldName(field: string): string {
     stellaMontisMajor: "Stella Montis Major",
   };
   return fieldMap[field] || field;
-}
-
-async function sendSyncUpdateNotification(
-  client: Client,
-  changes: RotationChange[],
-): Promise<void> {
-  try {
-    const { getServerConfigs } = await import("../utils/serverConfig");
-    const configs = await getServerConfigs();
-
-    // Group changes by hour for better readability
-    const changesByHour = new Map<number, RotationChange[]>();
-    for (const change of changes) {
-      const hourChanges = changesByHour.get(change.hour) || [];
-      hourChanges.push(change);
-      changesByHour.set(change.hour, hourChanges);
-    }
-
-    // Build the notification message
-    let message = `🔄 **Map Rotation Updated**\n${changes.length} change(s) detected:\n\n`;
-
-    for (const [hour, hourChanges] of changesByHour) {
-      message += `**Hour ${hour.toString().padStart(2, "0")}:00 UTC**\n`;
-      for (const change of hourChanges) {
-        message += `• ${formatFieldName(change.field)}: ${change.oldValue} → ${change.newValue}\n`;
-      }
-      message += "\n";
-    }
-
-    // Truncate if too long for Discord (2000 char limit)
-    if (message.length > 1900) {
-      message = `${message.substring(0, 1900)}\n... and more changes`;
-    }
-
-    // Send to all configured channels
-    for (const [guildId, config] of Object.entries(configs)) {
-      if (!config?.channelId) continue;
-
-      try {
-        const channel = await client.channels.fetch(config.channelId);
-        if (channel && "send" in channel) {
-          await (channel as TextChannel).send({ content: message });
-          logger.debug({ guildId, channelId: config.channelId }, "Sent sync update notification");
-        }
-      } catch (err) {
-        logger.warn(
-          { err, guildId, channelId: config.channelId },
-          "Failed to send update notification to channel",
-        );
-      }
-    }
-
-    logger.info(`Sent map rotation update notification to ${Object.keys(configs).length} servers`);
-  } catch (alertError) {
-    logger.error({ err: alertError }, "Failed to send sync update notification");
-  }
 }
