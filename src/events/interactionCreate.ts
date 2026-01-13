@@ -54,7 +54,7 @@ export async function handleInteraction(interaction: Interaction) {
     const locale = config?.locale || interaction.guild?.preferredLocale || "en";
     const t = getT(locale);
 
-    const current = getCurrentRotation();
+    const current = await getCurrentRotation();
     const nextTimestamp = getNextRotationTimestamp();
 
     const embed = new EmbedBuilder()

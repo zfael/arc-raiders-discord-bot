@@ -54,7 +54,7 @@ export async function createMapRotationEmbed(
   components: ActionRowBuilder<ButtonBuilder>[];
 }> {
   const t = getT(locale);
-  const current = options?.rotation ?? getCurrentRotation();
+  const current = options?.rotation ?? (await getCurrentRotation());
   const nextTimestamp = getNextRotationTimestamp();
 
   const primaryColor =
@@ -355,7 +355,7 @@ export async function postOrUpdateInChannel(
       "Loaded server configuration for update",
     );
 
-    const imageContext = prepareImageCacheContext(locale);
+    const imageContext = await prepareImageCacheContext(locale);
     const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
       rotation: imageContext.rotation,
       imageUrl: imageContext.cachedUrl,
@@ -625,7 +625,7 @@ export function setupLockExpiration(client: Client) {
           "Lock expired: restoring message to overview state",
         );
 
-        const imageContext = prepareImageCacheContext(locale);
+        const imageContext = await prepareImageCacheContext(locale);
         const { embed, files, components } = await createMapRotationEmbed(mobileFriendly, locale, {
           rotation: imageContext.rotation,
           imageUrl: imageContext.cachedUrl,
@@ -648,8 +648,8 @@ export function setupLockExpiration(client: Client) {
   });
 }
 
-function prepareImageCacheContext(locale: string): MapImageCacheContext {
-  const rotation = getCurrentRotation();
+async function prepareImageCacheContext(locale: string): Promise<MapImageCacheContext> {
+  const rotation = await getCurrentRotation();
   if (cachedImageHour === null || cachedImageHour !== rotation.hour) {
     cachedImageHour = rotation.hour;
     imageUrlCache.clear();
