@@ -367,7 +367,7 @@ export async function postOrUpdateInChannel(
       files: files.length > 0 ? files : undefined,
     };
     const logOperationResult = (action: string, startedAt: number) => {
-      logger.info(
+      logger.debug(
         {
           guildId,
           channelId,
