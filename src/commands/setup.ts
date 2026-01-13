@@ -432,6 +432,17 @@ async function saveAndComplete(
     const channel = await ctx.guild.channels.fetch(ctx.state.channelId!);
     const channelName = channel && "name" in channel ? channel.name : ctx.state.channelId!;
 
+    logger.info(
+      {
+        guildId: ctx.guildId,
+        channelId: ctx.state.channelId,
+        locale: ctx.state.locale,
+        notificationMethod: ctx.state.notificationMethod,
+        mobileFriendly: ctx.state.mobileFriendly,
+      },
+      "Setup command completed successfully",
+    );
+
     const step = buildCompleteStep(ctx.t, ctx.state, channelName);
     await i.update({ embeds: [step.embed], components: [] });
 
@@ -441,7 +452,7 @@ async function saveAndComplete(
 
     ctx.collector.stop("complete");
   } catch (error) {
-    logger.error({ err: error }, "Setup save failed");
+    logger.error({ err: error, guildId: ctx.guildId }, "Setup save failed");
     await i.update({
       content: ctx.t("commands.setup.save_error"),
       embeds: [],
@@ -475,6 +486,11 @@ const SetupCommand: Command = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) as Command["data"],
 
   async execute(interaction: ChatInputCommandInteraction) {
+    logger.info(
+      { guildId: interaction.guildId, userId: interaction.user.id },
+      "Setup command initiated",
+    );
+
     // Get current config for initial locale
     const config = interaction.guildId ? await getServerConfig(interaction.guildId) : null;
     const initialLocale = config?.locale || interaction.guild?.preferredLocale || "en";
