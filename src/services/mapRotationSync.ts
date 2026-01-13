@@ -1,7 +1,7 @@
 import type { Client, TextChannel } from "discord.js";
 import type { MapRotation } from "../types";
 import { logger } from "../utils/logger";
-import { updateCacheIfChanged } from "../utils/mapRotationCache";
+import { updateCacheIfChanged, type RotationChange } from "../utils/mapRotationCache";
 import * as mapRotationRepo from "../repositories/mapRotationRepository";
 
 const SHEET_CSV_URL =
@@ -130,7 +130,7 @@ export async function syncMapRotations(client?: Client): Promise<{
     }
 
     // Update cache/database if changed
-    const updated = await updateCacheIfChanged(rotations);
+    const { updated, changes } = await updateCacheIfChanged(rotations);
 
     await mapRotationRepo.setLastSyncStatus(updated ? "updated" : "unchanged");
 
@@ -139,6 +139,11 @@ export async function syncMapRotations(client?: Client): Promise<{
         ? "Map rotations synced and updated successfully"
         : "Map rotations synced, no changes detected",
     );
+
+    // Send Discord notification if there are changes and client is available
+    if (updated && changes.length > 0 && client) {
+      await sendSyncUpdateNotification(client, changes);
+    }
 
     return { success: true, updated };
   } catch (error) {
@@ -176,5 +181,78 @@ async function sendSyncErrorAlert(client: Client, errorMessage: string): Promise
     }
   } catch (alertError) {
     logger.error({ err: alertError }, "Failed to send sync error alert");
+  }
+}
+
+function formatFieldName(field: string): string {
+  // Convert camelCase to readable format: damMajor -> Dam Major
+  const fieldMap: Record<string, string> = {
+    damMinor: "Dam Minor",
+    damMajor: "Dam Major",
+    buriedCityMinor: "Buried City Minor",
+    buriedCityMajor: "Buried City Major",
+    spaceportMinor: "Spaceport Minor",
+    spaceportMajor: "Spaceport Major",
+    blueGateMinor: "Blue Gate Minor",
+    blueGateMajor: "Blue Gate Major",
+    stellaMontisMinor: "Stella Montis Minor",
+    stellaMontisMajor: "Stella Montis Major",
+  };
+  return fieldMap[field] || field;
+}
+
+async function sendSyncUpdateNotification(
+  client: Client,
+  changes: RotationChange[],
+): Promise<void> {
+  try {
+    const { getServerConfigs } = await import("../utils/serverConfig");
+    const configs = await getServerConfigs();
+
+    // Group changes by hour for better readability
+    const changesByHour = new Map<number, RotationChange[]>();
+    for (const change of changes) {
+      const hourChanges = changesByHour.get(change.hour) || [];
+      hourChanges.push(change);
+      changesByHour.set(change.hour, hourChanges);
+    }
+
+    // Build the notification message
+    let message = `🔄 **Map Rotation Updated**\n${changes.length} change(s) detected:\n\n`;
+
+    for (const [hour, hourChanges] of changesByHour) {
+      message += `**Hour ${hour.toString().padStart(2, "0")}:00 UTC**\n`;
+      for (const change of hourChanges) {
+        message += `• ${formatFieldName(change.field)}: ${change.oldValue} → ${change.newValue}\n`;
+      }
+      message += "\n";
+    }
+
+    // Truncate if too long for Discord (2000 char limit)
+    if (message.length > 1900) {
+      message = `${message.substring(0, 1900)}\n... and more changes`;
+    }
+
+    // Send to all configured channels
+    for (const [guildId, config] of Object.entries(configs)) {
+      if (!config?.channelId) continue;
+
+      try {
+        const channel = await client.channels.fetch(config.channelId);
+        if (channel && "send" in channel) {
+          await (channel as TextChannel).send({ content: message });
+          logger.debug({ guildId, channelId: config.channelId }, "Sent sync update notification");
+        }
+      } catch (err) {
+        logger.warn(
+          { err, guildId, channelId: config.channelId },
+          "Failed to send update notification to channel",
+        );
+      }
+    }
+
+    logger.info(`Sent map rotation update notification to ${Object.keys(configs).length} servers`);
+  } catch (alertError) {
+    logger.error({ err: alertError }, "Failed to send sync update notification");
   }
 }
