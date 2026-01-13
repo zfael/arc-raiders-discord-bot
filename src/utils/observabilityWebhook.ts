@@ -81,3 +81,42 @@ export async function notifyBotRemoved(
 
   await sendWebhook([embed]);
 }
+
+/**
+ * Sends notification when map rotations are updated from sheet sync
+ */
+export async function notifyMapRotationUpdated(
+  changes: { hour: number; field: string; oldValue: string; newValue: string }[],
+): Promise<void> {
+  // Group changes by hour
+  const changesByHour = new Map<number, typeof changes>();
+  for (const change of changes) {
+    const hourChanges = changesByHour.get(change.hour) || [];
+    hourChanges.push(change);
+    changesByHour.set(change.hour, hourChanges);
+  }
+
+  // Build description
+  let description = "";
+  for (const [hour, hourChanges] of changesByHour) {
+    description += `**Hour ${hour.toString().padStart(2, "0")}:00 UTC**\n`;
+    for (const change of hourChanges) {
+      description += `• ${change.field}: ${change.oldValue} → ${change.newValue}\n`;
+    }
+    description += "\n";
+  }
+
+  // Truncate if too long
+  if (description.length > 4000) {
+    description = `${description.substring(0, 3950)}\n... and more changes`;
+  }
+
+  const embed: WebhookEmbed = {
+    title: "🔄 Map Rotation Updated",
+    description: `${changes.length} change(s) detected:\n\n${description}`,
+    color: 0x5865f2, // Discord blurple
+    timestamp: new Date().toISOString(),
+  };
+
+  await sendWebhook([embed]);
+}
