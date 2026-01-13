@@ -1,4 +1,6 @@
 import type { MapRotation } from "../types";
+import { getCachedRotations, getCachedRotationByHour } from "../utils/mapRotationCache";
+import { logger } from "../utils/logger";
 
 // Go to https://discord.com/developers/applications/your-app-id/emojis and add the emojis from `./assets/` and copy the emoji ID and replace them in the object below.
 export const CONDITION_EMOJIS: { [key: string]: string } = {
@@ -349,17 +351,59 @@ export const MAP_ROTATIONS: MapRotation[] = [
   },
 ];
 
-export function getCurrentRotation(): MapRotation {
+// Default fallback rotation when database is unavailable
+const FALLBACK_ROTATION: MapRotation = {
+  hour: 0,
+  damMinor: "None",
+  damMajor: "None",
+  buriedCityMinor: "None",
+  buriedCityMajor: "None",
+  spaceportMinor: "None",
+  spaceportMajor: "None",
+  blueGateMinor: "None",
+  blueGateMajor: "None",
+  stellaMontisMinor: "None",
+  stellaMontisMajor: "None",
+};
+
+export async function getCurrentRotation(): Promise<MapRotation> {
   const now = new Date();
   const currentHour = now.getUTCHours();
-  return MAP_ROTATIONS[currentHour];
+
+  try {
+    const rotation = await getCachedRotationByHour(currentHour);
+    if (rotation) return rotation;
+  } catch (error) {
+    logger.error({ err: error }, "Failed to get current rotation from cache, using fallback");
+  }
+
+  // Fallback to hardcoded data if cache/DB fails
+  return MAP_ROTATIONS[currentHour] ?? { ...FALLBACK_ROTATION, hour: currentHour };
 }
 
-export function getNextRotation(): MapRotation {
+export async function getNextRotation(): Promise<MapRotation> {
   const now = new Date();
   const currentHour = now.getUTCHours();
   const nextHour = (currentHour + 1) % 24;
-  return MAP_ROTATIONS[nextHour];
+
+  try {
+    const rotation = await getCachedRotationByHour(nextHour);
+    if (rotation) return rotation;
+  } catch (error) {
+    logger.error({ err: error }, "Failed to get next rotation from cache, using fallback");
+  }
+
+  // Fallback to hardcoded data if cache/DB fails
+  return MAP_ROTATIONS[nextHour] ?? { ...FALLBACK_ROTATION, hour: nextHour };
+}
+
+export async function getAllRotations(): Promise<MapRotation[]> {
+  try {
+    return await getCachedRotations();
+  } catch (error) {
+    logger.error({ err: error }, "Failed to get all rotations from cache, using fallback");
+    return MAP_ROTATIONS;
+  }
 }
 
 export function getNextRotationTimestamp(): number {
