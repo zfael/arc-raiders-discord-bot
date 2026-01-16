@@ -9,6 +9,7 @@ import {
 import {
   CONDITION_COLORS,
   CONDITION_EMOJIS,
+  getAllRotations,
   getCurrentRotation,
   getNextRotationTimestamp,
 } from "../config/mapRotation";
@@ -55,6 +56,7 @@ export async function handleInteraction(interaction: Interaction) {
     const t = getT(locale);
 
     const current = await getCurrentRotation();
+    const rotations = await getAllRotations();
     const nextTimestamp = getNextRotationTimestamp();
 
     const embed = new EmbedBuilder()
@@ -261,6 +263,7 @@ export async function handleInteraction(interaction: Interaction) {
         nextRotationTs,
         filter: { type: "location", value: location },
         mobileFriendly,
+        rotations,
       });
 
       let description = `${t("map_rotation.forecast.title_location", { location: locationName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;
@@ -295,6 +298,7 @@ export async function handleInteraction(interaction: Interaction) {
         nextRotationTs,
         filter: { type: "event", value: eventType },
         mobileFriendly,
+        rotations,
       });
 
       let description = `${t("map_rotation.forecast.title_event", { emoji, event: eventName })}\n${t("map_rotation.forecast.next_rotation", { timestamp: nextTimestamp })}\n\n`;

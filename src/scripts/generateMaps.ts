@@ -2,11 +2,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import puppeteer from "puppeteer";
-import { CONDITION_EMOJIS } from "../config/mapRotation";
+import { CONDITION_EMOJIS, getAllRotations } from "../config/mapRotation";
 import { i18nPromise, getT } from "../utils/i18n";
 import { loadAvailableLocales } from "../utils/localeLoader";
 import { logger } from "../utils/logger";
-import { MAP_ROTATIONS } from "../config/mapRotation";
 import type { MapRotation } from "../types";
 
 // --- Constants & Config ---
@@ -76,6 +75,10 @@ async function generateAllMaps() {
   // 1. Await i18n initialization
   await i18nPromise;
   logger.info("i18n initialized.");
+
+  // 2. Fetch rotations from database
+  const rotations = await getAllRotations();
+  logger.info(`Loaded ${rotations.length} rotations from database.`);
 
   const locales = Array.from(loadAvailableLocales().keys());
   const outputDir = path.join(__dirname, "../assets/generatedMaps");
@@ -168,11 +171,11 @@ async function generateAllMaps() {
     };
 
     for (let hour = 0; hour < 24; hour++) {
-      const currentRotation = MAP_ROTATIONS[hour];
+      const currentRotation = rotations[hour];
       const forecast: MapRotation[] = [];
       for (let i = 1; i <= 6; i++) {
         const hourIndex = (hour + i) % 24;
-        forecast.push(MAP_ROTATIONS[hourIndex]);
+        forecast.push(rotations[hourIndex]);
       }
 
       const data = { current: currentRotation, forecast };
