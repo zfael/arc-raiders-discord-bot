@@ -97,8 +97,11 @@ export async function updateCacheIfChanged(newRotations: MapRotation[]): Promise
   const newHash = computeRotationsHash(newRotations);
   const storedHash = await mapRotationRepo.getRotationsHash();
 
+  // Always invalidate in-memory cache on sync to ensure freshness
+  invalidateCache();
+
   if (storedHash === newHash) {
-    logger.debug("Rotations hash unchanged, skipping update");
+    logger.debug("Rotations hash unchanged, skipping database update");
     return { updated: false, changes: [] };
   }
 
@@ -116,9 +119,6 @@ export async function updateCacheIfChanged(newRotations: MapRotation[]): Promise
   // Update database
   await mapRotationRepo.upsertRotations(newRotations);
   await mapRotationRepo.setRotationsHash(newHash);
-
-  // Invalidate cache so next read fetches fresh data
-  invalidateCache();
 
   logger.info(
     `Map rotations updated, new hash: ${newHash.substring(0, 8)}..., ${changes.length} changes detected`,

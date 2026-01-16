@@ -35,7 +35,8 @@ export function generateForecast(options: ForecastOptions): {
 
   for (let i = 1; i <= 24; i++) {
     const hourIndex = (currentHour + i) % 24;
-    const rotation = rotations[hourIndex];
+    const rotation = rotations.find((r) => r.hour === hourIndex);
+    if (!rotation) continue;
     const timestamp = nextRotationTs + (i - 1) * 3600;
     const timeLabel = `<t:${timestamp}:R>`;
 
