@@ -12,9 +12,9 @@ import {
 import {
   CONDITION_COLORS,
   CONDITION_EMOJIS,
+  getAllRotations,
   getCurrentRotation,
   getNextRotationTimestamp,
-  MAP_ROTATIONS,
 } from "../config/mapRotation";
 import type { MapRotation, ServerConfigEntry } from "../types";
 import { getT, translateEvent } from "./i18n";
@@ -55,6 +55,7 @@ export async function createMapRotationEmbed(
 }> {
   const t = getT(locale);
   const current = options?.rotation ?? (await getCurrentRotation());
+  const rotations = await getAllRotations();
   const nextTimestamp = getNextRotationTimestamp();
 
   const primaryColor =
@@ -166,7 +167,8 @@ export async function createMapRotationEmbed(
     let forecastText = "";
     for (let i = 1; i <= 6; i++) {
       const hourIndex = (currentHour + i) % 24;
-      const rotation = MAP_ROTATIONS[hourIndex];
+      const rotation = rotations.find((r) => r.hour === hourIndex);
+      if (!rotation) continue;
       const timestamp = nextTimestamp + (i - 1) * 3600;
       const timeLabel = `<t:${timestamp}:R>`;
 
@@ -217,7 +219,8 @@ export async function createMapRotationEmbed(
 
     for (let i = 1; i <= 6; i++) {
       const hourIndex = (currentHour + i) % 24;
-      const rotation = MAP_ROTATIONS[hourIndex];
+      const rotation = rotations.find((r) => r.hour === hourIndex);
+      if (!rotation) continue;
       const timestamp = nextTimestamp + (i - 1) * 3600;
       const timeLabel = `<t:${timestamp}:R>`;
 
