@@ -46,6 +46,10 @@
     "setup": {
       "name": "configurar",
       "description": "Asistente guiado para configurar el bot en tu servidor"
+    },
+    "feedback": {
+      "name": "comentarios",
+      "description": "Enviar comentarios sobre el bot"
     }
   },
   "commands": {
@@ -125,6 +129,19 @@
       "important_rules": "⚠️ Directrices Importantes",
       "rules": "• Mantén el texto dentro de `{{llaves}}` exactamente igual — son marcadores de posición\n• No cambies los nombres de las claves, solo los valores de texto\n• Mantén la misma estructura que la versión en inglés\n• Las descripciones de comandos deben tener menos de 100 caracteres",
       "footer": "¡Gracias por ayudar a que este bot sea accesible para más jugadores! 💙"
+    },
+    "feedback": {
+      "select_type_prompt": "¿Qué tipo de comentario te gustaría enviar?",
+      "select_type_placeholder": "Selecciona el tipo...",
+      "type_bug": "Reporte de Error",
+      "type_suggestion": "Sugerencia",
+      "type_general": "Comentario General",
+      "modal_title": "Enviar Comentario",
+      "message_label": "Tu comentario",
+      "message_placeholder": "Describe tu comentario en detalle...",
+      "success": "✅ ¡Gracias por tu comentario! Apreciamos que te tomes el tiempo para ayudar a mejorar el bot.",
+      "rate_limited": "⏳ Por favor espera {{minutes}} minuto(s) antes de enviar otro comentario.",
+      "error": "❌ Ocurrió un error al enviar tu comentario. Por favor intenta de nuevo más tarde."
     }
   },
   "image_renderer": {

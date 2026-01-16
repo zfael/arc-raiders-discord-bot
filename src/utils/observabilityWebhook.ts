@@ -120,3 +120,40 @@ export async function notifyMapRotationUpdated(
 
   await sendWebhook([embed]);
 }
+
+/**
+ * Sends notification when user feedback is received
+ */
+export async function notifyFeedbackReceived(
+  feedbackType: string,
+  guildId: string,
+  message: string,
+): Promise<void> {
+  const typeEmojis: Record<string, string> = {
+    bug: "🐛",
+    suggestion: "💡",
+    general: "💬",
+  };
+
+  const typeLabels: Record<string, string> = {
+    bug: "Bug Report",
+    suggestion: "Suggestion",
+    general: "General Feedback",
+  };
+
+  // Truncate message if too long
+  const truncatedMessage = message.length > 1000 ? `${message.substring(0, 997)}...` : message;
+
+  const embed: WebhookEmbed = {
+    title: `📬 New Feedback: ${typeEmojis[feedbackType] || "📝"} ${typeLabels[feedbackType] || feedbackType}`,
+    color: feedbackType === "bug" ? 0xed4245 : feedbackType === "suggestion" ? 0x57f287 : 0x5865f2,
+    fields: [
+      { name: "Type", value: typeLabels[feedbackType] || feedbackType, inline: true },
+      { name: "Guild ID", value: guildId, inline: true },
+      { name: "Message", value: truncatedMessage },
+    ],
+    timestamp: new Date().toISOString(),
+  };
+
+  await sendWebhook([embed]);
+}

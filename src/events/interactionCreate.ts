@@ -5,6 +5,8 @@ import {
   EmbedBuilder,
   MessageFlags,
   type Interaction,
+  type ModalSubmitInteraction,
+  type StringSelectMenuInteraction,
 } from "discord.js";
 import {
   CONDITION_COLORS,
@@ -12,14 +14,29 @@ import {
   getCurrentRotation,
   getNextRotationTimestamp,
 } from "../config/mapRotation";
+import { createFeedbackModal } from "../commands/feedback";
+import { type FeedbackType, saveFeedback } from "../repositories/feedbackRepository";
 import { getT, translateEvent } from "../utils/i18n";
 import { generateForecast } from "../utils/forecastGenerator";
 import { interactionLockManager } from "../utils/interactionLock";
 import { logger } from "../utils/logger";
 import { createMapRotationEmbed } from "../utils/messageManager";
+import { notifyFeedbackReceived } from "../utils/observabilityWebhook";
 import { getServerConfig } from "../utils/serverConfig";
 
 export async function handleInteraction(interaction: Interaction) {
+  // Handle feedback type selection
+  if (interaction.isStringSelectMenu() && interaction.customId === "feedback_type_select") {
+    await handleFeedbackTypeSelect(interaction);
+    return;
+  }
+
+  // Handle feedback modal submission
+  if (interaction.isModalSubmit() && interaction.customId.startsWith("feedback_modal_")) {
+    await handleFeedbackModalSubmit(interaction);
+    return;
+  }
+
   if (!interaction.isButton()) return;
 
   try {
@@ -320,5 +337,64 @@ export async function handleInteraction(interaction: Interaction) {
     logger.info(`Button clicked: ${customId}`);
   } catch (error) {
     logger.error({ err: error }, "Error handling interaction");
+  }
+}
+
+async function handleFeedbackTypeSelect(interaction: StringSelectMenuInteraction): Promise<void> {
+  try {
+    const feedbackType = interaction.values[0];
+    const config = interaction.guildId ? await getServerConfig(interaction.guildId) : null;
+    const locale = config?.locale || interaction.guild?.preferredLocale || "en";
+    const t = getT(locale);
+
+    const modal = createFeedbackModal(feedbackType, t);
+    await interaction.showModal(modal);
+  } catch (error) {
+    logger.error({ err: error }, "Error handling feedback type selection");
+  }
+}
+
+async function handleFeedbackModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+  try {
+    const feedbackType = interaction.customId.replace("feedback_modal_", "") as FeedbackType;
+    const message = interaction.fields.getTextInputValue("feedback_message");
+    const guildId = interaction.guildId;
+    const userId = interaction.user.id;
+
+    const config = guildId ? await getServerConfig(guildId) : null;
+    const locale = config?.locale || interaction.guild?.preferredLocale || "en";
+    const t = getT(locale);
+
+    if (!guildId) {
+      await interaction.reply({
+        content: t("common.only_in_guild"),
+        flags: Number(MessageFlags.Ephemeral),
+      });
+      return;
+    }
+
+    // Save feedback to database
+    await saveFeedback(guildId, userId, feedbackType, message);
+
+    // Send webhook notification
+    await notifyFeedbackReceived(feedbackType, guildId, message);
+
+    await interaction.reply({
+      content: t("commands.feedback.success"),
+      flags: Number(MessageFlags.Ephemeral),
+    });
+
+    logger.info({ guildId, userId, feedbackType }, "Feedback submitted successfully");
+  } catch (error) {
+    logger.error({ err: error }, "Error handling feedback modal submission");
+
+    const config = interaction.guildId ? await getServerConfig(interaction.guildId) : null;
+    const locale = config?.locale || interaction.guild?.preferredLocale || "en";
+    const t = getT(locale);
+
+    await interaction.reply({
+      content: t("commands.feedback.error"),
+      flags: Number(MessageFlags.Ephemeral),
+    });
   }
 }

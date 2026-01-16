@@ -8,6 +8,7 @@
     "build": "tsc && npx copyfiles -u 1 \"src/templates/**/*\" \"src/assets/**/*\" \"src/locales/**/*\" dist",
     "start": "node dist/index.js",
     "deploy-commands": "ts-node src/deploy-commands.ts",
+    "deploy-commands:guild": "ts-node src/deploy-commands-guild.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write --unsafe",
     "generate-maps": "ts-node src/scripts/generateMaps.ts",

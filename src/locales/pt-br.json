@@ -46,6 +46,10 @@
     "setup": {
       "name": "setup",
       "description": "Assistente guiado para configurar o bot no seu servidor"
+    },
+    "feedback": {
+      "name": "feedback",
+      "description": "Enviar feedback sobre o bot"
     }
   },
   "commands": {
@@ -125,6 +129,19 @@
       "important_rules": "⚠️ Important Guidelines",
       "rules": "• Keep text inside `{{brackets}}` exactly as-is — these are placeholders\n• Don't change any of the key names, only the text values\n• Keep the same file structure as the English version\n• Command descriptions must be under 100 characters",
       "footer": "Thank you for helping make this bot accessible to more players! 💙"
+    },
+    "feedback": {
+      "select_type_prompt": "Que tipo de feedback você gostaria de enviar?",
+      "select_type_placeholder": "Selecione o tipo...",
+      "type_bug": "Relato de Bug",
+      "type_suggestion": "Sugestão",
+      "type_general": "Feedback Geral",
+      "modal_title": "Enviar Feedback",
+      "message_label": "Seu feedback",
+      "message_placeholder": "Descreva seu feedback em detalhes...",
+      "success": "✅ Obrigado pelo seu feedback! Agradecemos por dedicar seu tempo para ajudar a melhorar o bot.",
+      "rate_limited": "⏳ Por favor aguarde {{minutes}} minuto(s) antes de enviar outro feedback.",
+      "error": "❌ Ocorreu um erro ao enviar seu feedback. Por favor tente novamente mais tarde."
     }
   },
   "image_renderer": {
