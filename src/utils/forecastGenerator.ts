@@ -1,5 +1,6 @@
 import type { APIEmbedField } from "discord.js";
-import { CONDITION_EMOJIS, MAP_ROTATIONS } from "../config/mapRotation";
+import { CONDITION_EMOJIS } from "../config/mapRotation";
+import type { MapRotation } from "../types";
 import { translateEvent } from "./i18n";
 
 interface ForecastOptions {
@@ -8,6 +9,7 @@ interface ForecastOptions {
   nextRotationTs: number;
   filter: { type: "location"; value: string } | { type: "event"; value: string };
   mobileFriendly: boolean;
+  rotations: MapRotation[];
 }
 
 const LOCATIONS = ["dam", "buriedCity", "spaceport", "blueGate", "stellaMontis"];
@@ -23,7 +25,7 @@ export function generateForecast(options: ForecastOptions): {
   descriptionSuffix: string;
   fields: APIEmbedField[];
 } {
-  const { t, currentHour, nextRotationTs, filter, mobileFriendly } = options;
+  const { t, currentHour, nextRotationTs, filter, mobileFriendly, rotations } = options;
   let description = "";
   let hasEvents = false;
 
@@ -33,7 +35,7 @@ export function generateForecast(options: ForecastOptions): {
 
   for (let i = 1; i <= 24; i++) {
     const hourIndex = (currentHour + i) % 24;
-    const rotation = MAP_ROTATIONS[hourIndex];
+    const rotation = rotations[hourIndex];
     const timestamp = nextRotationTs + (i - 1) * 3600;
     const timeLabel = `<t:${timestamp}:R>`;
 
