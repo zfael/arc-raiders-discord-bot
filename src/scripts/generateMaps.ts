@@ -47,6 +47,7 @@ const ICON_MAPPING: { [key: string]: string } = {
   Matriarch: "matriarch.png",
   Cold: "cold.png",
   Gate: "gate.png",
+  Birds: "birds.png",
 };
 
 // --- Helper Functions ---
@@ -165,6 +166,7 @@ async function generateAllMaps() {
       event_blooms: t("map_rotation.events.blooms"),
       event_caches: t("map_rotation.events.caches"),
       event_probes: t("map_rotation.events.probes"),
+      event_birds: t("map_rotation.events.birds"),
       no_major_events: t("map_rotation.forecast.no_major_events"),
       upcoming: t("map_rotation.forecast.upcoming"),
       in_hours: t("map_rotation.forecast.in_hours"),

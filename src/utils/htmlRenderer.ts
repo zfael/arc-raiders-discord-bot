@@ -46,6 +46,7 @@ const ICON_MAPPING: { [key: string]: string } = {
   Matriarch: "matriarch.png",
   Cold: "cold.png",
   Gate: "gate.png",
+  Birds: "birds.png",
 };
 
 interface RenderData {

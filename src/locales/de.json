@@ -159,6 +159,7 @@
       "probes": "ARC-Proben",
       "cold": "Kälteeinbruch",
       "gate": "Tor",
+      "birds": "Vögel",
       "none": "Keine",
       "major": "Hautpevent",
       "minor": "Nebenevent"

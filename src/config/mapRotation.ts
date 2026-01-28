@@ -16,6 +16,7 @@ export const CONDITION_EMOJIS: { [key: string]: string } = {
   Matriarch: "<:matriarch:1444519663860973620>",
   Cold: "<:cold:1450872893947904102>",
   Gate: "<:gate:1450872856740237353>",
+  Birds: "<:birds:1466170845780246655>",
   None: " ",
 };
 
@@ -32,6 +33,7 @@ export const CONDITION_COLORS: { [key: string]: number } = {
   Matriarch: 0xd80c1a, // Red
   Cold: 0xd80c1a, // Red
   Gate: 0xd80c1a, // Red
+  Birds: 0xeed722, // Yellow
   None: 0x40fd86, // Green
 };
 
