@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.8",
     "copyfiles": "^2.4.1",
     "supabase": "^2.72.6",
     "ts-node": "^10.9.2",
