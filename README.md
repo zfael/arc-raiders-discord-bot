@@ -1,3 +1,5 @@
+
+
 # Arc Raiders Discord Bot
 
 [![Build & Lint](https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/zfael/arc-raiders-discord-bot/actions/workflows/build.yml)
@@ -219,6 +221,9 @@ If you prefer to run without Docker:
    - `spacetower_loot.png` (for Tower)
    - `bunker.png`
    - `matriarch.png`
+   - `cold.png`
+   - `gate.png`
+   - `birds.png`
 3. Copy each emoji ID and update `CONDITION_EMOJIS` in `src/config/mapRotation.ts`
 
 ### 3. Bot Permissions
